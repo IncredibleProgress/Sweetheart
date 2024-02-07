@@ -1,30 +1,14 @@
 
-fn getenv(var:&str) -> String {
-    // short way for getting environment value
-    match std::env::var(var) {
-        Ok(value) => value,
-        Err(_) => "__undefined__".to_string() }}
-        
-mod run {
-    use std::process::Command;
+fn env(var:&str) -> String { std::env::var(var) }
+fn npm(args) -> Command { Command::new("/usr/bin/npm").args(args) }
+fn cargo(args) -> Command { Command::new("/usr/bin/cargo").args(args) }
 
-    const npmb: &str = "/usr/bin/npm";
-    const cargo: &str = "/usr/bin/cargo";
-    const poetry: &str = "~/.local/bin/poetry";
-
-    pub fn npm(args) {
-        Command::new(npm).args(args); }
-
-    pub fn cargo(args) {
-        Command::new(cargo).args(args); }
-
-    pub fn poetry(args) {
-        Command::new(poetry)
-        .current_dir("~/.sweet/sweetheart/programs/my_python")
-        .args(args); }
-}
+fn poetry(args) -> Command {
+    Command::new("~/.local/bin/poetry")
+    .current_dir("~/.sweet/sweetheart/programs/my_python")
+    .args(args) }
 
 fn main() {
-    let show = run::poetry(["show"]).output();
+    let show = poetry(["show"]).output();
     println!("{:?}",show);
 }

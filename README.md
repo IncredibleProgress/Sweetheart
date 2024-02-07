@@ -24,12 +24,6 @@ Sweetheart supports you getting coding full power from scratch:
   - made for calculations, big-data and AI
   - made for high performances and innovation
 
-## Rock-solid components for supporting innovative capabilities
-
-Ubuntu - Nginx Unit - RethinkDB - Rust - Python - React - Typescript
-
-more details Coming Soon !
-
 ## Stick to best practices worldwide without thinking about it
 
 Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It intends to transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the included documentation you will **learn quickly to make great Python/React code** including up-to-date best practices and patterns. You won't learn Sweetheart itself, you will learn Python/React real coding-life like any other developer, but skipping some tedious considerations. That means especially you don't need any kind of expertise to use good things in the right way. Be quite, Sweetheart is made for low resources consumption, high security level, and best performances:
@@ -39,12 +33,9 @@ Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. I
   - it ensures ruggedness of the committed libraries
   - it ensures the efficiency of your coding effort
   - it allows you to operate without cloud services
-<<<<<<< Updated upstream
-=======
 
 ## Rock-solid components for supporting innovative capabilities
 
 NginxUnit - RethinkDB - Rust - Python - React/Typescript
 
 more details Coming Soon !
->>>>>>> Stashed changes

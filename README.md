@@ -24,7 +24,7 @@ Sweetheart supports you getting coding full power from scratch:
   - made for calculations, big-data and AI
   - made for high performances and innovation
 
-## Stick to best practices worldwide without thinking about it
+## Stick to worldwide best practices without thinking about it
 
 Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It intends to transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the included documentation you will **learn quickly to make great Python/React code** including up-to-date best practices and patterns. You won't learn Sweetheart itself, you will learn Python/React real coding-life like any other developer, but skipping some tedious considerations. That means especially you don't need any kind of expertise to use good things in the right way. Be quite, Sweetheart is made for low resources consumption, high security level, and best performances:
 
@@ -34,8 +34,14 @@ Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. I
   - it ensures the efficiency of your coding effort
   - it allows you to operate without cloud services
 
-## Rock-solid components for supporting innovative capabilities
+## Rock-solid pillars for supporting innovative capabilities
 
-Ubuntu - NginxUnit - RethinkDB - Rust - Python - React/Typescript - TailwindCss - Websocket
+  - Basement: Ubuntu - NginxUnit - Rust - RethinkDB - Websocket
+  - Application: **Python** - **React**/Typescript - TailwindCss
+  - Charged extras: Code4all tools for the enterprise
 
 more details Coming Soon !
+
+### why RethinkDB should be used in businesses ?
+
+Maybe some of you can be surprised with regards to RethinkDB, because this not currently the best known database server. Believe it will become one of these within next years. Sweetheart intends to provide a NoSQL and JSON-based database for performances and versatility purposes. In comparison RethinkDB won't support big binaries like for example MongoDB can do, but this is not a concern for considered enterprise solutions here. On the other hand collaborative work between people must be considered at the highest level in any enterprise and organization. Meaning that working together on same data using several devices has to be the normal way, not a big challenge. Usually implementing real-time capabilities on database systems is technically sophisticated. Because originally the involved technologies were not made for such expectations. RethinkDB is designed for it. Furthermore the admin interface is great, the queries made with ReQL are great, there is no need of any ORM, and no SQL injection attacks risk exists.

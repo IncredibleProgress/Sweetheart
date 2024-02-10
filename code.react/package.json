@@ -4,7 +4,7 @@
   "description": "innovative foundations for enterprise-grade solutions",
   "main": "welcome.js",
   "scripts": {
-    "test": "npx parcel welcome.htm"
+    "test": "npx parcel StartPage.html"
   },
   "author": "Nicolas Champion",
   "license": "CeCILL-C FREE SOFTWARE LICENSE AGREEMENT",

@@ -2,11 +2,11 @@
   "name": "sweetheart",
   "version": "0.1.3",
   "description": "innovative foundations for enterprise-grade solutions",
-  "main": "welcome.js",
+  "main": "./dist/StartPage.*.js",
   "scripts": {
     "test": "npx parcel StartPage.html"
   },
-  "author": "Nicolas Champion",
+  "author": "IncredibleProgress <champion.nicolas@gmail.com>",
   "license": "CeCILL-C FREE SOFTWARE LICENSE AGREEMENT",
   "dependencies": {
     "@types/react": "^18.2.55",

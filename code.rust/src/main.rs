@@ -2,7 +2,7 @@
 
 use std::process::{Command, ExitStatus};
 
-fn run_command_with_args(command: &str, args: &[&str]) -> Result<String, String> {
+fn run(command: &str, args: &[&str]) -> Result<String, String> {
     let output = Command::new(command)
         .args(args)
         .output()
@@ -21,7 +21,7 @@ fn main() {
     let command = "ls";
     let args = ["-l"];
 
-    match run_command_with_args(command, &args) {
+    match run(command, &args) {
         Ok(output) => println!("Output: {}", output),
         Err(error) => eprintln!("{}", error),
     }

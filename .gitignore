@@ -5,3 +5,4 @@ code.react/dist/
 code.react/webapp/
 code.react/node_modules/
 code.react/.parcel-cache/
+code.python/src/__pycache__

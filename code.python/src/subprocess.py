@@ -11,8 +11,7 @@ import multiprocessing as _multiprocessing_
 class os:
 
     """ reimplements common tools of the python os module
-        and extends it with some foreign facilities for ease 
-        it intends to ensure best practices using standard libs """
+        and extends it with some foreign facilities for ease """
 
     #env = environ = _os_.environ
     getenv = _os_.getenv

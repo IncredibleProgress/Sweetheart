@@ -20,7 +20,10 @@ def init():
     if not os.isfile(poetry):
         os.run("curl -sSL https://install.python-poetry.org | python3 -")
 
-    os.makedirs(f"{HOME}/.sweet/configuration/")
+    os.makedirs(f"{HOME}/.sweet/application/typescript/")
+    os.mkdir(f"{HOME}/.sweet/configuration/")
     os.mkdir(f"{HOME}/.sweet/documentation/")
-    os.mkdir(f"{HOME}/.sweet/application/")
+    
+    os.makedirs(f"{HOME}/.sweet/my_code/python")
+    os.symlink(f"{HOME}/.sweet/application/typescript/",f"{HOME}/.sweet/my_code/react")
     

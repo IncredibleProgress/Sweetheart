@@ -20,12 +20,24 @@ class BaseConfig(UserDict):
         self.data = {
             # editable general settings
             "path_webapp": f"{self.root}/application",
-            "path_database": f"{self.root}/database/rethinkdb-tests",
+            "path_database": f"{self.root}/databases/rethinkdb-tests",
             "path_pymodule": f"{self.root}/my_code/python",# no / at end
+
+            # editable python app settings
+            "python_app_module": "start",
+            "python_app_callable": "webapp",
+            "unit_app_name": "starlette",
+            "unit_app_user": os.getuser(),
 
             # editable html rendering settings
             "static_files": {},
             "static_dirs": { "/": "/webapp" } }
+    
+    def __getattr__(self,attr):
+        """ search non-existing attribute into self.data
+            config.path_webapp can be used instead of config['path_webapp'] """
+        
+        return self.data[attr]
     
     def load_json(self):
         """ update config from given json file """
@@ -37,7 +49,7 @@ class BaseConfig(UserDict):
                 verbose("load config file:",self.conffile)
 
 
-#############################################################################
+  #############################################################################
  ## logging functions ########################################################
 #############################################################################
 

@@ -1,4 +1,5 @@
 
+import configparser
 from sweetheart import *
 
 from starlette.applications import Starlette
@@ -11,29 +12,19 @@ from starlette.responses import HTMLResponse,FileResponse,JSONResponse,RedirectR
 class xWebsocket:
 
     def set_websocket(self,dbname=None,set_encoding='json'):
-        """ factory function for implementing starlette WebSocketEndpoint
-            the parent class 'self' must provide an 'on_receive' method
-            which is not implemented directly into BaseService """
-        
-        parent:BaseService = self
-        if not dbname: dbname=self.config['db_name']
 
-        class WebSocket(WebSocketEndpoint):
+        class _WebSocket(WebSocketEndpoint):
+
             encoding = set_encoding
-            service_config = {
-                "encoding": encoding,
-                "db_name": dbname,
-                "route": f"/data/{dbname}",
-                "receiver": parent.on_receive,
-                }
-            async def on_receive(self,websocket,data):
-                receiver = self.service_config['receiver']
-                await receiver(websocket,data)
+            route = f"/data/{dbname}"
+            receiver = self.on_receive
 
-        self.ws_config:dict = WebSocket.service_config
-        self.WebSocketEndpoint:type = WebSocket
-        verbose("new websocket endpoint: ",WebSocket.service_config['route'])
-        return WebSocket.service_config['route'], WebSocket
+            async def on_receive(self,websocket,data):
+                await self.receiver(websocket,data)
+
+        self.WebSocketEndpoint = _WebSocket
+        verbose("new websocket endpoint: ",_WebSocket.route)
+        return _WebSocket.route, _WebSocket
     
     def on_receive(self,websocket,data):
         raise NotImplementedError
@@ -137,25 +128,4 @@ class xSystemd:
 
         with open(self.config.subproc_file,'w') as file_out:
             json.dump(subproc_settings,file_out)
-
-
-class xUnit:
-
-    @classmethod
-    def get_unit(cls):
-        """ right way for getting NginxUnit instance via self.unit 
-            which is not available within BaseService.__init__()
-            this intends to avoid an unexpected use of NginxUnit() """
-
-        # ensure server_class set for unit
-        assert cls.server_class == 'NginxUnit'
-
-        try:
-            cls.unit
-            verbose("get BaseService.unit which is already set")
-        except:
-            verbose("set instance of:",cls.server_class)
-            BaseService.unit = eval(f"{cls.server_class}(BaseConfig._)")
-
-        return cls.unit
     

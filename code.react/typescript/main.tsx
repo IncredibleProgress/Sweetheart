@@ -1,7 +1,7 @@
 // Maintenance App Refactory
 
-import '../tailwind.css';
 import React from 'react';
+import '../resources/tailwind.css';
 import ReactDOM from 'react-dom/client';
 
 function Notification():

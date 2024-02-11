@@ -82,4 +82,4 @@ class os:
 
         return os.run(*args,
             text=True, capture_output=True,
-            **kwargs).stdout.strip()
+            **kwargs ).stdout.strip()

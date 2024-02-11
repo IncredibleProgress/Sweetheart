@@ -40,8 +40,8 @@ Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. I
   - Application: **Python** - **React**/Typescript - TailwindCss
   - Charged extras: Code4all tools for the enterprise
 
-more details Coming Soon !
-
 ### why RethinkDB should be used in businesses ?
 
 Maybe some of you can be surprised with regards to RethinkDB, because this not currently the best known database server. Believe it will become one of these within next years. Sweetheart intends to provide a NoSQL and JSON-based database for performances and versatility purposes. In comparison RethinkDB won't support big binaries like for example MongoDB can do, but this is not a concern for considered enterprise solutions here. On the other hand collaborative work between people must be considered at the highest level in any enterprise and organization. Meaning that working together on same data using several devices has to be the normal way, not a big challenge. Usually implementing real-time capabilities on database systems is technically sophisticated. Because originally the involved technologies were not made for such expectations. RethinkDB is designed for it. Furthermore the admin interface is great, the queries made with ReQL are great, there is no need of any ORM, and no SQL injection attacks risk exists.
+
+### more details Coming Soon !

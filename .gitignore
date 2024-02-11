@@ -1,3 +1,5 @@
+.vscode/
+.ipynb_checkpoints/
 code.rust/target/
 code.react/dist/
 code.react/node_modules/

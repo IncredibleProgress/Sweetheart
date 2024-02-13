@@ -1,6 +1,6 @@
 // first steps with rust - only for testing
 
-use std::process::{Command, ExitStatus};
+use std::process::{Command};
 
 fn run(command: &str, args: &[&str]) -> Result<String, String> {
     let output = Command::new(command)

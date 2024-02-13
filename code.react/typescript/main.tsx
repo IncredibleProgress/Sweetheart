@@ -3,23 +3,18 @@
 import React from 'react';
 import '../resources/tailwind.css';
 import ReactDOM from 'react-dom/client';
+import { SelectOption, TextInput } from './components';
 
 function Notification():
   React.JSX.Element {
-
+    
   return(
     <div className="p-14 space-y-2 max-w-lg m-auto">
       <h1 className="text-center mt-3 mb-9 text-pink-500">Demande d'intervention</h1>
 
       <div className="flex mt-12">
-        <input id="" type="text"
-          className="w-full border rounded-t-md px-3 py-2 focus:outline-none focus:border-pink-600"
-          placeholder="saisir ici l'intitulé de la problématique à traiter"/>
-
-        <select id=""
-          className="w-full border rounded-b-md px-3 py-2 focus:outline-none focus:border-pink-600">
-          <option></option>
-        </select>
+        <TextInput/>
+        <SelectOption/>
       </div>
 
       <div className="flex mt-2">

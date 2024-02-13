@@ -21,10 +21,10 @@ class BaseConfig(UserDict):
             # editable general settings
             "path_webapp": f"{self.root}/application",
             "path_database": f"{self.root}/databases/rethinkdb-tests",
-            "path_pymodule": f"{self.root}/my_code/python",# no / at end
+            "path_pymodule": f"{self.root}/my_code/python",#! no / at end
 
             # editable python app settings
-            "python_app_module": "start",
+            "python_app_module": "start",#! no .py at end
             "python_app_callable": "webapp",
             "unit_app_name": "starlette",
             "unit_app_user": os.getuser(),

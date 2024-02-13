@@ -18,11 +18,11 @@ class HttpServer(xWebsocket):
         # ensure mount() call only once
         assert self._mounted_ is False
 
-        # set the app's working directory
-        os.chdir(self.config["path_webapp"])
-        verbose("mount webapp:",self.config["path_webapp"])
+        # # set the app's working directory
+        # os.chdir(self.config["path_webapp"])
+        # verbose("mount webapp:",self.config["path_webapp"])
 
-        # assumes that args are Route objects
+        #NOTE: assumes that args are Route objects
         self.data.extend(args)
 
         # mount static files given within config

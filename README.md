@@ -3,7 +3,7 @@
 
 ## A supercharged heart for the non-expert hands
 
-What about security, big-data, real-time databases, responsive interfaces and AI? Sweetheart comes with the highest quality components widely used by GAFAM and others, also the best coding practices, and makes the hard stuff for you. Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open-source code for processing at full power data which remains yours!
+What about security, big-data, real-time databases, responsive interfaces and AI? Sweetheart comes with the highest quality components widely used by the GAFAM and others, also the best coding practices, and makes the hard stuff for you. Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open-source code for processing at full power data which remains yours!
 
 Since Ubuntu operating systems can be installed as usual software within Windows 10/11, it provides an incredible way for any organization to develop, deploy, and administrate powerful responsive apps including AI on its own local network keeping high capabilities of integration with the already existing tools like databases, MS-Excel, and SAP.
 

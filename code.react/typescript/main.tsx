@@ -1,9 +1,9 @@
 // Maintenance App Refactory
 
-import React from 'react';
-import '../resources/tailwind.css';
-import ReactDOM from 'react-dom/client';
-import { SelectOption, TextInput } from './components';
+import React from 'react'
+import '../resources/tailwind.css'
+import ReactDOM from 'react-dom/client'
+import { TextInput } from './components'
 
 function Notification():
   React.JSX.Element {
@@ -14,7 +14,7 @@ function Notification():
 
       <div className="flex mt-12">
         <TextInput/>
-        <SelectOption/>
+        {/* <SelectOption/> */}
       </div>
 
       <div className="flex mt-2">
@@ -36,13 +36,13 @@ function Notification():
         placeholder="insert a description">
       </textarea>
     </div>
-  );
+  )
 }
 
 // set title from the first <h1> element
-const heading: HTMLHeadingElement = document.getElementsByTagName("h1")[0];
-if (heading != null) document.title = heading.innerText;
+const heading = document.getElementsByTagName("h1")[0]
+if (heading != null) document.title = heading.innerText
 
 // render the React app
-const app: HTMLElement | null = document.getElementById('ReactApp');
-ReactDOM.createRoot(app!).render(<Notification />);
+const app: HTMLElement | null = document.getElementById('ReactApp')
+ReactDOM.createRoot(app!).render(<Notification />)

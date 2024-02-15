@@ -3,14 +3,16 @@
 import React from 'react'
 import '../resources/tailwind.css'
 import ReactDOM from 'react-dom/client'
-import { TextInput } from './components'
+import { Title,TextInput } from './components'
 
 function Notification():
   React.JSX.Element {
     
   return(
     <div className="p-14 space-y-2 max-w-lg m-auto">
-      <h1 className="text-center mt-3 mb-9 text-pink-500">Demande d'intervention</h1>
+      
+      <Title className="text-center">
+        Demande d'intervention</Title>
 
       <div className="flex mt-12">
         <TextInput/>

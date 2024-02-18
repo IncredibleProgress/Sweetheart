@@ -2,49 +2,35 @@
 
 import React from 'react'
 import '../resources/tailwind.css'
-import ReactDOM from 'react-dom/client'
-import { Title,TextInput } from './components'
+import { render,MiniApp,Title,TextInput,SelectOption,TextArea } from './components'
 
-function Notification():
-  React.JSX.Element {
-    
-  return(
-    <div className="p-14 space-y-2 max-w-lg m-auto">
-      
-      <Title className="text-center">
-        Demande d'intervention</Title>
+const prior = ['P0','P1','P2','P3','P4']
+const categ = ['SECU','FOOD','MTCE']
+const owner = ['MECA','ELEC','CHAU','SYST']
 
-      <div className="flex mt-12">
-        <TextInput/>
-        {/* <SelectOption/> */}
-      </div>
+render(<MiniApp>
+  
+  <Title className="text-center">
+    Demande d'intervention
+  </Title>
 
-      <div className="flex mt-2">
-        <select id=""
-          className="border rounded-b-md px-3 py-2 focus:outline-none focus:border-pink-600">
-          <option></option>
-        </select>
-        <select id=""
-          className="w-24 mr-1 border rounded-b-md px-3 py-2 focus:outline-none focus:border-pink-600">
-          <option></option>
-        </select>
+  <div>
+    <SelectOption options={prior}/>
+    <SelectOption options={categ}/>
+  </div>
 
-        <input id="" type="text" className="flex-initial w-24 text-center"
-          placeholder="criticité"/>
-      </div>
+  <div>
+    <TextInput className="w-full"
+      placeholder="Quel est le problème ?"/>
+  </div>
 
-      <textarea id=""
-        className="w-full border rounded-b-md px-3 py-2 focus:outline-none focus:border-pink-600"
-        placeholder="insert a description">
-      </textarea>
-    </div>
-  )
-}
+  <div className="flex">
+    <TextInput className="w-full" placeholder="équipement"/>
+    <TextInput className="w-24 text-center" placeholder="criticité" disabled/>
+    <SelectOption options={owner}/>
+  </div>
 
-// set title from the first <h1> element
-const heading = document.getElementsByTagName("h1")[0]
-if (heading != null) document.title = heading.innerText
+  <TextArea className="w-full min-h-48" 
+    placeholder="donnez toutes les informations utiles"/>
 
-// render the React app
-const app: HTMLElement | null = document.getElementById('ReactApp')
-ReactDOM.createRoot(app!).render(<Notification />)
+</MiniApp>)

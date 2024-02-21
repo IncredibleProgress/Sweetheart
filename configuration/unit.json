@@ -1,0 +1,32 @@
+{
+    "listeners": {
+        "*:80": {
+            "pass": "routes"
+        }
+    },
+    "routes": [
+        {
+            "match": {
+                "uri": "/*"
+            },
+            "action": {
+                "share": "~/.sweet/application/webapp"
+            }
+        },
+        {
+            "action": {
+                "pass": "applications/starlette"
+            }
+        }
+    ],
+    "applications": {
+        "starlette": {
+            "type": "python 3.10",
+            "path": "~/.sweet/my_code/python",
+            "home": null,
+            "module": "start",
+            "callable": "webapp",
+            "user": null
+        }
+    }
+}

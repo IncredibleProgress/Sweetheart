@@ -1,5 +1,5 @@
 """
-SWEETHEART 0.1.3 'Reactive'
+SWEETHEART 0.1.3 (React)
 """
 
 import re,sys,json
@@ -30,19 +30,29 @@ class BaseConfig(UserDict):
             "unit_app_user": os.getuser(),
 
             # editable html rendering settings
-            "static_files": {},
-            "static_dirs": { "/": "/webapp" } }
+            # "static_files": {},
+            # "static_dirs": { "/": f"webapp" }
+            }
     
     def __getattr__(self,attr):
         """ search non-existing attribute into self.data
             config.path_webapp can be used instead of config['path_webapp'] """
-        
-        return self.data[attr]
+
+        if attr=="python_bin" and not self.__dict__.get(attr)\
+        or attr=="python_env" and not self.__dict__.get(attr):
+            #FIXME: set the python virtual env
+            cwd = self["path_pymodule"]
+            self.python_env= os.stdout(f"poetry env info --path -C {cwd}")
+            self.python_bin= f"{self.python_env}/bin/python3"
+            return self.__dict__.get(attr)
+
+        else:
+            return self.data[attr]
     
     def load_json(self):
         """ update config from given json file """
 
-        if os.path.isfile(self.conffile):
+        if os.isfile(self.conffile):
 
             with open(self.conffile) as file_in:
                 self.update(json.load(file_in))

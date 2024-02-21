@@ -15,6 +15,6 @@ starlette = "^0.37.1"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[sweetheart-dev]
+[sweetheart-codespace]
 source = "/workspaces/Sweetheart/code.python/src"
 symlink = "/home/codespace/.cache/pypoetry/virtualenvs/sweetheart-kYq1UJ0L-py3.10/lib/python3.10/site-packages/sweetheart"

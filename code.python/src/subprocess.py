@@ -1,27 +1,27 @@
-
-import platform,locale,shutil
-
 import os as _os_
 import shlex as _shlex_
-import getpass as _getpass_
+import shutil as _shutil_
+# import getpass as _getpass_
 import tempfile as _tempfile_
 import subprocess as _subprocess_
-import multiprocessing as _multiprocessing_
+# import multiprocessing as _multiprocessing_
+
+from pathlib import Path
 
 class os:
 
     """ reimplements common tools of the python os module
         and extends it with some foreign facilities for ease """
 
-    #env = environ = _os_.environ
+    # env = environ = _os_.environ
     getenv = _os_.getenv
     putenv = _os_.putenv
 
     getcwd = _os_.getcwd
-    getuser = _getpass_.getuser
-    getpass = _getpass_.getpass
+    # getuser = _getpass_.getuser
+    # getpass = _getpass_.getpass
     get_exec_path = _os_.get_exec_path
-    getlocale = locale.getlocale
+    # getlocale = _locale_.getlocale
 
     path = _os_.path
     isdir = _os_.path.isdir
@@ -34,25 +34,25 @@ class os:
     makedirs = _os_.makedirs
     symlink = _os_.symlink
     remove = _os_.remove
-    rmtree = shutil.rmtree
+    rmtree = _shutil_.rmtree
     listdir = _os_.listdir
-    #walk = _os_.walk
+    # walk = _os_.walk
 
     # provide distro infos
-    os_release = platform.freedesktop_os_release()
-    distrib = os_release['ID'].lower()
-    distbase = os_release['ID_LIKE'].lower()
-    codename = os_release.get('UBUNTU_CODENAME').lower()
+    # os_release = platform.freedesktop_os_release()
+    # distrib = os_release['ID'].lower()
+    # distbase = os_release['ID_LIKE'].lower()
+    # codename = os_release.get('UBUNTU_CODENAME').lower()
 
     # tempfiles utilities
     TemporaryFile = _tempfile_.TemporaryFile
     SpooledTemporaryFile = _tempfile_.SpooledTemporaryFile
 
     # multiprocessing features
-    Process = _multiprocessing_.Process
+    # Process = _multiprocessing_.Process
 
     # shell-like features
-    which = shutil.which
+    which = _shutil_.which
     DEVNULL = _subprocess_.DEVNULL
 
     @staticmethod
@@ -68,10 +68,10 @@ class os:
             # split given str but doesn't pass shell=True
             args_: list[str] = _shlex_.split(args[0])
             assert "sudo" not in args
-            return _os_.run(args_,**kwargs)
+            return _subprocess_.run(args_,**kwargs)
         
         elif len(args)==1 and isinstance(args[0],list):
-            return _os_.run(args[0],**kwargs)
+            return _subprocess_.run(args[0],**kwargs)
         
         else:
             raise Exception("invalid arguments given to os.run()")

@@ -22,7 +22,7 @@
     "applications": {
         "starlette": {
             "type": "python 3.10",
-            "path": "~/.sweet/my_code/python",
+            "path": null,
             "home": null,
             "module": "start",
             "callable": "webapp",

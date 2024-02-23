@@ -20,22 +20,18 @@ class BaseConfig(UserDict):
         self.data = {
             # editable general settings
             "path_webapp": f"{self.root}/application",
-            "path_database": f"{self.root}/databases/rethinkdb-tests",
             "path_pymodule": f"{self.root}/my_code/python",#! no / at end
+            "path_database": f"{self.root}/databases/rethinkdb-tests",
 
             # editable python app settings
             "python_app_module": "start",#! no .py at end
             "python_app_callable": "webapp",
             "unit_app_name": "starlette",
             "unit_app_user": os.getuser(),
-
-            # editable html rendering settings
-            # "static_files": {},
-            # "static_dirs": { "/": f"webapp" }
             }
     
     def __getattr__(self,attr):
-        """ search non-existing attribute into self.data
+        """ search non-existing attribute into self.data allowing that
             config.path_webapp can be used instead of config['path_webapp'] """
 
         if attr=="python_bin" and not self.__dict__.get(attr)\
@@ -49,14 +45,28 @@ class BaseConfig(UserDict):
         else:
             return self.data[attr]
     
-    def load_json(self):
-        """ update config from given json file """
+    def load_json(self,filename:str=None):
 
-        if os.isfile(self.conffile):
+        if filename:
+            raise NotImplementedError
 
-            with open(self.conffile) as file_in:
-                self.update(json.load(file_in))
-                verbose("load config file:",self.conffile)
+        with open(self.conffile) as file_in:
+            self.update(json.load(file_in))
+
+
+def set_config(values:dict) -> BaseConfig:
+
+    config = BaseConfig()
+
+    # load config from config file when given
+    if os.isfile(config.conffile):
+        config.load_json()
+        verbose("load config file:",config.conffile)
+    else:
+        verbose("WARNING: config file is missing")
+
+    config.update(values)
+    return config
 
 
   #############################################################################

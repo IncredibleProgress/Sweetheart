@@ -7,6 +7,10 @@ import subprocess as _subprocess_
 # import multiprocessing as _multiprocessing_
 
 from pathlib import Path
+# from contextlib import contextmanager
+from locale import _get_locale_encoding
+assert _get_locale_encoding() == "UTF-8"
+
 
 class os:
 
@@ -44,9 +48,8 @@ class os:
     # distbase = os_release['ID_LIKE'].lower()
     # codename = os_release.get('UBUNTU_CODENAME').lower()
 
-    # tempfiles utilities
-    TemporaryFile = _tempfile_.TemporaryFile
-    SpooledTemporaryFile = _tempfile_.SpooledTemporaryFile
+    # temporary files features
+    NamedTemporaryFile = _tempfile_.NamedTemporaryFile
 
     # multiprocessing features
     # Process = _multiprocessing_.Process

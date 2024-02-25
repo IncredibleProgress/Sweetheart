@@ -3,7 +3,7 @@ import configparser
 from sweetheart import *
 
 from starlette.applications import Starlette
-from starlette.staticfiles import StaticFiles
+# from starlette.staticfiles import StaticFiles
 from starlette.endpoints import WebSocketEndpoint
 from starlette.routing import Route,Mount,WebSocketRoute
 from starlette.responses import HTMLResponse,FileResponse,JSONResponse,RedirectResponse

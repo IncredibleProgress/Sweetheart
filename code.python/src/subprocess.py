@@ -1,16 +1,14 @@
 import os as _os_
 import shlex as _shlex_
+from pathlib import Path
 import shutil as _shutil_
-# import getpass as _getpass_
+import getpass as _getpass_
 import tempfile as _tempfile_
 import subprocess as _subprocess_
 # import multiprocessing as _multiprocessing_
 
-from pathlib import Path
-# from contextlib import contextmanager
 from locale import _get_locale_encoding
 assert _get_locale_encoding() == "UTF-8"
-
 
 class os:
 
@@ -22,7 +20,7 @@ class os:
     putenv = _os_.putenv
 
     getcwd = _os_.getcwd
-    # getuser = _getpass_.getuser
+    getuser = _getpass_.getuser
     # getpass = _getpass_.getpass
     get_exec_path = _os_.get_exec_path
     # getlocale = _locale_.getlocale
@@ -59,25 +57,24 @@ class os:
     DEVNULL = _subprocess_.DEVNULL
 
     @staticmethod
-    def run(*args,**kwargs) -> _subprocess_.CompletedProcess[str] :
+    def run(*args:list|str,**kwargs) -> _subprocess_.CompletedProcess[str] :
 
         """ securized subprocess.run() function with shell=True forbidden
             this intends to protect code against shell injection attacks """
 
         if kwargs.get('shell'):
-            raise Exception("running shell is not allowed")
+            raise Exception("running shell cmd is not allowed")
         
         elif len(args)==1 and isinstance(args[0],str):
             # split given str but doesn't pass shell=True
             args_: list[str] = _shlex_.split(args[0])
-            assert "sudo" not in args
             return _subprocess_.run(args_,**kwargs)
         
         elif len(args)==1 and isinstance(args[0],list):
             return _subprocess_.run(args[0],**kwargs)
         
         else:
-            raise Exception("invalid arguments given to os.run()")
+            raise Exception("Invalid arguments given to run()")
     
     @staticmethod
     def stdout(*args,**kwargs) -> str :

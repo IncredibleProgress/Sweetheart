@@ -2,14 +2,15 @@
 SWEETHEART 0.1.3 (React)
 """
 
-import re,sys,json
+import json
 from collections import UserDict
 from sweetheart.subprocess import os
 
 
 class BaseConfig(UserDict):
 
-    verbosity = 0
+    debug = True
+    verbosity = 1
     master_module = "sweetheart"
     
     def __init__(self):
@@ -26,6 +27,8 @@ class BaseConfig(UserDict):
             # editable python app settings
             "python_app_module": "start",#! no .py at end
             "python_app_callable": "webapp",
+            "shared_app_content": f"{self.root}/application/webapp-dist",
+            "shared_app_index": "startpage.html",
             "unit_app_name": "starlette",
             "unit_app_user": os.getuser(),
             }
@@ -54,16 +57,13 @@ class BaseConfig(UserDict):
             self.update(json.load(file_in))
 
 
-def set_config(values:dict) -> BaseConfig:
+def set_config(values={}) -> BaseConfig:
 
     config = BaseConfig()
 
-    # load config from config file when given
     if os.isfile(config.conffile):
         config.load_json()
         verbose("load config file:",config.conffile)
-    else:
-        verbose("WARNING: config file is missing")
 
     config.update(values)
     return config
@@ -73,17 +73,26 @@ def set_config(values:dict) -> BaseConfig:
  ## logging functions ########################################################
 #############################################################################
 
-def echo(*args,blank=False):
-    """ convenient function for formated prints """
+class ansi:
+
+    RED = "\033[0;31m"
+    YELLOW = "\033[0;33m"
+    GREEN = "\033[0;32m"
+    NULL = "\033[0m"
+
+
+def echo(*args,prefix="",**kwargs):
 
     label = BaseConfig.master_module.upper()
-    init = "\n" if blank else ""
-    print(init,f"[{label}]",*args)
+    init = prefix + f"[{label}]"
+    print(init,*args,ansi.NULL,**kwargs)
 
 
-def verbose(*args,level:int=1):
+def verbose(*args,level=1,prefix=""):
+
     """ convenient function for verbose messages 
         level set the intended level of verbosity """
 
     if BaseConfig.verbosity >= level:
-        print(f"swh:{level}:",*args)
+        init = prefix + f"#{level}"
+        print(init,*args,ansi.NULL)

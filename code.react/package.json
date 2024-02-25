@@ -6,7 +6,7 @@
   "license": "CeCILL-C FREE SOFTWARE LICENSE AGREEMENT",
   "source": "./resources/startpage.html",
   "scripts": {
-    "test": "npx parcel --dist-dir webapp"
+    "serve": "npx parcel --dist-dir webapp-dist"
   },
   "dependencies": {
     "@types/react": "^18.2.55",

@@ -1,31 +1,31 @@
 {
     "listeners": {
-        "*:80": {
+        "127.0.0.1:8080": {
             "pass": "routes"
+        },
+        "127.0.0.1:8081": {
+            "pass": "applications/starlette"
         }
     },
     "routes": [
         {
-            "match": {
-                "uri": "/*"
-            },
             "action": {
-                "share": "~/.sweet/application/webapp"
-            }
-        },
-        {
-            "action": {
-                "pass": "applications/starlette"
+                "share": null,
+                "chroot": null,
+                "index": null,
+                "follow_symlinks": false,
+                "traverse_mounts": false
             }
         }
     ],
     "applications": {
         "starlette": {
             "type": "python 3.10",
+            "threads": 1,
             "path": null,
             "home": null,
-            "module": "start",
-            "callable": "webapp",
+            "module": null,
+            "callable": null,
             "user": null
         }
     }

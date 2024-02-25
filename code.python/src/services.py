@@ -4,68 +4,69 @@ from sweetheart import *
 from sweetheart.snippets import *
 
 
-class HttpServer(xWebsocket):
+class WebappServer(xWebsocket):
 
     def __init__(self,config:BaseConfig):
         
         self.data = []
         self.config = config
-        self._mounted_ = False
 
-    def mount(self,*args:Route|Mount):
-        """ mount given Route(s) and set facilities from config """
+    def mount(self,*args:str|Route|Mount):
 
-        # ensure mount() call only once
-        assert self._mounted_ is False
+        args_are: bool = lambda typ:\
+            all([ isinstance(arg,typ) for arg in args ])
+            # True when all args are instances of typ
 
-        #NOTE: assumes that args are Route objects
-        self.data.extend(args)
+        if args_are(str):
 
-        # set the webapp Starlette object
-        self.starlette = Starlette(routes=self.data)
-        self._mounted_ = True
+            assert not self.data
+            assert not hasattr(self,"mount_str_")
+
+            self.mount_str_ = ",\n".join(args)
+
+            try: [ eval(string) for string in args ]
+            except: raise Exception("Invalid string given to mount()")
+
+        elif args_are((Route,Mount)):
+
+            assert not hasattr(self,"mount_str_")
+            self.data.extend(args)
+        
+        else:
+            raise Exception("Invalid args given to mount()")
 
         return self
 
     def app(self,*args:str|Route|Mount) -> Starlette:
-        """ mount(*args) and return related Starlette object """
 
-        args_are = lambda typ:\
-            all([ isinstance(arg,typ) for arg in args ])
+        self.mount(*args)
 
-        if args_are(str):
-            self.mount([ eval(str) for str in args ])
-            self.mount_str_ = ",\n".join(args)
-
-        elif args_are((Route,Mount)):
-            self.mount(*args)
-        
-        else:
-            raise Exception("Invalid arguments given to app()")
-        
-        return self.starlette
+        return Starlette(
+            debug = BaseConfig.debug,
+            routes = self.data )
 
     def set_service(self,put_config=False):
 
-        cf= self.config
-        startfile= f"{cf.path_pymodule}/{cf.python_app_module}.py"
+        cf = self.config
+        start = f"{cf.path_pymodule}/{cf.python_app_module}.py"
 
-        with open(startfile,'w') as file_out:
-            file_out.write(f'''
+        with open(start,'w') as python_script:
+            python_script.write(
+f'''
 """
 {self.config.python_app_module}.py
-auto-generated using sweetheart.services.HttpServer
+auto-generated using sweetheart.services.WebappServer
 USER: {os.getuser()} DATE: {os.stdout("date")}
 """
 from sweetheart.services import *
 
-config = set_config({})
+config = set_config()
 
-{self.config.python_app_callable} = HttpServer(config).app(
+{self.config.python_app_callable} = WebappServer(config).app(
     # set here url routing of your sweetheart app
-    {self.mount_str_} ) ''')
-
-        # set nginx unit server
+    {self.mount_str_} )
+''')
+        #FIXME: only for tests
         unit = NginxUnit()
         unit.set_app_config(self.config)
         if put_config: unit.put_config()
@@ -89,31 +90,48 @@ class NginxUnit(UserDict):
         try:
             app = self["applications"][config.unit_app_name]
         except:
-            raise Exception("Error, python app not set for unit")
+            raise Exception("Invalid Unit settings 'applications'")
             
-        app["path"] = config.path_pymodule
-        app["home"] = config.python_env
-        app["module"] = config.python_app_module
-        app["callable"] = config.python_app_callable
-        app["user"] = config.unit_app_user
+        app.update({
+            "path": config.path_pymodule,
+            "home": config.python_env,
+            "module": config.python_app_module,
+            "callable": config.python_app_callable,
+            "user": config.unit_app_user })
 
-    def put_config(self) -> dict :
+        try:
+            route = self["routes"][-1]["action"]
+        except:
+            raise Exception("Invalid Unit settings 'routes'")
+
+        route.update({
+            "share": f"{config.shared_app_content}$uri",
+            "chroot": config.shared_app_content,
+            "index": config.shared_app_index })
+            
+    def put_config(self):
 
         assert self["listeners"]
         assert self["routes"]
         assert self["applications"]
 
+        echo("configuring NGINX Unit for you ...")
         verbose("unit config:",self.data,level=2)
 
-        with os.NamedTemporaryFile(delete=False) as tempfile:
+        with os.NamedTemporaryFile("wt",delete=False) as tempfile:
             json.dump(self.data,tempfile)
             tempname = tempfile.name
 
-        stdout = eval(os.stdout(
-            ["sudo","curl","-X","PUT","-d",f"@{tempname}","--unix-socket",self.socket,f"{self.host}/config/"]
+        stdout = eval(os.stdout( ["sudo",
+            "curl","-X","PUT","-d",f"@{tempname}",
+            "--unix-socket",self.socket,f"{self.host}/config/"]
             )); assert isinstance(stdout,dict)
 
         os.remove(tempname)
         
-        verbose("set unit:",stdout.get('success',''),stdout.get('error',''))
-        os.run(["sudo","systemctl","reload-or-restart","unit"])
+        verbose("set unit:",
+            ansi.GREEN, stdout.get('success',''),
+            ansi.RED, stdout.get('error',''),
+            level=0 )
+
+        os.run("sudo systemctl reload-or-restart unit")

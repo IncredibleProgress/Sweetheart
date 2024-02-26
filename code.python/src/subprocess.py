@@ -18,6 +18,7 @@ class os:
     # env = environ = _os_.environ
     getenv = _os_.getenv
     putenv = _os_.putenv
+    unsetenv = _os_.unsetenv
 
     getcwd = _os_.getcwd
     getuser = _getpass_.getuser
@@ -55,6 +56,10 @@ class os:
     # shell-like features
     which = _shutil_.which
     DEVNULL = _subprocess_.DEVNULL
+
+    # SUDO = [] # default disabled
+    # def enable_sudo(): os.SUDO = ["sudo"]
+    # def enable_stdin_sudo(): os.SUDO = ["sudo","-S"]
 
     @staticmethod
     def run(*args:list|str,**kwargs) -> _subprocess_.CompletedProcess[str] :

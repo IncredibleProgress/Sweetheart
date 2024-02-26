@@ -19,18 +19,25 @@ class BaseConfig(UserDict):
         self.conffile = f"{self.root}/configuration/config.json"
 
         self.data = {
+
             # editable general settings
             "path_webapp": f"{self.root}/application",
             "path_pymodule": f"{self.root}/my_code/python",#! no / at end
             "path_database": f"{self.root}/databases/rethinkdb-tests",
 
+            # editable hosts, ports setup
+            "url_database_admin": "http://127.0.0.1:8082",
+
             # editable python app settings
-            "python_app_module": "start",#! no .py at end
+            "python_app_module": "start",#! no .py suffix
             "python_app_callable": "webapp",
             "shared_app_content": f"{self.root}/application/webapp-dist",
             "shared_app_index": "startpage.html",
-            "unit_app_name": "starlette",
+            "unit_app_name": "starlette",#! update with unit.json
             "unit_app_user": os.getuser(),
+
+            # # editable services setup
+            # "setup_systemd": {}
             }
     
     def __getattr__(self,attr):
@@ -76,8 +83,8 @@ def set_config(values={}) -> BaseConfig:
 class ansi:
 
     RED = "\033[0;31m"
-    YELLOW = "\033[0;33m"
     GREEN = "\033[0;32m"
+    PINK = "\033[0;35m"
     NULL = "\033[0m"
 
 
@@ -94,5 +101,5 @@ def verbose(*args,level=1,prefix=""):
         level set the intended level of verbosity """
 
     if BaseConfig.verbosity >= level:
-        init = prefix + f"#{level}"
+        init = prefix + f">{level}" if level!=0 else ">>"
         print(init,*args,ansi.NULL)

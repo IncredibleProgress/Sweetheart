@@ -9,6 +9,17 @@ from starlette.routing import Route,Mount,WebSocketRoute
 from starlette.responses import HTMLResponse,FileResponse,JSONResponse,RedirectResponse
 
 
+class xInitServer:
+
+    def __init__(self,url):
+
+        self.url = url
+        url_split = url.split(":")
+        # self.protocol = url_split[0].lower()
+        self.host = url_split[1].strip("/")
+        self.port = int(url_split[2])
+
+
 class xWebsocket:
 
     def set_websocket(self,dbname=None,set_encoding='json'):
@@ -32,100 +43,59 @@ class xWebsocket:
 
 class xSystemd:
 
-    def set_service(self,
-            Description:str = None,
-            # filename:str = None,
-            **kwargs ) -> configparser.ConfigParser :
+    # default_systemd_setup = {
+    #     'Unit': {
+    #         'Description': '[SWEETHEART] Service',
+    #         'After': 'network.target' },
+    #     'Service': {
+    #         'User': os.getuser(),
+    #         'ExecStart': f'sh -c "{self.command}"' },
+    #     'Install': {
+    #         'WantedBy': 'default.target' }}
+
+    def set_systemd_service(self,config:dict)\
+        -> configparser.ConfigParser :
 
         """ create and set config for new systemd service 
-            kwargs keys must be supported service options
-            
-            [Unit]
-              Description,After,Before
-            [Service]
-              ExecStart,ExecReload,Restart,Type,User,Group
-            [Install]
-              WantedBy,RequiredBy """
+            kwargs keys must be supported service options """
 
         # provide a ConfigParser for setting systemd
-        self.sysd = configparser.ConfigParser()
-        self.sysd.optionxform = str #! keep case of options 
+        self.sysdconf = configparser.ConfigParser()
+        self.sysdconf.optionxform = str #! keep case of options 
 
         # set sections of systemd service file
-        self.sysd.add_section('Unit')
-        self.sysd.add_section('Service')
-        self.sysd.add_section('Install')
+        self.sysdconf.add_section('Unit')
+        self.sysdconf.add_section('Service')
+        self.sysdconf.add_section('Install')
 
-        if Description:
-            assert 'Description' not in kwargs
-            self.sysd['Unit']['Description'] = Description
+        for section in config.keys():
+            assert section in ('Unit','Service','Install')
+            for option,value in config[section].items():
+                if BaseConfig.debug and option not in {
 
-        # set given options within **kwargs
-        for option,value in kwargs.items():
+                    '[Unit]':
+                        ('Description','After','Before'),
+                    '[Service]':
+                        ('ExecStart','ExecReload','Restart','Type','User','Group',
+                        'StandardOutput','StandardError','SyslogIdentifier'),
+                    '[Install]':
+                        ('WantedBy','RequiredBy') }[section]:
 
-            section = "Service" #! default value
-            for sctn in self.allowed_sysd_options:
-                if option in self.allowed_sysd_options[sctn]:
-                    section = sctn[1:-1]
-                    break
+                    verbose(f"option '{option}' setting systemd : to check",
+                        level=0, prefix=ansi.RED)
 
-            self.sysd[section][option] = value
-        
-        # debugging output messsage
-        verbose("set systemd service:",self.sysd,level=2)
+                # set option given with config
+                self.sysdconf[section][option] = value
 
-        # if filename:
-        #     # enable service when given filename
-        #     self.enable_service(filename)
-        
-        return self.sysd
+    def enable_systemd_service(self,service:str):
 
-    def enable_service(self,filename):
-
-        """ write file and enable service within systemd
-            it will provide default values when not given """
-
-        # provide some flexibility with filename
-        if filename.endswith(".service"): suffix = ""
-        else: suffix = ".service"
-
-        default_settings = {
-            'Unit': {
-                'Description': '[SWEETHEART] Service',
-                'After': 'network.target' },
-            'Service': {
-                'Type': 'simple',
-                'User': os.getuser(),
-                'ExecStart': f'sh -c "{self.command}"' },
-            'Install': {
-                'WantedBy': 'default.target' }}
-        
-        # set the previous default settings if needed
-        for section,optdic in default_settings.items():
-            for option,value in optdic.items():
-                if not self.sysd[section].get(option):
-                    self.sysd[section][option] = value
-
-        # write file and enable service in systemd
-        tempfile = f"{self.config.root_path}/configuration/{filename}{suffix}"
-
-        with open(tempfile,'w') as file_out:
+        with os.NamedTemporaryFile("wt",delete=False) as tempfile:
             #! space_around_delimiters must be set at False
-            self.sysd.write(file_out, space_around_delimiters=False )
+            self.sysdconf.write(tempfile, space_around_delimiters=False )
+            tempname = tempfile.name
 
-        sp.sudo("cp",tempfile,self.system_dir)
-        sp.sudo("systemctl","enable",tempfile)
+        os.run(["sudo","cp",tempname,f"/etc/systemd/system/{service}.service"])
+        os.run(["sudo","systemctl","enable",service])
 
-        # def update_subproc_file(self,dict):
-        #FIXME: add new service within subproc conf file
-        # should become a class method provided by sp/BaseConfig/BaseService?
-        self.config.subproc['systemd'].append(filename)
-
-        with open(self.config.subproc_file,'r') as file_in:
-            subproc_settings = json.load(file_in)
-        
-        subproc_settings.update({'systemd':self._.systemd})
-
-        with open(self.config.subproc_file,'w') as file_out:
-            json.dump(subproc_settings,file_out)
+        os.remove(tempname)
     

@@ -26,7 +26,8 @@ class BaseConfig(UserDict):
             "path_database": f"{self.root}/databases/rethinkdb-tests",
 
             # editable hosts, ports setup
-            "url_database_admin": "http://127.0.0.1:8082",
+            "database_server": "rethinkdb://127.0.0.1:28015",
+            "database_admin": "http://127.0.0.1:8082",
 
             # editable python app settings
             "python_app_module": "start",#! no .py suffix

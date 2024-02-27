@@ -1,6 +1,4 @@
 
-
-from sweetheart import *
 from sweetheart.snippets import *
 
 
@@ -138,13 +136,12 @@ class NginxUnit(UserDict):
         os.run("sudo systemctl reload-or-restart unit")
 
 
-class RethinkDB(
-    xInitServer,xWebsocket,xSystemd):
+class RethinkDB(xUrl,xWebsocket,xSystemd):
 
-    def __init__(self,config):
+    def __init__(self,config:BaseConfig):
         
         self.config = config
-        xInitServer.__init__(config.url_database_admin)
+        self.urlparse("config.database_server")
 
     def set_client(self,dbname:str=None):
 
@@ -162,6 +159,9 @@ class RethinkDB(
 
     def set_service(self,enable:str=None):
 
+        dirpth = self.config.path_database
+        adport = urlparse(self.config.database_admin).port
+
         self.set_systemd_service({
 
             "Unit": {
@@ -169,7 +169,7 @@ class RethinkDB(
                 "After": "network.target" },
 
             "Service": {
-                "ExecStart": f"rethinkdb -d {self.config.path_database}",
+                "ExecStart": f"rethinkdb --http-port {adport} -d {dirpth}",
                 "Restart": "always",
                 "StandardOutput": "syslog",
                 "StandardError": "syslog",

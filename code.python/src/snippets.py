@@ -1,6 +1,8 @@
 
-import configparser
 from sweetheart import *
+
+import configparser
+from urllib.parse import urlparse
 
 from starlette.applications import Starlette
 # from starlette.staticfiles import StaticFiles
@@ -9,15 +11,44 @@ from starlette.routing import Route,Mount,WebSocketRoute
 from starlette.responses import HTMLResponse,FileResponse,JSONResponse,RedirectResponse
 
 
-class xInitServer:
+class xUrl:
 
-    def __init__(self,url):
+    def urlparse(self,url:str):
 
-        self.url = url
-        url_split = url.split(":")
-        # self.protocol = url_split[0].lower()
-        self.host = url_split[1].strip("/")
-        self.port = int(url_split[2])
+        parsed_url = urlparse(url)
+        # set initial values, it can be changed
+        self.protocol = parsed_url.scheme
+        self.host = parsed_url.hostname
+        self.port = parsed_url.port
+
+
+class xDataHub:
+
+    api = {
+        "header": {
+            "token": str,
+            "hash": str,
+        },
+        "data": {
+            "request": {
+                "GET": str,
+                "POST": str,
+                "PUT":str,
+                "DELETE": str,
+                "ReQL": str,
+            },
+            "push": {
+                "console": str,
+                "element": str,
+                "attribute": str,
+                "value": str,
+            }
+        },
+        "status": {
+            "success": str,
+            "error": str,
+        }
+    }
 
 
 class xWebsocket:

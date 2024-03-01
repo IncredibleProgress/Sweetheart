@@ -1,7 +1,7 @@
 
 from sweetheart import *
 
-import configparser
+import configparser,hashlib
 from urllib.parse import urlparse
 
 from starlette.applications import Starlette
@@ -20,35 +20,6 @@ class xUrl:
         self.protocol = parsed_url.scheme
         self.host = parsed_url.hostname
         self.port = parsed_url.port
-
-
-class xDataHub:
-
-    api = {
-        "header": {
-            "token": str,
-            "hash": str,
-        },
-        "data": {
-            "request": {
-                "GET": str,
-                "POST": str,
-                "PUT":str,
-                "DELETE": str,
-                "ReQL": str,
-            },
-            "push": {
-                "console": str,
-                "element": str,
-                "attribute": str,
-                "value": str,
-            }
-        },
-        "status": {
-            "success": str,
-            "error": str,
-        }
-    }
 
 
 class xWebsocket:
@@ -129,4 +100,48 @@ class xSystemd:
         os.run(["sudo","systemctl","enable",service])
 
         os.remove(tempname)
-    
+
+
+class xDataHub(UserDict):
+
+    api = { #FIXME
+        "auth": {
+            "token": str,
+            "hash": str,
+        },
+        "data": {
+            "request": {
+                "get": str,
+                "post": str,
+                "put":str,
+                "delete": str,
+                "ReQL": str,
+            },
+            "push": {
+                "console": str,
+                "element": str,
+                "attribute": str,
+                "value": str,
+                "type": str,
+            },
+            "status": {
+                "success": str,
+                "error": str,
+            }
+        },
+    }
+
+    def to_push(self,data:dict):
+
+        try:
+            api = self.api["data"]["push"].keys()
+            assert all([key in api for key in data.keys()])
+        except:
+            raise Exception("Invalid data given to push")
+
+        data = { "push": "data" }
+        digest = hashlib.sha1(data).hexdigest()
+
+        self.data = { 
+            "auth": { "hash": digest },
+            "data": data }

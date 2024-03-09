@@ -2,13 +2,13 @@
 from sweetheart import *
 
 import configparser,hashlib
+from datetime import datetime
 from urllib.parse import urlparse
 
 from starlette.applications import Starlette
-# from starlette.staticfiles import StaticFiles
 from starlette.endpoints import WebSocketEndpoint
 from starlette.routing import Route,Mount,WebSocketRoute
-from starlette.responses import HTMLResponse,FileResponse,JSONResponse,RedirectResponse
+from starlette.responses import JSONResponse
 
 
 class xUrl:
@@ -24,20 +24,17 @@ class xUrl:
 
 class xWebsocket:
 
-    def set_websocket(self,dbname=None,set_encoding='json'):
+    def set_websocket(self,set_encoding='json'):
 
         class _WebSocket(WebSocketEndpoint):
 
             encoding = set_encoding
-            route = f"/data/{dbname}"
             receiver = self.on_receive
 
-            async def on_receive(self,websocket,data):
-                await self.receiver(websocket,data)
+            async def on_receive(_ws,websocket,data):
+                await _ws.receiver(websocket,data)
 
-        self.WebSocketEndpoint = _WebSocket
-        verbose("new websocket endpoint: ",_WebSocket.route)
-        return _WebSocket.route, _WebSocket
+        self.Websocket = _WebSocket
     
     def on_receive(self,websocket,data):
         raise NotImplementedError
@@ -92,7 +89,7 @@ class xSystemd:
     def enable_systemd_service(self,service:str):
 
         with os.NamedTemporaryFile("wt",delete=False) as tempfile:
-            #! space_around_delimiters must be set at False
+            #NOTE: space_around_delimiters must be set at False
             self.sysdconf.write(tempfile, space_around_delimiters=False )
             tempname = tempfile.name
 
@@ -102,46 +99,25 @@ class xSystemd:
         os.remove(tempname)
 
 
-class xDataHub(UserDict):
+# class xDataHub(UserDict):
 
-    api = { #FIXME
-        "auth": {
-            "token": str,
-            "hash": str,
-        },
-        "data": {
-            "request": {
-                "get": str,
-                "post": str,
-                "put":str,
-                "delete": str,
-                "ReQL": str,
-            },
-            "push": {
-                "console": str,
-                "element": str,
-                "attribute": str,
-                "value": str,
-                "type": str,
-            },
-            "status": {
-                "success": str,
-                "error": str,
-            }
-        },
-    }
+#     def push_json(self,data:dict):
+#         #FIXME
 
-    def to_push(self,data:dict):
+#         assert data.keys() == ["push"]
 
-        try:
-            api = self.api["data"]["push"].keys()
-            assert all([key in api for key in data.keys()])
-        except:
-            raise Exception("Invalid data given to push")
+#         data.update({
+#             "salt": "tMByGcTNg0dhSio0nb",
+#             "token": hash(datetime.now()) })
+        
+#         json_ = json.dumps(data)
+#         digest = hashlib.sha1(json_).hexdigest()
+#         del data["salt"]
 
-        data = { "push": "data" }
-        digest = hashlib.sha1(data).hexdigest()
-
-        self.data = { 
-            "auth": { "hash": digest },
-            "data": data }
+#         return JSONResponse({ 
+#             "digest": digest,
+#             "data": data })
+    
+#     def fetch_json(self):
+#         raise NotImplementedError
+    

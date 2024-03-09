@@ -1,13 +1,15 @@
 
+from collections import UserList
 from sweetheart.snippets import *
 
 
-class WebappServer:
+class WebappServer(UserList):
 
     def __init__(self,config:BaseConfig):
         
         self.data = []
         self.config = config
+        self.middleware = None #FIXME
 
     def mount(self,*args:str|Route|Mount):
 
@@ -26,7 +28,7 @@ class WebappServer:
             try: [ eval(string) for string in args ]
             except: raise Exception("Invalid string given to mount()")
 
-        elif args_are((Route,Mount)):
+        elif args_are((Route,Mount,WebSocketRoute)):
             assert not hasattr(self,"mount_str_")
             self.data.extend(args)
         
@@ -35,13 +37,14 @@ class WebappServer:
 
         return self
 
-    def app(self,*args:Route|Mount) -> Starlette:
+    def app(self,*args:Route|Mount|WebSocketRoute) -> Starlette:
 
         self.mount(*args)
 
         return Starlette(
+            routes = self.data,
             debug = BaseConfig.debug,
-            routes = self.data )
+            middleware = self.middleware )
 
     def set_service(self,put_config=False):
 
@@ -136,7 +139,7 @@ class NginxUnit(UserDict):
         os.run("sudo systemctl reload-or-restart unit")
 
 
-class RethinkDB(xUrl,xWebsocket,xSystemd):
+class RethinkDB(xUrl,xSystemd):
 
     def __init__(self,config:BaseConfig):
         
@@ -148,7 +151,10 @@ class RethinkDB(xUrl,xWebsocket,xSystemd):
         # [LocalImport]
         from rethinkdb import r
 
-        if hasattr(self,'conn'): self.conn.close()
+        if hasattr(self,'conn'):
+            echo("existing RethinkDB connection closed",prefix=ansi.RED)
+            self.conn.close()
+
         if not dbname: dbname= self.config.db_name
 
         self.dbname = dbname

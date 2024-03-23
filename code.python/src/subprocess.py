@@ -67,7 +67,7 @@ class os:
         """ securized subprocess.run() function with shell=True forbidden
             this intends to protect code against shell injection attacks """
 
-        if kwargs.get('shell'):
+        if kwargs.get("shell"):
             raise Exception("running shell cmd is not allowed")
         
         elif len(args)==1 and isinstance(args[0],str):

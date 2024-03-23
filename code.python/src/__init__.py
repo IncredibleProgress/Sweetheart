@@ -36,9 +36,6 @@ class BaseConfig(UserDict):
             "shared_app_index": "startpage.html",
             "unit_app_name": "starlette",#! update with unit.json
             "unit_app_user": os.getuser(),
-
-            # # editable services setup
-            # "setup_systemd": {}
             }
     
     def __getattr__(self,attr):
@@ -102,5 +99,5 @@ def verbose(*args,level=1,prefix=""):
         level set the intended level of verbosity """
 
     if BaseConfig.verbosity >= level:
-        init = prefix + f">{level}" if level!=0 else ">>"
+        init = prefix + f">{level}" if level != 0 else ">>"
         print(init,*args,ansi.NULL)

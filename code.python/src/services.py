@@ -11,9 +11,10 @@ class WebappServer(UserList):
         self.config = config
         self.middleware = None #FIXME
 
-    def mount(self,*args:str|Route|Mount):
+    def mount(self,*args:str|Route):
 
-        """ Mounting str args is used as presets for set_service(),
+        """ [Deprecated]
+        Mounting str args is used as presets for set_service(),
         and str args must describe here Route|Mount correct instances.
         Otherwise mounting Route|Mount is used to build Starlette app. """
 
@@ -139,7 +140,8 @@ class NginxUnit(UserDict):
         os.run("sudo systemctl reload-or-restart unit")
 
 
-class RethinkDB(xUrl,xSystemd):
+class RethinkDB(
+    xUrl,xWebsocket,xSystemd ):
 
     def __init__(self,config:BaseConfig):
         
@@ -155,7 +157,8 @@ class RethinkDB(xUrl,xSystemd):
             echo("existing RethinkDB connection closed",prefix=ansi.RED)
             self.conn.close()
 
-        if not dbname: dbname= self.config.db_name
+        if dbname is None:
+            dbname= self.config.db_name
 
         self.dbname = dbname
         self.client = self.r = r

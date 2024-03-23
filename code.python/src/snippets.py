@@ -1,14 +1,16 @@
 
 from sweetheart import *
+from sweetheart.asgi3 import *
 
 import configparser,hashlib
 from datetime import datetime
 from urllib.parse import urlparse
 
-from starlette.applications import Starlette
-from starlette.endpoints import WebSocketEndpoint
-from starlette.routing import Route,Mount,WebSocketRoute
-from starlette.responses import JSONResponse
+# [Deprecated]
+# from starlette.applications import Starlette
+# from starlette.endpoints import WebSocketEndpoint
+# from starlette.routing import Route,Mount,WebSocketRoute
+# from starlette.responses import JSONResponse
 
 
 class xUrl:
@@ -16,47 +18,20 @@ class xUrl:
     def urlparse(self,url:str):
 
         parsed_url = urlparse(url)
-        # set initial values, it can be changed
+
+        # set url attributes
         self.protocol = parsed_url.scheme
         self.host = parsed_url.hostname
         self.port = parsed_url.port
 
 
-class xWebsocket:
-
-    def set_websocket(self,set_encoding='json'):
-
-        class _WebSocket(WebSocketEndpoint):
-
-            encoding = set_encoding
-            receiver = self.on_receive
-
-            async def on_receive(_ws,websocket,data):
-                await _ws.receiver(websocket,data)
-
-        self.Websocket = _WebSocket
-    
-    def on_receive(self,websocket,data):
-        raise NotImplementedError
-
-
 class xSystemd:
-
-    # default_systemd_setup = {
-    #     'Unit': {
-    #         'Description': '[SWEETHEART] Service',
-    #         'After': 'network.target' },
-    #     'Service': {
-    #         'User': os.getuser(),
-    #         'ExecStart': f'sh -c "{self.command}"' },
-    #     'Install': {
-    #         'WantedBy': 'default.target' }}
 
     def set_systemd_service(self,config:dict)\
         -> configparser.ConfigParser :
 
         """ create and set config for new systemd service 
-            kwargs keys must be supported service options """
+            config keys must be supported service options """
 
         # provide a ConfigParser for setting systemd
         self.sysdconf = configparser.ConfigParser()
@@ -99,25 +74,54 @@ class xSystemd:
         os.remove(tempname)
 
 
-# class xDataHub(UserDict):
+class xDataHub:
+    #FIXME
 
-#     def push_json(self,data:dict):
-#         #FIXME
+    def _App_init(self,request):
 
-#         assert data.keys() == ["push"]
+        if not hasattr(self,"token"):
+            self.token = bytes(hash(datetime.now()))
 
-#         data.update({
-#             "salt": "tMByGcTNg0dhSio0nb",
-#             "token": hash(datetime.now()) })
+        return JSONResponse(
+            content = self.data,
+            headers = {
+                "X-Sweetheart-Action": "init",
+                "X-Sweetheart-Token": self.token })
+    
+    def _ReQL_update(self,request):
+        pass
         
-#         json_ = json.dumps(data)
-#         digest = hashlib.sha1(json_).hexdigest()
-#         del data["salt"]
+    async def endpoint(self,request):
 
-#         return JSONResponse({ 
-#             "digest": digest,
-#             "data": data })
+        method = request.method.uppers()
+        action = request.headers["X-Sweetheart-Action"]
+        token = request.headers["X-Sweetheart-Token"]
+
+        assert  token == self.token
+
+
+# class xWebsocket:
+        
+#     """ former websocket implementation with Starlette """
+
+#     def set_websocket(self,set_encoding='json'):
+#         assert set_encoding in ('json','bytes','text')
+
+#         class _WebSocket(WebSocketEndpoint):
+
+#             encoding = set_encoding
+#             receiver = self.on_receive
+
+#             # async def on_connect(self,websocket):
+#             #   await websocket.accept()
+
+#             async def on_receive(_ws,websocket,data):
+#                 await _ws.receiver(websocket,data)
+
+#             # async def on_disconnect(self,websocket,close_code):
+#             #     pass
+
+#         self.Websocket = _WebSocket
     
-#     def fetch_json(self):
+#     def on_receive(self,websocket,data):
 #         raise NotImplementedError
-    

@@ -1,4 +1,4 @@
-# Sweetheart **0.1.3**
+# Sweetheart 0.1.3
 *innovative foundations for enterprise-grade solutions*
 
 ## A supercharged heart for the non-expert hands

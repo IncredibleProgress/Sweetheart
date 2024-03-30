@@ -29,7 +29,7 @@ class WebappServer(UserList):
             try: [ eval(string) for string in args ]
             except: raise Exception("Invalid string given to mount()")
 
-        elif args_are((Route,Mount,WebSocketRoute)):
+        elif args_are((Route,)):
             assert not hasattr(self,"mount_str_")
             self.data.extend(args)
         
@@ -38,11 +38,11 @@ class WebappServer(UserList):
 
         return self
 
-    def app(self,*args:Route|Mount|WebSocketRoute) -> Starlette:
+    def app(self,*args:Route) -> Asgi3App:
 
         self.mount(*args)
 
-        return Starlette(
+        return Asgi3App(
             routes = self.data,
             debug = BaseConfig.debug,
             middleware = self.middleware )

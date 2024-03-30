@@ -1,61 +1,51 @@
 """
 ASGI 3.0 implementation for Sweetheart
-which ensures some consistency with starlette
+ensures some consistency with starlette
 """
 
 from sweetheart import *
 
 
-class HttpResponse:
-
-    def __init__(self, 
-        status: int = 200,
-        content: bytes = b"",
-        headers: list[tuple[bytes,bytes]] = [] )-> None:
-
-        self.status = status
-        self.headers = headers
-        self.content = content
-
-    async def __call__(self,scope,receive,send)-> None:
-
-        assert scope["type"] == "http"
-
-        await send({
-            "type": "http.response.start",
-            "status": self.status,
-            "headers": self.headers })
-        
-        await send({
-            "type": "http.response.body",
-            "body": self.content })
+class AsgiEndpoint:
+    """
+    Asynchronous Server Gateway Interface\n
+    async def __call__(self,scope,receive,send) must be implemented\n
+    https://asgi.readthedocs.io/en/latest/
+    https://asgi.readthedocs.io/_/downloads/en/latest/pdf/
+    """
 
 
 class Route:
 
     def __init__(self,
         path: str,
-        endpoint: HttpResponse,
-        methods: list = [] )-> None:
+        endpoint: AsgiEndpoint,
+        methods: list = [] ):
 
         self.path = path
         self.methods = methods
         self.endpoint = endpoint
 
 
-class AsgiServerInterface:
+class Asgi3App:
 
-    def __init__(self,routes:list=[]):
+    def __init__(self,
+        routes: list = [],
+        debug: bool = True,
+        middelware: list = [] ):
         
         self.routes = routes
     
-    async def __call__(self,scope,receive,send)-> None:
+    async def __call__(self,scope,receive,send):
 
         is_path = lambda route: route.path == scope["path"]
 
         try:
             route = filter(is_path,self.routes)[0] #!
-            assert scope["method"] in route.methods
+
+            if scope.has_key("method"):
+                assert scope["method"] in route.methods
+
             endpoint = route.endpoint
 
         except:
@@ -67,13 +57,80 @@ class AsgiServerInterface:
         await endpoint(scope,receive,send)
 
 
-class Websocket:
+class HttpResponse(AsgiEndpoint):
 
-    def __init__(self,receiver:callable=None):
+    def __init__(self, 
+        status: int = 200,
+        content: bytes|str = b"",
+        headers: list[tuple[bytes,bytes]]|dict = [] ):
+
+        if isinstance(content,str):
+            content = content.encode()
+
+        if isinstance(headers,dict): headers = [
+            ( key.encode("latin-1"), val.encode("latin-1") )\
+            for key,val in headers.items() ]
+
+        self.status = status
+        self.headers = headers
+        self.content = content
+
+    async def __call__(self,scope,receive,send):
+
+        assert scope["type"] == "http"
+
+        await send({
+            "type": "http.response.start",
+            "status": self.status,
+            "headers": self.headers })
+        
+        await send({
+            "type": "http.response.body",
+            "body": self.content })
+        
+
+class Lifespan(AsgiEndpoint):
+    #FIXME
+    
+    def __init__(self,receiver:callable):
         
         self.receiver = receiver
 
-    async def __call__(self,scope,receive,send)-> None:
+    async def __call__(self,scope,receive,send):
+
+        assert scope["type"] == "lifespan"
+
+        message = await receive()
+        assert message["type"] == "lifespan.startup"
+
+        try:
+            assert scope["state"]
+            # Do some startup here
+            await send({ "type": "lifespan.startup.complete" })
+
+        except:
+            await send({
+                "type": "lifespan.startup.failed",
+                "message": "missing state starting lifespan" })
+
+        while True:
+            message = await receive()
+
+            if message["type"] == "lifespan.shutdown":
+                # Do some shutdown here
+                await send({ "type": "lifespan.shutdown.complete" })
+                break
+
+            self.receiver(scope,receive,send)
+
+
+class Websocket(AsgiEndpoint):
+
+    def __init__(self,receiver:callable):
+        
+        self.receiver = receiver
+
+    async def __call__(self,scope,receive,send):
 
         assert scope["type"] == "websocket"
 
@@ -101,7 +158,7 @@ class Websocket:
                 await send({"type": "websocket.close"})
                 break
 
-    async def send_json(self,data:dict)-> None:
+    async def send_json(self,data:dict):
 
         await self.send({
             "type": "websocket.send",

@@ -80,13 +80,15 @@ class xDataHub:
     def _App_init(self,request):
 
         if not hasattr(self,"token"):
-            self.token = bytes(hash(datetime.now()))
+            self.token = hash(datetime.now())
 
-        return JSONResponse(
-            content = self.data,
-            headers = {
-                "X-Sweetheart-Action": "init",
-                "X-Sweetheart-Token": self.token })
+        return HttpResponse(
+            status = 200,
+            content = json.dumps(self.data).encode(),
+            headers = [
+                ( b"content-type", b"application/json" ),
+                ( b"x-xweetheart-action", b"init" ),
+                ( b"x-Sweetheart-token", bytes(self.token) ) ])
     
     def _ReQL_update(self,request):
         pass
@@ -94,8 +96,8 @@ class xDataHub:
     async def endpoint(self,request):
 
         method = request.method.uppers()
-        action = request.headers["X-Sweetheart-Action"]
-        token = request.headers["X-Sweetheart-Token"]
+        action = request.headers["x-Sweetheart-action"]
+        token = request.headers["x-sweetheart-token"]
 
         assert  token == self.token
 

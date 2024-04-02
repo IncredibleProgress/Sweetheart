@@ -9,7 +9,11 @@
 //   "Cross-Origin-Resource-Policy": "same-site"
 // })
 
-async function fetchInit(): Promise<JSON> {
-  const response = await fetch("/init")
+async function fetchInit():
+Promise<JSON> {
+  const response = await fetch("/init",{
+    headers:{
+      "x-sweetheart-action": "init" }
+    })
   return response.json()
 }

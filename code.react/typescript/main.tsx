@@ -4,6 +4,12 @@ import React from 'react'
 import '../resources/tailwind.css'
 import { render,MiniApp,Title,TextInput,SelectOption,TextArea } from './components'
 
+const APP_DATA = (await fetch("/",{
+  method: "HEAD",
+  headers: {"x-sweetheart-action":"fetch.init"} })).json()
+
+console.log(APP_DATA)
+
 const prior = ['P0','P1','P2','P3','P4']
 const categ = ['SECU','FOOD','MTCE']
 const owner = ['MECA','ELEC','CHAU','SYST']

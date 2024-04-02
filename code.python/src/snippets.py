@@ -68,62 +68,45 @@ class xSystemd:
             self.sysdconf.write(tempfile, space_around_delimiters=False )
             tempname = tempfile.name
 
-        os.run(["sudo","cp",tempname,f"/etc/systemd/system/{service}.service"])
-        os.run(["sudo","systemctl","enable",service])
+        allowed = True
+        os.sudo(["cp",tempname,f"/etc/systemd/system/{service}.service"],allowed)
+        os.sudo(["systemctl","enable",service],allowed)
 
         os.remove(tempname)
 
 
-class xDataHub:
+class xDatahub:
     #FIXME
 
-    def _App_init(self,request):
-
-        if not hasattr(self,"token"):
-            self.token = hash(datetime.now())
-
-        return HttpResponse(
-            status = 200,
-            content = json.dumps(self.data).encode(),
-            headers = [
-                ( b"content-type", b"application/json" ),
-                ( b"x-xweetheart-action", b"init" ),
-                ( b"x-Sweetheart-token", bytes(self.token) ) ])
-    
-    def _ReQL_update(self,request):
-        pass
+    # schemes = ("http","ws")
+    data = {"status":"test-init"}
         
-    async def endpoint(self,request):
+    async def endpoint(self,scope,receive,send):
 
-        method = request.method.uppers()
-        action = request.headers["x-Sweetheart-action"]
-        token = request.headers["x-sweetheart-token"]
+        if not hasattr(self,"etag"):
+            self.etag = hash(datetime.now())
 
-        assert  token == self.token
+        # ensure here consistency with NginxUnit
+        assert scope["http_version"] == "1.1"
+        assert scope["asgi"]["version"] == "3.0"
+        assert scope["asgi"]["spec_version"] == "2.1"
 
-
-# class xWebsocket:
+        headers = dict([ (key.decode("latin-1"),val.decode("latin-1")) 
+            for key,val in scope["headers"] ])
         
-#     """ former websocket implementation with Starlette """
+        if scope["type"] == "http":
 
-#     def set_websocket(self,set_encoding='json'):
-#         assert set_encoding in ('json','bytes','text')
+            request = await receive()
+            # body = request.get("body",b"").decode()
 
-#         class _WebSocket(WebSocketEndpoint):
+            if headers["x-sweetheart-action"] == "fetch.init":
 
-#             encoding = set_encoding
-#             receiver = self.on_receive
+                assert scope["method"] == "HEAD"
+                assert request["type"] == "http.request"
 
-#             # async def on_connect(self,websocket):
-#             #   await websocket.accept()
-
-#             async def on_receive(_ws,websocket,data):
-#                 await _ws.receiver(websocket,data)
-
-#             # async def on_disconnect(self,websocket,close_code):
-#             #     pass
-
-#         self.Websocket = _WebSocket
-    
-#     def on_receive(self,websocket,data):
-#         raise NotImplementedError
+                response = JSONResponse(
+                    content = self.data,
+                    headers = { "etag": self.etag })
+                
+        await response(scope,receive,send)
+            

@@ -27,7 +27,7 @@ class Route:
         self.endpoint = endpoint
 
 
-class Asgi3App:
+class AsgiBasicRouter:
 
     def __init__(self,
         routes: list = [],
@@ -38,10 +38,10 @@ class Asgi3App:
     
     async def __call__(self,scope,receive,send):
 
-        is_path = lambda route: route.path == scope["path"]
-
         try:
-            route = filter(is_path,self.routes)[0] #!
+            route = filter(
+                lambda route: route.path == scope["path"],
+                self.routes)[0] # returns first match
 
             if scope.has_key("method"):
                 assert scope["method"] in route.methods
@@ -61,8 +61,8 @@ class HttpResponse(AsgiEndpoint):
 
     def __init__(self, 
         status: int = 200,
-        content: bytes|str = b"",
-        headers: list[tuple[bytes,bytes]]|dict = [] ):
+        content: bytes | str = b"",
+        headers: list[tuple[bytes,bytes]] | dict = [] ):
 
         if isinstance(content,str):
             content = content.encode()
@@ -87,7 +87,23 @@ class HttpResponse(AsgiEndpoint):
         await send({
             "type": "http.response.body",
             "body": self.content })
+
+
+class JSONResponse(HttpResponse):
+
+    def __init__(self,content:dict,**kwargs):
+
+        bjson = json.dumps(content).encode()
+        kwargs["headers"] = kwargs.get("headers",{})
+
+        kwargs["headers"].update({
+            #NOTE: no bytes here, str only
+            "content-length": str(len(bjson)),
+            "content-type": "application/json",
+            "x-content-type-options": "nosniff" })
         
+        super().__init__(content=bjson,**kwargs)
+
 
 class Lifespan(AsgiEndpoint):
     #FIXME

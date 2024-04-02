@@ -57,10 +57,6 @@ class os:
     which = _shutil_.which
     DEVNULL = _subprocess_.DEVNULL
 
-    # SUDO = [] # default disabled
-    # def enable_sudo(): os.SUDO = ["sudo"]
-    # def enable_stdin_sudo(): os.SUDO = ["sudo","-S"]
-
     @staticmethod
     def run(*args:list|str,**kwargs) -> _subprocess_.CompletedProcess[str] :
 
@@ -81,8 +77,31 @@ class os:
         else:
             raise Exception("Invalid arguments given to run()")
     
+    ALLOW_SUDO = False
+    SUDO_PREFIX = ["sudo"]
+    # SUDO_STDIN = ["sudo","-S"]
+
+    @staticmethod
+    def sudo(
+        args: list,
+        allowed: bool = ALLOW_SUDO,
+        prefix: list[str] = SUDO_PREFIX,
+        **kwargs ) -> _subprocess_.CompletedProcess[str] :
+
+        """ securized subprocess.run() function with sudo prefix """
+
+        if not allowed:
+            raise Exception("running sudo is not allowed")
+        
+        assert isinstance(args,list)
+        assert isinstance(prefix,list)
+        
+        return os.run(prefix+args,**kwargs)
+
     @staticmethod
     def stdout(*args,**kwargs) -> str :
+
+        """ securized subprocess.run() function providing stdout as string """
 
         return os.run(*args,
             text=True, capture_output=True,

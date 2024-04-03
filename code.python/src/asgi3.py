@@ -77,6 +77,7 @@ class HttpResponse(AsgiEndpoint):
 
     async def __call__(self,scope,receive,send):
 
+        print(scope)
         assert scope["type"] == "http"
 
         await send({

@@ -9,7 +9,7 @@ class WebappServer(UserList):
         
         self.data = []
         self.config = config
-        self.middleware = None #FIXME
+        self.middelware = None #FIXME
 
     def mount(self,*args:str|Route):
 
@@ -40,7 +40,7 @@ class WebappServer(UserList):
         return AsgiBasicRouter(
             routes = self.data,
             debug = BaseConfig.debug,
-            middleware = self.middleware )
+            middelware = self.middelware )
 
     def set_service(self,put_config=False):
 

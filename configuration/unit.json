@@ -21,6 +21,7 @@
     "applications": {
         "starlette": {
             "type": "python 3.10",
+            "protocol": "asgi",
             "threads": 1,
             "path": null,
             "home": null,

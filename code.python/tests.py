@@ -8,7 +8,7 @@ def test_set_unit_config():
     config = set_config({})
 
     webapp = WebappServer(config).mount(
-        'Route("/",HTMLResponse("<h1>Starlette is OK!</h1>"))' )
+        'Route("/",HTMLResponse("<h1>Asgi Server is OK!</h1>"))' )
 
     webapp.set_service(put_config=True)
 

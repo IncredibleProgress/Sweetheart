@@ -1,5 +1,4 @@
 
-from collections import UserList
 from sweetheart.snippets import *
 
 

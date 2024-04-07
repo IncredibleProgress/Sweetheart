@@ -28,33 +28,65 @@ class Route:
 
 
 class AsgiBasicRouter:
+    #FIXME
 
     def __init__(self,
         routes: list = [],
         debug: bool = True,
         middelware: list = [] ):
         
+        self.debug = debug
         self.routes = routes
-    
+
+
     async def __call__(self,scope,receive,send):
 
-        try:
-            route = filter(
-                lambda route: route.path == scope["path"],
-                self.routes)[0] # returns first match
+        if scope["type"] == "lifespan":
 
-            if scope.has_key("method"):
-                assert scope["method"] in route.methods
+            while True:
+                message = await receive()
 
-            endpoint = route.endpoint
+                if message["type"] == "lifespan.startup":
 
-        except:
-            endpoint = HttpResponse(
-                status = 404,
-                content = b"404 Not Found",
-                headers= [(b"content-type",b"text/plain")] )
+                    try:
+                        assert scope["state"]
+                        # Do some startup here
+                        await send({ "type": "lifespan.startup.complete" })
 
-        await endpoint(scope,receive,send)
+                    except:
+                        await send({
+                            "type": "lifespan.startup.failed",
+                            "message": "missing state starting lifespan" })
+                        
+                elif message["type"] == "lifespan.shutdown":
+
+                    # Do some shutdown here
+                    await send({ "type": "lifespan.shutdown.complete" })
+                    break
+
+        elif scope["type"] in ("http","websocket"):
+            
+            try:
+                route = filter(
+                    lambda route: route.path == scope["path"],
+                    self.routes)[0] #! returns first match
+
+                if scope.has_key("method"):
+                    assert scope["method"] in route.methods
+
+                endpoint = route.endpoint
+
+            except:
+                endpoint = HttpResponse(
+                    status = 404,
+                    content = b"404 Not Found",
+                    headers= [(b"content-type",b"text/plain")] )
+
+            await endpoint(scope,receive,send)
+
+        else:
+            echo("Unknown scope type",scope["type"],prefix=ansi.RED)
+            raise NotImplementedError
 
 
 class HttpResponse(AsgiEndpoint):
@@ -104,41 +136,6 @@ class JSONResponse(HttpResponse):
             "x-content-type-options": "nosniff" })
         
         super().__init__(content=bjson,**kwargs)
-
-
-class Lifespan(AsgiEndpoint):
-    #FIXME
-    
-    def __init__(self,receiver:callable):
-        
-        self.receiver = receiver
-
-    async def __call__(self,scope,receive,send):
-
-        assert scope["type"] == "lifespan"
-
-        message = await receive()
-        assert message["type"] == "lifespan.startup"
-
-        try:
-            assert scope["state"]
-            # Do some startup here
-            await send({ "type": "lifespan.startup.complete" })
-
-        except:
-            await send({
-                "type": "lifespan.startup.failed",
-                "message": "missing state starting lifespan" })
-
-        while True:
-            message = await receive()
-
-            if message["type"] == "lifespan.shutdown":
-                # Do some shutdown here
-                await send({ "type": "lifespan.shutdown.complete" })
-                break
-
-            self.receiver(scope,receive,send)
 
 
 class Websocket(AsgiEndpoint):

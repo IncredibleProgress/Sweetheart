@@ -122,8 +122,9 @@ export const TextArea: FC<TextAreaProps> = (
  // Svg Components ////////////// ///////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
+// FIXME: ugly, provided here only for demo purposes
+
 interface SvgProps extends SVGAttributes<SVGElement> {}
-// FIXME: acceptance of html attributes
 
 // export const SvgChartPipe: FC<SvgProps> = (
 //   { ...props }) => {

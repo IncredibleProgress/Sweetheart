@@ -1,11 +1,6 @@
-
-import json
-from pprint import pprint
-from collections import UserList,UserDict
-
 import os as _os_
 import shlex as _shlex_
-from pathlib import Path
+# from pathlib import Path
 import shutil as _shutil_
 import getpass as _getpass_
 import tempfile as _tempfile_
@@ -82,26 +77,26 @@ class os:
         else:
             raise Exception("Invalid arguments given to run()")
     
-    ALLOW_SUDO = False
-    SUDO_PREFIX = ["sudo"]
-    # SUDO_STDIN = ["sudo","-S"]
+    # ALLOW_SUDO = False
+    # SUDO_PREFIX = ["sudo"]
+    # # SUDO_STDIN = ["sudo","-S"]
 
-    @staticmethod
-    def sudo(
-        args: list,
-        allowed: bool = ALLOW_SUDO,
-        prefix: list[str] = SUDO_PREFIX,
-        **kwargs ) -> _subprocess_.CompletedProcess[str] :
+    # @staticmethod
+    # def sudo(
+    #     args: list,
+    #     allowed: bool = ALLOW_SUDO,
+    #     prefix: list[str] = SUDO_PREFIX,
+    #     **kwargs ) -> _subprocess_.CompletedProcess[str] :
 
-        """ securized subprocess.run() function with sudo prefix """
+    #     """ securized subprocess.run() function with sudo prefix """
 
-        if not allowed:
-            raise Exception("running sudo is not allowed")
+    #     if not allowed:
+    #         raise Exception("running sudo is not allowed")
         
-        assert isinstance(args,list)
-        assert isinstance(prefix,list)
+    #     assert isinstance(args,list)
+    #     assert isinstance(prefix,list)
         
-        return os.run(prefix+args,**kwargs)
+    #     return os.run(prefix+args,**kwargs)
 
     @staticmethod
     def stdout(*args,**kwargs) -> str :

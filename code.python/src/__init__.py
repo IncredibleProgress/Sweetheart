@@ -2,8 +2,9 @@
 SWEETHEART 0.1.3 (React)
 """
 
-from sweetheart.subprocess import os,json
-from sweetheart.subprocess import UserDict,UserList
+import json
+from pprint import pprint
+from collections import UserList,UserDict
 
 
 class BaseConfig(UserDict):
@@ -43,7 +44,7 @@ class BaseConfig(UserDict):
 
         if attr=="python_bin" and not self.__dict__.get(attr)\
         or attr=="python_env" and not self.__dict__.get(attr):
-            #FIXME: set the python virtual env
+            #FIXME: autoset the python virtual env
             cwd = self["path_pymodule"]
             self.python_env= os.stdout(f"poetry env info --path -C {cwd}")
             self.python_bin= f"{self.python_env}/bin/python3"
@@ -98,5 +99,5 @@ def verbose(*args,level=1,prefix=""):
         level set the intended level of verbosity """
 
     if BaseConfig.verbosity >= level:
-        init = prefix + f">{level}" if level != 0 else ">>"
+        init = prefix + f"{level}-" if level != 0 else " -"
         print(init,*args,ansi.NULL)

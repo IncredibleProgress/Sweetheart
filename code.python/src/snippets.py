@@ -68,9 +68,8 @@ class xSystemd:
             self.sysdconf.write(tempfile, space_around_delimiters=False )
             tempname = tempfile.name
 
-        allowed = True
-        os.sudo(["cp",tempname,f"/etc/systemd/system/{service}.service"],allowed)
-        os.sudo(["systemctl","enable",service],allowed)
+        os.run(["sudo","cp",tempname,f"/etc/systemd/system/{service}.service"])
+        os.run(["sudo","systemctl","enable",service])
 
         os.remove(tempname)
 

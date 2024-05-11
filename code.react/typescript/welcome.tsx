@@ -195,9 +195,9 @@ ReactDOM.createRoot(app!).render(
   <div className="container max-w-screen-lg mx-auto">
 
     <div className="my-28">
-      <h1 className="text-8xl text-pink-500 text-center italic">
+      <h1 className="text-5xl md:text-8xl text-pink-500 text-center italic">
         Sweetheart </h1>
-      <p className="text-3xl text-center text-pink-600 italic mt-4">
+      <p className="text-2xl md:text-3xl text-center text-pink-600 italic mt-4">
         innovative foundations for enterprise-grade solutions </p>
     </div>
 
@@ -205,9 +205,9 @@ ReactDOM.createRoot(app!).render(
     transition-all hover:scale-110 hover:border-pink-200 hover:border-2">
       <SvgIphone className="size-1/4 p-4" />
       <p className="size-3/4 text-center p-4">
-        <span className="text-3xl">
+        <span className="text-xl lg:text-3xl">
           Just build Apps you need, in the brightest way.
-        </span><br/><br/><span className="text-2xl">
+        </span><br/><br/><span className="text-lg lg:text-2xl">
           Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open-source code.
         </span>
       </p>

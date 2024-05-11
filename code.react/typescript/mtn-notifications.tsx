@@ -1,4 +1,4 @@
-// Maintenance App Refactory
+// Maintenance App - Create Notifications
 
 import React from 'react'
 import '../resources/tailwind.css'

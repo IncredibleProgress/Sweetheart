@@ -5,13 +5,34 @@ import '../resources/tailwind.css'
 import ReactDOM from 'react-dom/client'
 
 
+// dataset
 
-// render JSX and React App
-const app = document.getElementById('ReactApp')
-ReactDOM.createRoot(app!).render(
+const days = Array(31).map((val,idx) => 
+  <>
+    <td>
+      {idx+1}
+      <input></input>
+    </td><td>
+      {idx+1}
+      <input></input>
+    </td>
+  </> )
+
+
+// export JSX
+
+export const WorkingTimePage = () => { return(
 <>
-  <table>
-    <tr></tr>
-    <tr></tr>
-  </table> 
-</> )
+  <h1>Working Time Table</h1>
+  <hr/>
+
+  <div>
+    <table><tr>
+      <th>Jan</th>
+      <th>Feb</th>
+    </tr><tr>
+      {days}
+      {days}
+    </tr></table>
+  </div>
+</> )}

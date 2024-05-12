@@ -2,7 +2,6 @@
 
 import React from 'react'
 import '../resources/tailwind.css'
-import ReactDOM from 'react-dom/client'
 
 // set SVG resources
 type SvgProps = React.SVGAttributes<SVGElement>
@@ -189,15 +188,15 @@ const SvgBank: React.FC<SvgProps> = (
  </g>
  </svg> )}
 
-// render JSX and React App
-const app: HTMLElement | null = document.getElementById('ReactApp')
-ReactDOM.createRoot(app!).render(
+// export JSX 
+
+export const WelcomePage = () => { return(
   <div className="container max-w-screen-lg mx-auto">
 
     <div className="my-28">
-      <h1 className="text-5xl md:text-8xl text-pink-500 text-center italic">
+      <h1 className="text-5xl lg:text-8xl text-pink-500 text-center italic">
         Sweetheart </h1>
-      <p className="text-2xl md:text-3xl text-center text-pink-600 italic mt-4">
+      <p className="text-2xl lg:text-3xl text-center text-pink-600 italic mt-4">
         innovative foundations for enterprise-grade solutions </p>
     </div>
 
@@ -216,9 +215,9 @@ ReactDOM.createRoot(app!).render(
     <div className="flex border rounded-lg shadow-xl p-6 mb-20
     transition-all hover:scale-110 hover:border-pink-200 hover:border-2">
       <p className="size-3/4 text-center p-4">
-        <span className="text-3xl">
+        <span className="text-xl lg:text-3xl">
           Be master of your data structures and capabilities.
-        </span><br/><br/><span className="text-2xl">
+        </span><br/><br/><span className="text-lg lg:text-2xl">
           The Python language becomes with Sweetheart an ideal toolkit in industry
           for data processing, the calculations and AI.
         </span>
@@ -230,9 +229,9 @@ ReactDOM.createRoot(app!).render(
     transition-all hover:scale-110 hover:border-pink-200 hover:border-2">
       <SvgGamepad className="size-1/4 p-4" />
       <p className="size-3/4 text-center p-4">
-        <span className="text-3xl">
+        <span className="text-xl lg:text-3xl">
           Enjoy fast approaches that fits for newbies.
-        </span><br/><br/><span className="text-2xl">
+        </span><br/><br/><span className="text-lg lg:text-2xl">
           No experience is needed to use good things in the right way.
           Be quiet, under the hood security and performances are ensured.
         </span>
@@ -242,9 +241,9 @@ ReactDOM.createRoot(app!).render(
     <div className="flex border rounded-lg shadow-xl p-6 mb-20
     transition-all hover:scale-110 hover:border-pink-200 hover:border-2">
       <p className="size-3/4 text-center p-4">
-        <span className="text-3xl">
+        <span className="text-xl lg:text-3xl">
           Take benefit of high quality patterns and resources.
-        </span><br/><br/><span className="text-2xl">
+        </span><br/><br/><span className="text-lg lg:text-2xl">
           Go one step further, learn how to write great React and Python code
           with efficiency including up-to-date best practices.
         </span>
@@ -256,9 +255,9 @@ ReactDOM.createRoot(app!).render(
     transition-all hover:scale-110 hover:border-pink-200 hover:border-2">
       <SvgBank className="size-1/4 p-4" />
       <p className="size-3/4 text-center p-4">
-        <span className="text-3xl">
+        <span className="text-xl lg:text-3xl">
           Rely on rock-solid and maintained basement.
-        </span><br/><br/><span className="text-2xl">
+        </span><br/><br/><span className="text-lg lg:text-2xl">
           Sweetheart is full stack featured and reduces drastically
           the volume of code and committed libraries in your projects.
         </span>
@@ -287,4 +286,4 @@ ReactDOM.createRoot(app!).render(
           follow the project on Github </a>
 
       <hr className="w-full mt-1" />
-  </div> )
+  </div> )}

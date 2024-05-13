@@ -1,5 +1,5 @@
 # Sweetheart
-### core concepts *provisional* 
+### core concepts *draft*
 
 ## Low level
 
@@ -9,8 +9,9 @@
 * Sweetheart handles directly the ASGI, Http and headers
 * Nginx/Nginx Unit are set for Https2
 * Rust is used for increasing performances and security
-* Sweetheart a RethinkDB server as default database solution
-* Sweetheart integrates an installer for rust,node,python,rdb
+* Sweetheart set a RethinkDB server as default database solution
+* Sweetheart integrates an installer for rust,node,python and resources
+* Sweetheart set configurations and ensure security settings
 * N-1 stable/lts releases are used for production
 
 ## Python envs

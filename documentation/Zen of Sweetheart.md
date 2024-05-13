@@ -24,4 +24,4 @@
 * Remember, sweetheart is a key to many matters ;-)
 
 ## 
-*By Nicolas Champion, inspired by [Zen of Python](https://en.wikipedia.org/wiki/Zen_of_Python) and some other readings.*
+*By Nicolas Champion, inspired by [Zen of Python](https://en.wikipedia.org/wiki/Zen_of_Python).*

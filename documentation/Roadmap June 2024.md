@@ -43,8 +43,10 @@ Note: an introduction to [Ubuntu](https://ubuntu.com), [Python/NginxUnit](https:
 * https://www.w3schools.com
 * https://realpython.com
 * https://react.dev/learn/typescript
+* https://tailwindcss.com/docs/installation
 
 ### Security
+* https://ubuntu.com/security
 * https://developer.mozilla.org/en-US/docs/Web/Security
 
 ### Playgrounds

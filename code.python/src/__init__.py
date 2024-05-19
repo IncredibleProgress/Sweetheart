@@ -1,6 +1,9 @@
 """
-SWEETHEART 0.1.3 (React)
+Sweetheart
+innovative foundations for enterprise-grade solutions
 """
+
+__version__ = "0.1.3"
 
 import json
 from pprint import pprint
@@ -13,9 +16,9 @@ class BaseConfig(UserDict):
     verbosity = 1
     master_module = "sweetheart"
     
-    def __init__(self):
+    def __init__(self,project:str=master_module):
 
-        self.root = f"{os.expanduser('~')}/.sweet"
+        self.root = f"{os.expanduser('~')}/.sweet/{project}"
         self.conffile = f"{self.root}/configuration/config.json"
 
         self.data = {

@@ -20,7 +20,7 @@
 
 * Adopt good habits, read, work hard
 * Facing issues, being enthusiastic
-* Think with the others and for the others
+* Be inspired by the others and for the others
 * Remember, sweetheart is a key to many matters ;-)
 
 ## 

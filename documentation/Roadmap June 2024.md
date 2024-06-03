@@ -40,7 +40,6 @@ An introduction to [Ubuntu](https://ubuntu.com), [Python/NginxUnit](https://unit
 ## Links & References
 
 ### Sweetheart
-
 * https://github.com/IncredibleProgress/Sweetheart
 * http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html
 * https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/Zen%20of%20Sweetheart.md

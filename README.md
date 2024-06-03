@@ -7,9 +7,9 @@ What about security, big-data, realtime databases, responsive interfaces and AI?
 
 Since Ubuntu operating system can be used in any cloud services and as usual software within Windows 10/11, it provides an incredible way for any organization to develop, deploy, and administrate powerful responsive apps including AI keeping high capabilities of integration with the already existing tools like databases, MS-Excel, or SAP.
 
-Sweetheart implements provides a Python/React centric approach leading you implementing best components and best practices. Due to the top-rated place of the Python language regarding to data processing, calculations and AI, this makes sweetheart a fast and ideal toolkit for innovative ideas.
+Sweetheart provides a Python/React centric approach leading you implementing best components and best practices. Due to the top-rated place of the Python language regarding to data processing, calculations and AI, this makes sweetheart a fast and ideal toolkit for innovative ideas.
 
-Sweetheart is shared under the [CeCILL-C FREE SOFTWARE LICENSE AGREEMENT](https://github.com/IncredibleProgress/sweetheart.py/blob/master/LICENSE).
+Sweetheart is shared under the [CeCILL-C FREE SOFTWARE LICENSE AGREEMENT](http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html).
 
 ## Get at rocket speed full benefits of coding, including AI
 
@@ -29,7 +29,7 @@ It comes too with some pragmatic intentions at its heart :
 
 ## Stick to worldwide best practices without thinking about it
 
-Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It will transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the included documentation you will **learn to make great apps with Python and React** including up-to-date best practices and patterns. You won't learn Sweetheart itself, you will learn Python/React real coding-life like any other developer, but skipping some tedious considerations. That means especially you don't need any kind of expertise to use good things in the right way. Be quite, Sweetheart is made for low resources consumption, high security level, and best performances :
+Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It will transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the included documentation you will **learn to make great apps with Python and React** including up-to-date best practices and patterns. You won't learn Sweetheart itself, you will learn Python/React real coding-life like any other developer, but skipping some tedious considerations. That means especially you don't need any kind of expertise to use good things in the right way. Be quite, sweetheart is made for low resources consumption, high security level, and best performances :
 
   - it ensures code reliability and maintainability
   - it ensures an enterprise-grade security level
@@ -39,7 +39,7 @@ Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. I
 
 Dive into sweetheart looking at
 [Zen of Sweetheart](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/Zen%20of%20Sweetheart.md)
-and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/core%20concepts.md)
+and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/core%20concepts.md).
 
 ## Rely on rock-solid pillars keeping innovative capabilities
 
@@ -47,7 +47,7 @@ and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/d
 
 Core resources : **Python - React - Typescript - TailwindCss**
 
-Depending of needs, *low-code* and *no-code* components for dedicated concerns can be built or provided.
+For specific needs e.g. in the industry, *low-code* and *no-code* components for dedicated concerns will be built and provided on the core basis.
 
 ### Committed into basement
 

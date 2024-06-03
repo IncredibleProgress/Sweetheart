@@ -33,4 +33,5 @@ de développement aptes aux solutions d’avenir sont open source et mis à la d
 en outre grandement la vie avec son portail de développement Github ainsi que son éditeur VS Code. Soulignons-le,
 ces dernières possibilités sont gratuites et à ce jour sans équivalents, il n’y a donc en réalité plus qu’à s’en servir!
 
+---
 N Champion, mai 2024 pour le bulletin municipal de La Neuville-sur-Ressons.

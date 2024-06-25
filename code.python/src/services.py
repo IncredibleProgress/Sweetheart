@@ -166,7 +166,7 @@ class RethinkDB(xUrl,xDatahub,xSystemd):
         self.set_systemd_service({
 
             "Unit": {
-                "Description": "RethinkDB running for Sweetheart app",
+                "Description": "RethinkDB running for Sweetheart",
                 "After": "network.target" },
 
             "Service": {
@@ -174,7 +174,7 @@ class RethinkDB(xUrl,xDatahub,xSystemd):
                 "Restart": "always",
                 "StandardOutput": "syslog",
                 "StandardError": "syslog",
-                "SyslogIdentifier": "sweetheart-app",
+                "SyslogIdentifier": "sweetheart-rdb",
                 "User": os.getuser(),
                 "Group": os.getuser() },#FIXME
 

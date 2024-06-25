@@ -73,7 +73,7 @@ if __name__ == "__main__":
             raise NotImplementedError
 
         else: libs = dict(
-            apt=["unitd","rethinkdb"],
+            apt=["unit","rethinkdb"],
             pip=["rethinkdb","ipykernel"],
             npm=["parcel","react","react-dom","@types/react","@types/react-dom","tailwindcss"])
 

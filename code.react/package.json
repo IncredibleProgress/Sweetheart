@@ -6,11 +6,13 @@
   "license": "CeCILL-C FREE SOFTWARE LICENSE AGREEMENT",
   "source": "./resources/startpage.html",
   "scripts": {
-    "serve": "npx parcel --dist-dir webapp-dist"
+    "test": "npx parcel --dist-dir webapp-dist"
   },
   "dependencies": {
+    "@types/echarts": "^4.9.22",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
+    "echarts": "^5.5.0",
     "parcel": "^2.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

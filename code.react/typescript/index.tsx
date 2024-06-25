@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom'
 import { WelcomePage } from './welcome'
 import { NotificationPage } from './mtn-notifications'
 import { WorkingTimePage } from './mtn-workingtime'
+import { Dashboard } from './opt-dashboard'
 
 const App: React.FC = () => {
   // Get the current path from the URL
@@ -13,6 +14,8 @@ const App: React.FC = () => {
 
   // Render different components based on the URL
   switch (currentPath) {
+    case '/dashboard':
+      return <Dashboard />
     case '/mtn/notification':
       return <NotificationPage />
     case '/mtn/workingtime':

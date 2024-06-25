@@ -21,6 +21,7 @@
 * Sweetheart integrates an installer for rust,node,python and resources
 * Sweetheart set relevant configurations and ensure security settings
 * N-1 stable/lts releases are used for production
+* Documentation is built with mdbook (rust crate)
 
 ## Python envs concepts
 

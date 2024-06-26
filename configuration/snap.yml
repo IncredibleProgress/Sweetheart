@@ -1,0 +1,30 @@
+name: sweetheart
+version: "0.1.2"
+base: core22
+summary: innovative foundations for enterprise-grade solutions
+
+description: |
+  Start from scratch, and create with ease and efficiency the apps you need 
+  embedding reliable open source code for processing your data at full power.
+
+grade: devel
+confinement: devmode
+
+apps:
+  sw-react:
+    command: npx parcel serve ~/mycode.react/opt-dashboard.tsx
+    plugs: [network,network-bind,home]
+
+parts:
+
+  nodejs:
+    plugin: nodejs
+    node-version: '20.15.0' # LTS
+
+  sw-react:
+    plugin: nil
+    after: [nodejs]
+    source: ../code.react
+    override-build: |
+      mkdir ~/code.react
+      npm i react react-dom typescript tailwindcss echarts parcel @types/react @types/react-dom @types/echarts

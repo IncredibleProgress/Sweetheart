@@ -9,10 +9,13 @@
     "test": "npx parcel --dist-dir webapp-dist"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
     "@types/echarts": "^4.9.22",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
+    "d3": "^7.9.0",
     "echarts": "^5.5.0",
+    "echarts-for-react": "^3.0.2",
     "parcel": "^2.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -20,6 +23,7 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "buffer": "^6.0.3",
     "process": "^0.11.10"
   }
 }

@@ -12,7 +12,7 @@ codename=$(grep -w UBUNTU_CODENAME /etc/os-release | cut -d'=' -f2 | tr -d '"')
 if [[ "$codename" == "noble" ]]; then codename="lunar"; fi
 
 # set official RethinkDB repository 
-if ! (apt policy rethinkdb); then
+if [[ -z "$(apt-cache policy rethinkdb)" ]]; then
 
     wget -qO- https://download.rethinkdb.com/repository/raw/pubkey.gpg \|
         sudo gpg --dearmor -o /usr/share/keyrings/rethinkdb-archive-keyrings.gpg
@@ -23,7 +23,7 @@ if ! (apt policy rethinkdb); then
 fi
 
 # set official Nginx Unit repository 
-if ! (apt policy unit); then
+if [[ -z "$(apt-cache policy unit)" ]]; then
 
     wget -qO- https://unit.nginx.org/keys/nginx-keyring.gpg \|
         sudo gpg --dearmor -o /usr/share/keyrings/nginx-keyring.gpg
@@ -69,6 +69,16 @@ poetry --directory=my_code/python --no-ansi -n -q add rethinkdb ipykernel
 SWS_PYTHON_ENV=$(poetry --directory=my_code/python env info --path)
 ln --symbolic ~/Sweetheart/code.python/src "$SWS_PYTHON_ENV/lib/python*/site-packages/sweetheart"
 
-#FIXME:
-export SWS_PYTHON_ENV
-sed -i "/^export SWS_PYTHON_ENV=/c\export SWS_PYTHON_ENV=$SWS_PYTHON_ENV" ~/.bashrc
+if ! grep -q "export SWS_PYTHON_ENV=" ~/.bashrc; then
+  # set Sweetheart python env into .bashrc
+  printf "\n%s"\
+    "# Sweetheart settings"\
+    "export SWS_PYTHON_ENV=$SWS_PYTHON_ENV"\
+    "alias sws=$SWS_PYTHON_ENV/bin/python3 -m sweetheart.cmdline $*"\
+  >> ~/.bashrc
+  # shellcheck disable=SC1090
+  source ~/.bashrc
+fi
+
+echo "all done, Sweetheart pre-requisites installed"
+echo "run 'sws --help' for getting available commands"

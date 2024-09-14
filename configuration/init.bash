@@ -17,7 +17,7 @@ if [[ -z "$(apt-cache policy rethinkdb)" ]]; then
     wget -qO- https://download.rethinkdb.com/repository/raw/pubkey.gpg \
     | sudo gpg --dearmor -o /usr/share/keyrings/rethinkdb-archive-keyrings.gpg
 
-    printf "%s %s"\
+    printf "%s %s\n"\
       "deb [signed-by=/usr/share/keyrings/rethinkdb-archive-keyrings.gpg]"\
       "https://download.rethinkdb.com/repository/ubuntu-$codename $codename main"\
     | sudo tee /etc/apt/sources.list.d/rethinkdb.list
@@ -29,7 +29,7 @@ if [[ -z "$(apt-cache policy unit)" ]]; then
     wget -qO- https://unit.nginx.org/keys/nginx-keyring.gpg \
     | sudo gpg --dearmor -o /usr/share/keyrings/nginx-keyring.gpg
 
-    printf "%s %s"\
+    printf "%s %s\n"\
       "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg]"\
       "https://packages.nginx.org/unit/ubuntu/ $codename unit"\
     | sudo tee /etc/apt/sources.list.d/unit.list

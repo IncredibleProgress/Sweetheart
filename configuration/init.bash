@@ -36,18 +36,18 @@ if [[ -z "$(apt-cache policy unit)" ]]; then
 fi
 
 # install required packages for Sweetheart dev
-command="sudo apt-get update -q && sudo apt-get install -q -y"
+packages=""
 version=$(python3 --version | awk '{print $2}' | cut -d. -f1,2)
 
-which rethinkdb || command="$command rethinkdb"
-which unitd || command="$command unit unit-python$version"
+which -s rethinkdb || packages="$packages rethinkdb"
+which -s unitd || packages="$packages unit unit-python$version"
 
-which git || command="$command git"
-# which npm || command="$command npm"
-# which cargo || command="$command cargo"
-which poetry || command="$command python3-poetry"
+which -s git || packages="$packages git"
+# which npm || packages="$packages npm"
+# which cargo || packages="$packages cargo"
+which -s poetry || packages="$packages python3-poetry"
 
-$command
+sudo apt-get update -q && sudo apt-get install -q -y $packages
 
 # clone whole Sweetheart sources from Github
 cd ~ && git clone https://github.com/IncredibleProgress/Sweetheart.git
@@ -81,6 +81,3 @@ if ! grep -q "export SWS_PYTHON_ENV=" ~/.bashrc; then
   # shellcheck disable=SC1090
   source ~/.bashrc
 fi
-
-echo "all done, Sweetheart pre-requisites installed"
-echo "run 'sws --help' for getting available commands"

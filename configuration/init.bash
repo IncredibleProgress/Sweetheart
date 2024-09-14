@@ -4,7 +4,7 @@ echo "SWEETHEART Initialization"
 printf "\033[0;31m%s\033[0m\n" "warn: for dev purposes only using Ubuntu 22.04 LTS and more"
 
 # system update
-sudo apt-get update -qq && sudo apt-get upgrade -qq -y
+sudo apt-get update -q && sudo apt-get upgrade -q -y
 
 # ubuntu version codename
 # FIXME: lunar is set here instead of noble waiting for updates
@@ -14,23 +14,25 @@ if [[ "$codename" == "noble" ]]; then codename="lunar"; fi
 # set official RethinkDB repository 
 if [[ -z "$(apt-cache policy rethinkdb)" ]]; then
 
-    wget -qO- https://download.rethinkdb.com/repository/raw/pubkey.gpg \|
-        sudo gpg --dearmor -o /usr/share/keyrings/rethinkdb-archive-keyrings.gpg
+    wget -qO- https://download.rethinkdb.com/repository/raw/pubkey.gpg \
+    | sudo gpg --dearmor -o /usr/share/keyrings/rethinkdb-archive-keyrings.gpg
 
-    echo "deb [signed-by=/usr/share/keyrings/rethinkdb-archive-keyrings.gpg]
-        https://download.rethinkdb.com/repository/ubuntu-$codename $codename main" \|
-        sudo tee /etc/apt/sources.list.d/rethinkdb.list
+    printf "%s %s"\
+      "deb [signed-by=/usr/share/keyrings/rethinkdb-archive-keyrings.gpg]"\
+      "https://download.rethinkdb.com/repository/ubuntu-$codename $codename main"\
+    | sudo tee /etc/apt/sources.list.d/rethinkdb.list
 fi
 
 # set official Nginx Unit repository 
 if [[ -z "$(apt-cache policy unit)" ]]; then
 
-    wget -qO- https://unit.nginx.org/keys/nginx-keyring.gpg \|
-        sudo gpg --dearmor -o /usr/share/keyrings/nginx-keyring.gpg
+    wget -qO- https://unit.nginx.org/keys/nginx-keyring.gpg \
+    | sudo gpg --dearmor -o /usr/share/keyrings/nginx-keyring.gpg
 
-    echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] \
-        https://packages.nginx.org/unit/ubuntu/ $codename unit" \|
-        sudo tee /etc/apt/sources.list.d/unit.list
+    printf "%s %s"\
+      "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg]"\
+      "https://packages.nginx.org/unit/ubuntu/ $codename unit"\
+    | sudo tee /etc/apt/sources.list.d/unit.list
 fi
 
 # install required packages for Sweetheart dev

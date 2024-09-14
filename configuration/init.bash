@@ -49,7 +49,7 @@ sudo apt-get update -q && sudo apt-get install -q -y $packages || exit 1
 # which -s unitd || sudo apt-get install -q -y $packages || exit 1
 
 # clone whole Sweetheart sources from Github
-cd ~ && git clone https://github.com/IncredibleProgress/Sweetheart.git || exit 1
+cd ~ && git clone https://github.com/IncredibleProgress/Sweetheart.git
 
 # set root directoty for Sweetheart project
 mkdir --parents ~/.sweet/sweetheart

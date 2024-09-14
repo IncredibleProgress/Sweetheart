@@ -37,17 +37,17 @@ fi
 
 # install required packages for Sweetheart dev
 packages=""
-version=$(python3 --version | awk '{print $2}' | cut -d. -f1,2)
+# version=$(python3 --version | awk '{print $2}' | cut -d. -f1,2)
 
 which -s rethinkdb || packages="$packages rethinkdb"
-which -s unitd || packages="$packages unit unit-python$version"
+which -s unitd || packages="$packages unit unit-python3.10"
 
 which -s git || packages="$packages git"
 # which npm || packages="$packages npm"
 # which cargo || packages="$packages cargo"
 which -s poetry || packages="$packages python3-poetry"
 
-sudo apt-get update -q && sudo apt-get install -q -y $packages
+sudo apt-get update -q && sudo apt-get install -q -y $packages || exit 1
 
 # clone whole Sweetheart sources from Github
 cd ~ && git clone https://github.com/IncredibleProgress/Sweetheart.git

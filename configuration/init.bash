@@ -52,7 +52,7 @@ if [[ -z "$unit_candidate" || "$unit_candidate" == "(none)" ]]; then
 
     printf "%s %s\n"\
       "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg]"\
-      "https://packages.nginx.org/unit/ubuntu/ $unit_codename unit"\
+      "https://packages.nginx.org/unit/ubuntu/ $codename unit"\
     | sudo tee /etc/apt/sources.list.d/unit.list
 
     # Mark to reload the package list

@@ -9,7 +9,6 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-starlette = "^0.37.1"
 
 [build-system]
 requires = ["poetry-core"]

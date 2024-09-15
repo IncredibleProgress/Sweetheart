@@ -65,6 +65,7 @@ if [[ "$reload" == "enabled" ]]; then
 
 # install required packages for Sweetheart dev
 packages="git rethinkdb"
+# preserving existing install of Nginx Unit or Poetry
 which -s unitd || packages="$packages unit $unit_python"
 which -s poetry || packages="$packages python3-poetry"
 # shellcheck disable=SC2086
@@ -82,7 +83,7 @@ mkdir application/typescript my_code/python
 ln --symbolic ../application/typescript my_code/react
 
 # init default python env set for using RethinkDB and Jupyter kernel
-poetry --directory=my_code/python --no-ansi -n -q init --name=my_code
+poetry --directory=my_code/python --no-ansi -n -q init --name=my_python
 poetry --directory=my_code/python --no-ansi -n -q add rethinkdb ipykernel
 
 # clone whole Sweetheart sources from Github
@@ -98,18 +99,14 @@ if ! grep -q "export SWS_PYTHON_ENV=" ~/.bashrc; then
   # set Sweetheart python env into .bashrc
   printf "\n%s"\
     "# Sweetheart settings"\
+    # "export SWS_OPERATING_STATE=development"\
     "export SWS_PYTHON_ENV=$SWS_PYTHON_ENV"\
     "alias sws='$SWS_PYTHON_ENV/bin/python3 -m $SWS_CMDLINE'"\
   >> ~/.bashrc
-  # shellcheck disable=SC1090
-  source ~/.bashrc
 else
   echo "Sweetheart python env update in .bashrc"
   sed -i "s|^export SWS_PYTHON_ENV=.*|export SWS_PYTHON_ENV=$SWS_PYTHON_ENV|" ~/.bashrc
-  # shellcheck disable=SC1090
-  source ~/.bashrc
 fi
 
 # set exit message
-echo "all done, Sweetheart prerequisites are ready"
-echo "use 'sws --help' for more information"
+echo "all done, Sweetheart prerequisites set for development"

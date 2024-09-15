@@ -8,19 +8,24 @@ printf "\033[0;31m%s\033[0m\n" \
 reload="disabled"
 sudo apt-get update -q && sudo apt-get upgrade -q -y
 
-# set ubuntu codename and python version
+# get current ubuntu codename and python version
 codename=$(grep -w UBUNTU_CODENAME /etc/os-release | cut -d'=' -f2 | tr -d '"')
 version=$(python3 --version | awk '{print $2}' | cut -d. -f1,2)
+
+# set default values for Nginx Unit
+unit_codename="$codename"
 unit_python="unit-python$version"
 
 if [[ -z "$codename" ]]; then
   echo "ERR: Ubuntu is required as OS for Sweetheart"
   exit 1
 elif [[ "$codename" == "noble" ]]; then
-  #FIXME: waiting for updates in official repositories
+  #FIXME: waiting for updates in official Nginx Unit repositories
   # lunar/python3.11 are set here instead of noble/python3.12
-  codename="lunar"
-  unit_python="libpython3.11 unit-python3.11"
+  unit_codename="mantic"
+  # unit_python="libpython3.11 unit-python3.11"
+  # # set repository for libpython3.11
+  # sudo add-apt-repository --yes ppa:deadsnakes/ppa
 fi
 
 # set official RethinkDB repository 
@@ -45,7 +50,7 @@ if [[ -z "$(apt-cache policy unit)" ]]; then
 
     printf "%s %s\n"\
       "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg]"\
-      "https://packages.nginx.org/unit/ubuntu/ $codename unit"\
+      "https://packages.nginx.org/unit/ubuntu/ $unit_codename unit"\
     | sudo tee /etc/apt/sources.list.d/unit.list
 
     reload="enabled"
@@ -78,7 +83,7 @@ poetry --directory=my_code/python --no-ansi -n -q init --name=my_code
 poetry --directory=my_code/python --no-ansi -n -q add rethinkdb ipykernel
 
 # clone whole Sweetheart sources from Github
-#FIXME: implemented getting only python sources
+#FIXME: to implement getting only the python source code
 cd ~ && git clone https://github.com/IncredibleProgress/Sweetheart.git
 
 # set github python sources as sweetheart module into python env

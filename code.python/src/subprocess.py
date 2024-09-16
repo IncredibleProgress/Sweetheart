@@ -7,8 +7,8 @@ import tempfile as _tempfile_
 import subprocess as _subprocess_
 # import multiprocessing as _multiprocessing_
 
-from locale import _get_locale_encoding
-assert _get_locale_encoding() == "UTF-8"
+from locale import getencoding
+assert getencoding() == "UTF-8"
 
 class os:
 

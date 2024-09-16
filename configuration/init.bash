@@ -20,8 +20,9 @@ elif [[ "$codename" == "noble" ]]; then
   #FIXME: waiting for updates in official repositories
   # mantic is set here instead of noble for RethinkDB and Nginx Unit
   codename="mantic"
+  # # set a specific python version for Nginx Unit
   # unit_python="libpython3.11 unit-python3.11"
-  # # set repository for libpython3.11
+  # # add a repository for getting libpython3.11
   # sudo add-apt-repository --yes ppa:deadsnakes/ppa
 fi
 
@@ -99,13 +100,13 @@ if ! grep -q "export SWS_PYTHON_ENV=" ~/.bashrc; then
   # set Sweetheart python env into .bashrc
   printf "\n%s"\
     "# Sweetheart settings"\
-    # "export SWS_OPERATING_STATE=development"\
+    "export SWS_OPERATING_STATE=development"\
     "export SWS_PYTHON_ENV=$SWS_PYTHON_ENV"\
     "alias sws='$SWS_PYTHON_ENV/bin/python3 -m $SWS_CMDLINE'"\
   >> ~/.bashrc
-else
-  echo "Sweetheart python env update in .bashrc"
-  sed -i "s|^export SWS_PYTHON_ENV=.*|export SWS_PYTHON_ENV=$SWS_PYTHON_ENV|" ~/.bashrc
+# else
+#   update the given python env into .bashrc
+#   sed -i "s|^export SWS_PYTHON_ENV=.*|export SWS_PYTHON_ENV=$SWS_PYTHON_ENV|" ~/.bashrc
 fi
 
 # set exit message

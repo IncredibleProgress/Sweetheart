@@ -3,7 +3,7 @@ Command Line Interface for Sweetheart
 """
 
 import argparse
-from sweetheart import __version__,BaseConfig,ansi
+from sweetheart import __version__, BaseConfig, ansi
 
 
 class CommandLineInterface:
@@ -66,18 +66,12 @@ if __name__ == "__main__":
 
     def _command_init(args):
 
-        # [LocalImport]
-        from sweetheart.transitional import init_project
-
         if args.package:
             raise NotImplementedError
-
-        else: libs = dict(
-            apt=["unit","rethinkdb"],
-            pip=["rethinkdb","ipykernel"],
-            npm=["parcel","react","react-dom","@types/react","@types/react-dom","tailwindcss"])
-
-        init_project(args.project,libs)
+        else: 
+            # [LocalImport]
+            from sweetheart.transitional import init_sweetheart
+            init_sweetheart(system=False)
 
     # set init command
     cli.sub("init",help="launch init process for sweetheart resources")

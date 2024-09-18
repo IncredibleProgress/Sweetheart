@@ -85,7 +85,7 @@ ln --symbolic ../application/typescript my_code/react
 
 # init default python env set for using RethinkDB and Jupyter kernel
 poetry --directory=my_code/python --no-ansi -n -q init --name=my_python
-poetry --directory=my_code/python --no-ansi -n -q add rethinkdb ipykernel
+poetry --directory=my_code/python --no-ansi -n -q add rethinkdb
 
 # clone whole Sweetheart sources from Github
 #FIXME: to implement getting only the python source code

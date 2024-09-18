@@ -6,8 +6,11 @@ innovative foundations for enterprise-grade solutions
 __version__ = "0.1.3"
 
 import json
-from pprint import pprint
+from sweetheart.subprocess import os
+
+#NOTE: pprint, UserList import for convenience
 from collections import UserList,UserDict
+from pprint import pprint
 
 
 class BaseConfig(UserDict):
@@ -39,9 +42,10 @@ class BaseConfig(UserDict):
             "shared_app_index": "startpage.html",
             "unit_app_name": "starlette",#! update with unit.json
             "unit_app_user": os.getuser(),
-            }
+        }
     
     def __getattr__(self,attr):
+
         """ search non-existing attribute into self.data allowing that
             config.path_webapp can be used instead of config['path_webapp'] """
 
@@ -98,7 +102,7 @@ def echo(*args,prefix="",**kwargs):
 
 def verbose(*args,level=1,prefix=""):
 
-    """ convenient function for verbose messages 
+    """ convenient function for verbose messages, 
         level set the intended level of verbosity """
 
     if BaseConfig.verbosity >= level:

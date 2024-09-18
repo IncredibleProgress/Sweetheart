@@ -1,21 +1,45 @@
 
 from sweetheart.subprocess import os
-from sweetheart.urllib import urlget
-from platform import python_version_tuple, freedesktop_os_release
+from platform import python_version_tuple
 
 # ensure Sweetheart runs in a development purpose
 assert os.getenv("SWS_OPERATING_STATE") == "development"
 
 
-def init_project(project:str,libs:dict):
+def init_sweetheart(system=False):
+
+    init_project("sweetheart", libs= {
+        "apt": 
+            ["unit",f"unit-python{ '.'.join(python_version_tuple()[:2]) }",
+            "rethinkdb","python3-poetry"] if system else [],
+        "pip":
+            ["rethinkdb","ipykernel","pydantic"],
+        "npm":
+            ["typescript","parcel","tailwindcss","preact",
+            "react","react-dom","@types/react","@types/react-dom"] })
+
+
+def init_project(project:str, libs:dict):
+    """ 
+    create or init a new project for dev
+
+        project: str
+            name of the project to initialize
+            a related directory will appear into ~/.sweet 
+
+        libs: dict
+            set requires libraries to install
+            {
+                "apt": [],
+                "librust": [],
+                "cargo": [], # Not Implemented
+                "pip": [],
+                "npm": []
+            }
+    """
 
     HOME = os.expanduser("~")
     install = libs.get("apt",[])
-
-    # [deprecated]
-    # version = '.'.join(python_version_tuple()[:2])
-    # if not os.which("unitd"): install.append(["unit","unit-python{version}"])
-    # if not os.which("rethinkdb"): install.append("rethinkdb")
 
     if libs.get("librust"):
         # install rust crates from ubuntu/debian packages
@@ -24,20 +48,16 @@ def init_project(project:str,libs:dict):
     if install:
         os.run(["sudo","apt-get","install",*install])
 
-    # [deprecated]
-    # if not os.isfile(f"{HOME}/.local/bin/poetry"):
-    #     os.run("curl -sSL https://install.python-poetry.org | python3 -")
-
     os.makedirs(f"{HOME}/.sweet/{project}/application/typescript/",exist_ok=True)
     os.makedirs(f"{HOME}/.sweet/{project}/configuration/",exist_ok=True)
     os.makedirs(f"{HOME}/.sweet/{project}/documentation/",exist_ok=True)
     os.makedirs(f"{HOME}/.sweet/{project}/my_code/python",exist_ok=True)
 
     try:
-        os.symlink(f"{HOME}/.sweet//{project}/application/typescript/",
+        os.symlink(f"{HOME}/.sweet/{project}/application/typescript/",
             f"{HOME}/.sweet/{project}/my_code/react")
-    except:
-        print(f"link {HOME}/.sweet/{project}/my_code/react may already exist")
+    except Exception as err:
+        print(err)
 
     if libs.get("npm"):
 
@@ -49,8 +69,11 @@ def init_project(project:str,libs:dict):
         os.run(["npm","install",*libs["npm"]],cwd=cwd)
 
     if libs.get("pip"):
-
         #NOTE: poetry is used here instead of pip
+
+        if not os.which("poetry"):
+            os.run("sudo apt-get install python3-poetry")
+
         cwd = f"{HOME}/.sweet/{project}/my_code/python"
         os.run(f"poetry init -C {cwd} -n --no-ansi --name={project}")
         os.run(["poetry","-C",cwd,"--no-ansi","add",*libs["pip"]])
@@ -63,21 +86,21 @@ def init_project(project:str,libs:dict):
         raise NotImplementedError("cargo not implemented")
 
 
-# [deprecated]
 # def init_sources():
 #     # tested on Ubuntu 22.04 LTS
 
-#     os.run("sudo apt update && sudo apt upgrade -y")
-#     #NOTE: update is required here for running into GCP
+#     os.run("sudo apt update -qq && sudo apt upgrade -q -y")
 
 #     # get distro infos
 #     os_release = freedesktop_os_release()
 #     distrib = os_release['ID'].lower()
-#     distbase = os_release['ID_LIKE'].lower()
-#     try: codename = os_release['UBUNTU_CODENAME'].lower()
-#     except: raise NotImplementedError("UBUNTU_CODENAME not found in /etc/os-release")
 
-#     if not os.stdout("apt policy unit"):
+#     try:
+#         codename = os_release['UBUNTU_CODENAME'].lower()
+#     except:
+#         raise NotImplementedError("UBUNTU_CODENAME not found in /etc/os-release")
+
+#     if not os.stdout("apt policy unit"): #FIXME
 
 #         os.run(["sudo","gpg","--dearmor","-o","/usr/share/keyrings/nginx-keyring.gpg"],
 #             input=urlget("https://unit.nginx.org/keys/nginx-keyring.gpg"))
@@ -86,7 +109,7 @@ def init_project(project:str,libs:dict):
 #             input=f"deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg]\
 #                 https://packages.nginx.org/unit/{distrib}/ {codename} unit")
 
-#     if not os.stdout("apt policy rethinkdb"):
+#     if not os.stdout("apt policy rethinkdb"): #FIXME
 
 #         op.run(["sudo","gpg","--dearmor","-o","/usr/share/keyrings/rethinkdb-archive-keyrings.gpg"],
 #             input=urlget("https://download.rethinkdb.com/repository/raw/pubkey.gpg"))
@@ -95,4 +118,4 @@ def init_project(project:str,libs:dict):
 #             input=f"deb [signed-by=/usr/share/keyrings/rethinkdb-archive-keyrings.gpg]\
 #                 https://download.rethinkdb.com/repository/{distrib}-{codename} {codename} main")
 
-#     os.run("sudo apt update",stdout=os.DEVNULL)
+#     os.run("sudo apt update -qq") #FIXME

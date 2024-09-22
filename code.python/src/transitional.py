@@ -13,22 +13,24 @@ def init_sweetheart(system=False):
             ["unit",f"unit-python{ '.'.join(python_version_tuple()[:2]) }",
             "rethinkdb","python3-poetry"] if system else [],
         "pip":
-            ["rethinkdb","ipykernel","pydantic"],
+            ["rethinkdb","pydantic","ipykernel"],
         "npm":
             ["typescript","parcel","tailwindcss","preact",
             "react","react-dom","@types/react","@types/react-dom"] })
 
 
-def init_project(project:str, libs:dict):
+def init_project(
+        project:str,
+        libs:dict[str,list[str]] ) -> None :
     """ 
-    create or init a new project for dev
+    Create or init a new project for dev
 
         project: str
             name of the project to initialize
-            a related directory will appear into ~/.sweet 
+            its related directory will appear into ~/.sweet
 
-        libs: dict
-            set requires libraries to install
+        libs: dict[str,list[str]]
+            set the requires libraries to install
             {
                 "apt": [],
                 "librust": [],
@@ -42,7 +44,7 @@ def init_project(project:str, libs:dict):
     install = libs.get("apt",[])
 
     if libs.get("librust"):
-        # install rust crates from ubuntu/debian packages
+        #FIXME: install rust crates from ubuntu/debian packages
         install.extend([ f"librust-{lib.replace('_', '-')}-dev" for lib in libs["librust"] ])
 
     if install:

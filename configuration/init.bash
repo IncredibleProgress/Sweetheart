@@ -83,9 +83,9 @@ mkdir -v application configuration documentation my_code
 mkdir application/typescript my_code/python
 ln --symbolic ../application/typescript my_code/react
 
-# init default python env set for using RethinkDB and Jupyter kernel
+# init a minmal python env set for using rethinkdb and pydantic
 poetry --directory=my_code/python --no-ansi -n -q init --name=my_python
-poetry --directory=my_code/python --no-ansi -n -q add rethinkdb
+poetry --directory=my_code/python --no-ansi -n -q add rethinkdb pydantic
 
 # clone whole Sweetheart sources from Github
 #FIXME: to implement getting only the python source code
@@ -107,6 +107,11 @@ if ! grep -q "export SWS_PYTHON_ENV=" ~/.bashrc; then
 # else
 #   update the given python env into .bashrc
 #   sed -i "s|^export SWS_PYTHON_ENV=.*|export SWS_PYTHON_ENV=$SWS_PYTHON_ENV|" ~/.bashrc
+fi
+
+if [[ "$1" != "--minimal" ]]; then
+  cd ~ && source .bashrc
+  sws init
 fi
 
 # set exit message

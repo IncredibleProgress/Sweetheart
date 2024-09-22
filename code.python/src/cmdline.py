@@ -44,7 +44,6 @@ class CommandLineInterface:
 if __name__ == "__main__": 
 
     # Set Sweetheart Command Line Interface
-    # should be called from a bash script called sws
 
     cli = CommandLineInterface()
 
@@ -61,7 +60,7 @@ if __name__ == "__main__":
         help="get additional messages about ongoing process")
 
     cli.opt("-p",dest="project",nargs=1,default=BaseConfig.master_module,
-        help="set a project env different of default one")
+        help="set a project env different of the default one")
 
 
     def _command_init(args):
@@ -83,6 +82,6 @@ if __name__ == "__main__":
     # process given arguments and apply the related function
 
     argv = cli.set_parser()
-    BaseConfig.verbosity = getattr(argv,"verbose",0)
+    BaseConfig.verbosity = getattr(argv,"verbose",BaseConfig.verbosity)
 
     cli.apply_function()

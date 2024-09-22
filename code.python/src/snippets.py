@@ -1,31 +1,72 @@
 
-from sweetheart import *
-from sweetheart.asgi3 import *
-
-import configparser,hashlib
+import json
+import configparser
 from datetime import datetime
-from urllib.parse import urlparse
 
-# [Deprecated]
-# from starlette.applications import Starlette
-# from starlette.endpoints import WebSocketEndpoint
-# from starlette.routing import Route,Mount,WebSocketRoute
-# from starlette.responses import JSONResponse
+from sweetheart.subprocess import os
+from sweetheart import BaseConfig, echo, verbose, ansi
 
 
-class xUrl:
+class Unit: 
 
-    def urlparse(self,url:str):
+    unitconf = {}
 
-        parsed_url = urlparse(url)
+    @classmethod
+    def set_app_config(cls,config:BaseConfig):
 
-        # set url attributes
-        self.protocol = parsed_url.scheme
-        self.host = parsed_url.hostname
-        self.port = parsed_url.port
+        with open(f"{config.root}/configuration/unit.json") as file_in:
+            cls.unitconf.update(json.load(file_in))
+
+        cls.unitconf["applications"]["python_app"].update({
+            # set unit config for python application
+            "path": config.path_pymodule,
+            "home": config.python_env,
+            "module": config.python_app_module,
+            "callable": config.python_app_callable,
+            "group": config.unit_app_user, #FIXME
+            "user": config.unit_app_user })
+        
+        cls.unitconf["routes"]["sweetheart"][-1]["action"].update({
+            # set unit config for sharing statics
+            "share": f"{config.shared_app_content}$uri",
+            "chroot": config.shared_app_content,
+            "index": config.shared_app_index })
+    
+    @classmethod
+    def put_unit_config(cls):
+
+        # fixed settings
+        unithost = "http://localhost"
+        unitsocket = "/var/run/control.unit.sock"
+
+        assert cls.unitconf["listeners"]
+        assert cls.unitconf["routes"]["sweetheart"]
+        assert cls.unitconf["applications"]["python_app"]
+
+        echo("configuring Nginx Unit ...")
+        verbose("unit config:",cls.unitconf,level=2)
+
+        with os.NamedTemporaryFile("wt",delete=False) as tempfile:
+            json.dump(cls.unitconf,tempfile)
+            tempname = tempfile.name
+
+        stdout = eval(os.stdout( ["sudo",
+            "curl","-X","PUT","-d",f"@{tempname}",
+            "--unix-socket",unitsocket,f"{unithost}/config/"] ))
+
+        os.remove(tempname)
+        assert isinstance(stdout,dict)
+        
+        verbose("set unit:",
+            ansi.GREEN, stdout.get('success',''),
+            ansi.RED, stdout.get('error',''),
+            level=0 )
+
+        if stdout.get('success'):
+            os.run("sudo systemctl reload-or-restart unit")
 
 
-class xSystemd:
+class Systemd:
 
     def set_systemd_service(self,config:dict)\
         -> configparser.ConfigParser :
@@ -74,14 +115,14 @@ class xSystemd:
         os.remove(tempname)
 
 
-class xDatahub:
-    #FIXME
+class Datahub: #FIXME
 
     # schemes = ("http","ws")
     data = {"status":"test-init"}
         
     async def endpoint(self,scope,receive,send):
 
+        # provide a default etag
         if not hasattr(self,"etag"):
             self.etag = hash(datetime.now())
 
@@ -108,4 +149,3 @@ class xDatahub:
                     headers = { "etag": self.etag })
                 
         await response(scope,receive,send)
-            

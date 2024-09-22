@@ -31,13 +31,12 @@ class AsgiBasicRouter:
     #FIXME
 
     def __init__(self,
-        routes: list = [],
-        debug: bool = True,
-        middelware: list = [] ):
+            routes: list = [],
+            debug: bool = True,
+            middelware: list = [] ):
         
         self.debug = debug
         self.routes = routes
-
 
     async def __call__(self,scope,receive,send):
 
@@ -92,16 +91,17 @@ class AsgiBasicRouter:
 class HttpResponse(AsgiEndpoint):
 
     def __init__(self, 
-        status: int = 200,
-        content: bytes | str = b"",
-        headers: list[tuple[bytes,bytes]] | dict = [] ):
+            status: int = 200,
+            content: bytes | str = b"",
+            headers: list[tuple[bytes,bytes]] | dict[str,str] = [] ):
 
         if isinstance(content,str):
             content = content.encode()
 
-        if isinstance(headers,dict): headers = [
-            ( key.encode("latin-1"), val.encode("latin-1") )\
-            for key,val in headers.items() ]
+        if isinstance(headers,dict):
+            headers = [
+                ( key.encode("latin-1"), val.encode("latin-1") )\
+                for key,val in headers.items() ]
 
         self.status = status
         self.headers = headers

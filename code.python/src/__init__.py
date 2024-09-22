@@ -6,11 +6,8 @@ innovative foundations for enterprise-grade solutions
 __version__ = "0.1.3"
 
 import json
+from collections import UserDict
 from sweetheart.subprocess import os
-
-#NOTE: pprint, UserList import for convenience
-from collections import UserList,UserDict
-from pprint import pprint
 
 
 class BaseConfig(UserDict):
@@ -40,8 +37,8 @@ class BaseConfig(UserDict):
             "python_app_callable": "webapp",
             "shared_app_content": f"{self.root}/application/webapp-dist",
             "shared_app_index": "startpage.html",
-            "unit_app_name": "starlette",#! update with unit.json
-            "unit_app_user": os.getuser(),
+            # "unit_app_name": "python_app",#! update with unit.json
+            "unit_app_user": os.getuser(),#! group must exists too
         }
     
     def __getattr__(self,attr):

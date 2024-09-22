@@ -57,11 +57,6 @@ class os:
     which = _shutil_.which
     DEVNULL = _subprocess_.DEVNULL
 
-    # [Deprecated]
-    # ALLOW_SUDO = False
-    # SUDO_PREFIX = ["sudo"]
-    # SUDO_STDIN = ["sudo","-S"]
-
     @staticmethod
     def run(*args:list|str,**kwargs) -> _subprocess_.CompletedProcess[str] :
 

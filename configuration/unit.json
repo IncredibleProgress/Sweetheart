@@ -1,33 +1,60 @@
 {
     "listeners": {
-        "127.0.0.1:8080": {
-            "pass": "routes"
-        },
-        "127.0.0.1:8081": {
-            "pass": "applications/starlette"
+        "*:8080": {
+            "pass": "routes/sweetheart"
         }
     },
-    "routes": [
-        {
-            "action": {
-                "share": null,
-                "chroot": null,
-                "index": null,
-                "follow_symlinks": false,
-                "traverse_mounts": false
+    "routes": {
+        "sweetheart": [
+            {
+                "match": {
+                    "uri": "/datahub/*"
+                },
+                "action": {
+                    "pass": "applications/python_app"
+                }
+            },
+            {
+                "action": {
+                    "share": null,
+                    "chroot": null,
+                    "index": null,
+                    "follow_symlinks": false,
+                    "traverse_mounts": false
+                }
             }
-        }
-    ],
+        ]
+    },
     "applications": {
-        "starlette": {
-            "type": "python 3.10",
-            "protocol": "asgi",
-            "threads": 1,
+        "python_app": {
+
+            "user": null,
+            "group": null,
+
             "path": null,
-            "home": null,
             "module": null,
             "callable": null,
-            "user": null
+            "home": null,
+
+            "type": "python 3",
+            "protocol": "asgi",
+            "threads": 1,
+
+            "environment": {
+                "PYTHON_EGG_CACHE": "/tmp/python-egg-cache",
+                "PYTHONUNBUFFERED": "1"
+            },
+            
+            "processes": {
+                "max": 10,
+                "spare": 3,
+                "idle_timeout": 20
+            },
+            "limits": {
+                "requests": 1000,
+                "timeout": 30
+            }
         }
-    }
+    },
+    "access_log": "/var/log/unit/access.log"
 }

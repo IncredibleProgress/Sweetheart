@@ -4,6 +4,7 @@ import configparser
 from datetime import datetime
 
 from sweetheart.subprocess import os
+from sweetheart.asgi3 import JSONResponse, Websocket
 from sweetheart import BaseConfig, echo, verbose, ansi
 
 
@@ -115,37 +116,51 @@ class Systemd:
         os.remove(tempname)
 
 
-class Datahub: #FIXME
+class DataHub: #FIXME
 
-    # schemes = ("http","ws")
-    data = {"status":"test-init"}
+    """ abstraction for exchanging JSON data 
+        using the http and websocket protocols """
+
+    def __init__(self):
+
+        self.websocket = Websocket()
+
+        # set default callables to catch events
+        # this can be changed for instances of DataHub
+        self.http_responder = self.on_test
+        self.websocket.receiver = self.on_message
         
     async def endpoint(self,scope,receive,send):
 
-        # provide a default etag
-        if not hasattr(self,"etag"):
-            self.etag = hash(datetime.now())
-
-        # ensure here consistency with NginxUnit
-        assert scope["http_version"] == "1.1"
-        assert scope["asgi"]["version"] == "3.0"
-        assert scope["asgi"]["spec_version"] == "2.1"
-
-        headers = dict([ (key.decode("latin-1"),val.decode("latin-1")) 
-            for key,val in scope["headers"] ])
+        if scope["type"] == "websocket":
+            # redirect to the asgi websocket handler
+            await self.websocket(self,scope,receive,send)
         
-        if scope["type"] == "http":
+        elif scope["type"] == "http":
+            # implement http requests utilities 
 
             request = await receive()
             # body = request.get("body",b"").decode()
 
-            if headers["x-sweetheart-action"] == "fetch.init":
+            match scope.headers.get("x-sweetheart-action"):
 
-                assert scope["method"] == "HEAD"
-                assert request["type"] == "http.request"
+                case "fetch.init":
+                    assert scope["method"] == "head"
+                    assert request["type"] == "http.request"
+                    response = self.http_responder(data={})
+            
+            # at end, call response as an asgi app
+            await response(scope,receive,send)
 
-                response = JSONResponse(
-                    content = self.data,
-                    headers = { "etag": self.etag })
-                
-        await response(scope,receive,send)
+    def on_test(self,data):
+        return JSONResponse(
+            content = { "test": "Welcome!" },
+            headers = { "etag": hash(datetime.now()) })
+
+    def on_request(self,data) -> JSONResponse:
+        """ handle http request event """
+        raise NotImplementedError
+
+    def on_message(self,data):
+        """ handle websocket message event """
+        raise NotImplementedError

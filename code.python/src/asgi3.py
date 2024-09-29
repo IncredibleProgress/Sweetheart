@@ -17,10 +17,10 @@ class AsgiEndpoint:
     @staticmethod
     def ensure_versions(scope):
 
-        verbose("ongoing ASGI scope:\n",
-            f"   http version: {scope['http_version']}\n",
-            f"   asgi version: {scope['asgi']['version']}\n",
-            f"   asgi spec version: {scope['asgi']['spec_version']}",
+        verbose("ongoing ASGI scope:",
+            f"http version: {scope['http_version']}",
+            f"asgi version: {scope['asgi']['version']}",
+            f"asgi spec version: {scope['asgi']['spec_version']}",
             level=2 )
 
         if BaseConfig.debug:
@@ -132,15 +132,15 @@ class Route:
     def __init__(self,
         urlpath: str,
         endpoint: AsgiEndpoint,
-        methods: list = ['get'] ):
+        methods: list = ['get','head'] ):
 
         self.path = urlpath
         self.endpoint = endpoint
         self.methods = [ m.lower() for m in methods]
 
-class AsgiBasicRouter: #FIXME
+class AsgiLifespanRouter:
     """
-    implement ASGI lifespan and a basic router concept
+    implement ASGI lifespan and simple router concepts
     """
 
     def __init__(self,
@@ -148,7 +148,7 @@ class AsgiBasicRouter: #FIXME
             debug: bool = True,
             middelware: list = [] ):
         
-        self.debug = debug
+        self.debug = debug #FIXME
         self.routes = routes
 
     async def __call__(self,scope,receive,send):
@@ -161,7 +161,7 @@ class AsgiBasicRouter: #FIXME
                 if message["type"] == "lifespan.startup":
 
                     try:
-                        assert scope["state"]
+                        # assert scope["state"]
                         # Do some startup here
                         await send({ "type": "lifespan.startup.complete" })
 
@@ -192,8 +192,8 @@ class AsgiBasicRouter: #FIXME
                 # set endpoint from selected route
                 endpoint = route.endpoint
 
-            except Exception:
-                # raise en Http error
+            except IndexError:
+                # raise an http error response
                 endpoint = HttpResponse(
                     status = 404,
                     content = b"404 Not Found",

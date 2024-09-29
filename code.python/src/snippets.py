@@ -13,7 +13,8 @@ class Unit:
     unitconf = {}
 
     @classmethod
-    def set_app_config(cls,config:BaseConfig):
+    def set_unit_config(cls,config:BaseConfig):
+        #NOTE: this currently manages only 1 python app
 
         with open(f"{config.root}/configuration/unit.json") as file_in:
             cls.unitconf.update(json.load(file_in))
@@ -30,7 +31,7 @@ class Unit:
         cls.unitconf["routes"]["sweetheart"][-1]["action"].update({
             # set unit config for sharing statics
             "share": f"{config.shared_app_content}$uri",
-            "chroot": config.shared_app_content,
+            "chroot": config.shared_app_content+'/',
             "index": config.shared_app_index })
     
     @classmethod
@@ -38,6 +39,7 @@ class Unit:
 
         # fixed settings
         unithost = "http://localhost"
+        unitlog = "/var/log/unit.log"
         unitsocket = "/var/run/control.unit.sock"
 
         assert cls.unitconf["listeners"]
@@ -45,26 +47,32 @@ class Unit:
         assert cls.unitconf["applications"]["python_app"]
 
         echo("configuring Nginx Unit ...")
-        verbose("unit config:",cls.unitconf,level=2)
+        verbose("set unit config:",cls.unitconf,level=2)
 
         with os.NamedTemporaryFile("wt",delete=False) as tempfile:
             json.dump(cls.unitconf,tempfile)
             tempname = tempfile.name
 
-        stdout = eval(os.stdout( ["sudo",
-            "curl","-X","PUT","-d",f"@{tempname}",
-            "--unix-socket",unitsocket,f"{unithost}/config/"] ))
+        stdout = eval(os.stdout(["sudo", "--stdin",
+            "curl", "-X", "PUT", "-d", f"@{tempname}",
+            "--unix-socket", unitsocket, f"{unithost}/config/"],
+            check=True, **os.sudopass() ))
 
         os.remove(tempname)
         assert isinstance(stdout,dict)
         
-        verbose("set unit:",
+        verbose("put unit config:",
             ansi.GREEN, stdout.get('success',''),
             ansi.RED, stdout.get('error',''),
             level=0 )
 
-        if stdout.get('success'):
-            os.run("sudo systemctl reload-or-restart unit")
+        if stdout.get('success'): os.run(
+            "sudo systemctl reload-or-restart unit",
+            check=True )
+
+        if BaseConfig.debug:
+            verbose("last unit log messages:",level=0)
+            os.run(["sudo","tail",unitlog])
 
 
 class Systemd:

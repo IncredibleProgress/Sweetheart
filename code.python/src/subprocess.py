@@ -7,8 +7,6 @@ import tempfile as _tempfile_
 import subprocess as _subprocess_
 # import multiprocessing as _multiprocessing_
 
-from locale import getencoding
-assert getencoding() == "UTF-8"
 
 class os:
 
@@ -22,7 +20,7 @@ class os:
 
     getcwd = _os_.getcwd
     getuser = _getpass_.getuser
-    # getpass = _getpass_.getpass
+    getpass = _getpass_.getpass
     get_exec_path = _os_.get_exec_path
     # getlocale = _locale_.getlocale
 
@@ -76,6 +74,22 @@ class os:
         
         else:
             raise Exception("Invalid arguments given to run()")
+    
+    @staticmethod
+    def sudopass() -> dict :
+
+        """ allows using sudo command into Jupyter Notebooks as follow :
+            os.run( ["sudo", "--stdin", *command], check=True, **os.sudopass() ) """
+
+        stdin = {}
+        returncode = os.run("sudo -n true",stderr=os.DEVNULL).returncode
+
+        if  returncode == 1 :
+            stdin.update(dict(
+            # provide sudo password at the stdin
+            input = os.getpass("sudo passwd required: ") ))
+
+        return stdin
 
     @staticmethod
     def stdout(*args,**kwargs) -> str :

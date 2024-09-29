@@ -103,5 +103,5 @@ def verbose(*args,level=1,prefix=""):
         level set the intended level of verbosity """
 
     if BaseConfig.verbosity >= level:
-        init = prefix + f"{level}-" if level != 0 else " -"
+        init = prefix + f"{level}*" if level != 0 else " *"
         print(init,*args,ansi.NULL)

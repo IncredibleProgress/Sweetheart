@@ -115,7 +115,7 @@ TextareaHTMLAttributes<HTMLTextAreaElement> {}
 export const TextArea: FC<TextAreaProps> = (
   { spaces, shape, ...props }) => {
     props.className = genClassName(props.className,spaces,shape)
-    return ( <textarea {...props} /> )}
+    return( <textarea {...props} /> )}
 
 
 

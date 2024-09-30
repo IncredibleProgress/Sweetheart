@@ -4,24 +4,33 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 
 import { WelcomePage } from './welcome'
-import { NotificationPage } from './mtn-notifications'
-import { WorkingTimePage } from './mtn-workingtime'
-import { Dashboard } from './opt-dashboard'
+
 
 const App: React.FC = () => {
-  // Get the current path from the URL
-  const currentPath = window.location.pathname
 
   // Render different components based on the URL
-  switch (currentPath) {
-    case '/dashboard':
-      return <Dashboard />
-    case '/mtn/notification':
-      return <NotificationPage />
-    case '/mtn/workingtime':
-      return <WorkingTimePage />
-    default:
-      return <WelcomePage /> }}
+  switch (window.location.pathname) {
+
+    case '/welcome':
+      return <WelcomePage />
+
+    default: // Test page
+
+      // const APP_DATA = (await fetch("/data",{
+      //   method: "head",
+      //   headers: {"x-sweetheart-action":"fetch.init"} } )).json()
+
+      // console.log(APP_DATA)
+
+      return(
+        <div>
+          <div className="my-28">
+            <h1 className="text-5xl lg:text-8xl text-pink-500 text-center italic">
+              Welcome to Sweetheart</h1>
+          </div>
+
+        </div>
+      ) }}
 
 // render JSX and ReactApp
 const app: HTMLElement | null = document.getElementById('ReactApp')

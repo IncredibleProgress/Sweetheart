@@ -1,5 +1,6 @@
 .vscode/
 .ipynb_checkpoints/
+applications/
 code.rust/target/
 code.react/dist/
 code.react/webapp-dist/

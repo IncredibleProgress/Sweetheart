@@ -15,43 +15,53 @@ class BaseConfig(UserDict):
     debug = True
     verbosity = 1
     master_module = "sweetheart"
+    basedir = "Sweetheart/applications"
     
     def __init__(self,project:str=master_module):
 
-        self.root = f"{os.expanduser('~')}/.sweet/{project}"
+        home = os.expanduser('~')
+        self.root = f"{home}/{BaseConfig.basedir}/{project}"
         self.conffile = f"{self.root}/configuration/config.json"
 
         self.data = {
 
-            # editable general settings
-            "path_webapp": f"{self.root}/application",
-            "path_pymodule": f"{self.root}/my_code/python",#! no / at end
-            "path_database": f"{self.root}/databases/rethinkdb-tests",
-
             # editable hosts, ports setup
+            "database_path": f"{self.root}/databases/rethinkdb-tests",
             "database_server": "rethinkdb://127.0.0.1:28015",
             "database_admin": "http://127.0.0.1:8082",
 
-            # editable python app settings
-            "python_app_module": "start",#! no .py suffix
-            "python_app_callable": "webapp",
-            "shared_app_content": f"{self.root}/application/webapp-dist",
-            "shared_app_index": "startpage.html",
+            # editable unit python app 
             # "unit_app_name": "python_app",#! update with unit.json
-            "unit_app_user": os.getuser(),#! group must exists too
+
+            # editable python app settings
+            "python_app": {
+                # "home": "__undefined__",
+                "path": f"{self.root}/my_code/python",
+                "module": "start",
+                "callable": "webapp",
+                "user": os.getuser(),
+                "group": os.getuser() },#FIXME
+            
+            # editable react app settings
+            "shared_content": {
+                "chroot": self.root,
+                "share": f"{self.root}/application/webapp-dist",
+                "index": "startpage.html" },
         }
     
     def __getattr__(self,attr):
 
         """ search non-existing attribute into self.data allowing that
-            config.path_webapp can be used instead of config['path_webapp'] """
+            config.python_bin can be used instead of config['python_bin'] """
 
-        if attr=="python_bin" and not self.__dict__.get(attr)\
-        or attr=="python_env" and not self.__dict__.get(attr):
-            #FIXME: autoset the python virtual env
-            cwd = self["path_pymodule"]
-            self.python_env= os.stdout(f"poetry env info --path -C {cwd}")
+        if attr=="python_env" and not self.__dict__.get(attr)\
+        or attr=="python_bin" and not self.__dict__.get(attr):
+
+            # autoset the python virtual env
+            cwd = self["python_app"]["path"]
+            self.python_env= os.stdout(["poetry","env","info","--path","-C",cwd])
             self.python_bin= f"{self.python_env}/bin/python3"
+
             return self.__dict__.get(attr)
 
         else:

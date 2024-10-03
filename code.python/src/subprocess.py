@@ -7,7 +7,6 @@ import tempfile as _tempfile_
 import subprocess as _subprocess_
 # import multiprocessing as _multiprocessing_
 
-
 class os:
 
     """ reimplements common tools of the python os module
@@ -24,7 +23,7 @@ class os:
     get_exec_path = _os_.get_exec_path
     # getlocale = _locale_.getlocale
 
-    path = _os_.path
+    # path = _os_.path
     isdir = _os_.path.isdir
     isfile = _os_.path.isfile
     islink = _os_.path.islink
@@ -94,7 +93,7 @@ class os:
     @staticmethod
     def stdout(*args,**kwargs) -> str :
 
-        """ securized subprocess.run() function providing stdout as string """
+        """ securized subprocess.run() providing stdout as string """
 
         return os.run(*args,
             text=True, capture_output=True,

@@ -10,30 +10,65 @@ from sweetheart import BaseConfig, echo, verbose, ansi
 
 class Unit: 
 
-    unitconf = {}
+    unitconf = {
+        "listeners": {},
+        "routes": {"sweetheart": [{}, {"action": {}}] },
+        "applications": {"python_app": {}} }
 
-    @classmethod
-    def set_unit_config(cls,config:BaseConfig):
+    def load_unit_config(self,source:str):
+
+        assert hasattr(self,"config")
+        assert isinstance(self.config,BaseConfig)
+
+        if source == "json":
+            # load and reset unit config from json config file
+            with open(f"{self.config.root}/configuration/unit.json") as file_in:
+                Unit.unitconf = json.load(file_in)
+
+        elif source == "current":
+            raise NotImplementedError
+        
+        else:
+            raise ValueError
+
+    def set_unit_config(
+        self,
+        settings = {},
+        share_directory = True ):
+
         #NOTE: this currently manages only 1 python app
 
-        with open(f"{config.root}/configuration/unit.json") as file_in:
-            cls.unitconf.update(json.load(file_in))
+        assert hasattr(self,"config")
+        assert isinstance(self.config,BaseConfig)
 
-        cls.unitconf["applications"]["python_app"].update({
-            # set unit config for python application
-            "path": config.path_pymodule,
-            "home": config.python_env,
-            "module": config.python_app_module,
-            "callable": config.python_app_callable,
-            "group": config.unit_app_user, #FIXME
-            "user": config.unit_app_user })
+        #FIXME: ensure consistency with BaseConfig
+        assert "home" in self.config["python_app"]
         
-        cls.unitconf["routes"]["sweetheart"][-1]["action"].update({
-            # set unit config for sharing statics
-            "share": f"{config.shared_app_content}$uri",
-            "chroot": config.shared_app_content+'/',
-            "index": config.shared_app_index })
-    
+        for key in settings.keys():
+
+            # update python app settings if given
+            if key in self.config["python_app"]:
+                self.config["python_app"][key] = settings[key]
+
+            # update shared content settings if given
+            elif key in self.config["shared_content"]:
+                self.config["shared_content"][key] = settings[key]
+
+            else:
+                raise KeyError
+        
+        # set python app from existing config
+        Unit.unitconf["applications"]["python_app"].update(
+            self.config["python_app"])
+        
+        if share_directory:
+            # expose full content of shared directory
+            self.config["shared_content"]["share"] += "$uri"
+
+        # set a direct acces to shared content as statics
+        Unit.unitconf["routes"]["sweetheart"][-1]["action"].update(
+            self.config["shared_content"])
+        
     @classmethod
     def put_unit_config(cls):
 

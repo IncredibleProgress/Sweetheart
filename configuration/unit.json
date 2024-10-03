@@ -17,7 +17,6 @@
             {
                 "action": {
                     "share": null,
-                    "chroot": null,
                     "index": null,
                     "follow_symlinks": true,
                     "traverse_mounts": true

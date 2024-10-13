@@ -9,8 +9,8 @@ reload="disabled"
 sudo apt-get update -qq && sudo apt-get upgrade -q -y
 
 # get current ubuntu codename and python version
-codename=$(grep -w UBUNTU_CODENAME /etc/os-release | cut -d'=' -f2 | tr -d '"')
-version=$(python3 --version | awk '{print $2}' | cut -d. -f1,2)
+codename=$(grep -w UBUNTU_CODENAME /etc/os-release | cut -d '=' -f 2 | tr -d '"')
+version=$(python3 --version | awk '{print $2}' | cut -d '.' -f 1,2)
 unit_python="unit-python$version"
 
 if [[ -z "$codename" ]]; then
@@ -72,12 +72,15 @@ which -s poetry || packages="$packages python3-poetry"
 # shellcheck disable=SC2086
 sudo apt-get install -q $packages || exit 1
 
+# clone whole Sweetheart sources from Github
+cd ~ && git clone https://github.com/IncredibleProgress/Sweetheart.git
+
 # set root directoty for Sweetheart project
-mkdir --parents ~/.sweet/sweetheart
+mkdir --parents ~/Sweetheart/applications/sweetheart
 
 # set default directories for building Sweetheart projects
-cd ~/.sweet/sweetheart &&
-mkdir -v application configuration documentation my_code
+cd ~/Sweetheart/applications/sweetheart \
+&& mkdir -v application configuration documentation my_code
 
 # set default directories for custom python and react code
 mkdir application/typescript my_code/python
@@ -87,13 +90,11 @@ ln --symbolic ../application/typescript my_code/react
 poetry --directory=my_code/python --no-ansi -n -q init --name=my_python
 poetry --directory=my_code/python --no-ansi -n -q add rethinkdb pydantic
 
-# clone whole Sweetheart sources from Github
-#FIXME: to implement getting only the python source code
-cd ~ && git clone https://github.com/IncredibleProgress/Sweetheart.git
+# python settings
+SWS_CMDLINE='sweetheart.cmdline $@'
+SWS_PYTHON_ENV=$(poetry --directory=my_code/python env info --path)
 
 # set github python sources as sweetheart module into python env
-SWS_CMDLINE='sweetheart.cmdline $@'
-SWS_PYTHON_ENV=$(poetry --directory=.sweet/sweetheart/my_code/python env info --path)
 ln --symbolic ~/Sweetheart/code.python/src "$SWS_PYTHON_ENV/lib/python$version/site-packages/sweetheart"
 
 if ! grep -q "export SWS_PYTHON_ENV=" ~/.bashrc; then
@@ -110,6 +111,7 @@ if ! grep -q "export SWS_PYTHON_ENV=" ~/.bashrc; then
 fi
 
 if [[ "$1" != "--minimal" ]]; then
+  # shellcheck disable=SC1091
   cd ~ && source .bashrc
   sws init
 fi

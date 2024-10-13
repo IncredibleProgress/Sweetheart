@@ -25,28 +25,28 @@ class BaseConfig(UserDict):
 
         self.data = {
 
-            # editable hosts, ports setup
-            "database_path": f"{self.root}/databases/rethinkdb-tests",
-            "database_server": "rethinkdb://127.0.0.1:28015",
-            "database_admin": "http://127.0.0.1:8082",
-
-            # editable unit python app 
-            # "unit_app_name": "python_app",#! update with unit.json
+            # editable database settings
+            "database":\
+                f"{self.root}/databases/rethinkdb-tests",
 
             # editable python app settings
+            # these are put into the Nginx Unit config
             "python_app": {
                 # "home": "__undefined__",
                 "path": f"{self.root}/my_code/python",
                 "module": "start",
                 "callable": "webapp",
                 "user": os.getuser(),
-                "group": os.getuser() },#FIXME
-            
-            # editable react app settings
+                "group": os.getuser(),#FIXME
+            },
+            # editable statics setting
+            # these are put into the Nginx Unit config
             "shared_content": {
-                "chroot": self.root,
+                "index": "startpage.html",
+                "chroot": f"{self.root}/application",
                 "share": f"{self.root}/application/webapp-dist",
-                "index": "startpage.html" },
+                "fallback": {"share": f"{self.root}/application/webapp-dist/startpage.html"},
+            },
         }
     
     def __getattr__(self,attr):
@@ -110,7 +110,7 @@ def echo(*args,prefix="",**kwargs):
 def verbose(*args,level=1,prefix=""):
 
     """ convenient function for verbose messages, 
-        level set the intended level of verbosity """
+        'level' set the intended level of verbosity """
 
     if BaseConfig.verbosity >= level:
         init = prefix + f"{level}*" if level != 0 else " *"

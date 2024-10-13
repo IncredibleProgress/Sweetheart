@@ -16,10 +16,11 @@
             },
             {
                 "action": {
+                    "chroot": null,
                     "share": null,
                     "index": null,
-                    "follow_symlinks": true,
-                    "traverse_mounts": true
+                    "follow_symlinks": false,
+                    "traverse_mounts": false
                 }
             }
         ]

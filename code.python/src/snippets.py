@@ -12,8 +12,12 @@ class Unit:
 
     unitconf = {
         "listeners": {},
-        "routes": {"sweetheart": [{}, {"action": {}}] },
+        "routes": {"sweetheart": [{}, {"action":{}} ]},
         "applications": {"python_app": {}} }
+
+    unithost = "http://localhost"
+    unitlog = "/var/log/unit.log"
+    unitsocket = "/var/run/control.unit.sock"
 
     def load_unit_config(self,source:str):
 
@@ -21,11 +25,14 @@ class Unit:
         assert isinstance(self.config,BaseConfig)
 
         if source == "json":
-            # load and reset unit config from json config file
+            # load unit config from json config file
+            #NOTE: induces reset of current unit config afterwards
             with open(f"{self.config.root}/configuration/unit.json") as file_in:
                 Unit.unitconf = json.load(file_in)
 
         elif source == "current":
+            # load unit current config through unit api
+            #NOTE: allows updating current unit config
             raise NotImplementedError
         
         else:
@@ -34,15 +41,12 @@ class Unit:
     def set_unit_config(
         self,
         settings = {},
-        share_directory = True ):
+        share_directory = False ):
 
         #NOTE: this currently manages only 1 python app
 
         assert hasattr(self,"config")
         assert isinstance(self.config,BaseConfig)
-
-        #FIXME: ensure consistency with BaseConfig
-        assert "home" in self.config["python_app"]
         
         for key in settings.keys():
 
@@ -54,15 +58,17 @@ class Unit:
             elif key in self.config["shared_content"]:
                 self.config["shared_content"][key] = settings[key]
 
-            else:
-                raise KeyError
+            else: raise KeyError
+
+        #! set python env for setting Nginx Unit
+        self.config["python_app"]["home"] = self.config.python_env
         
         # set python app from existing config
         Unit.unitconf["applications"]["python_app"].update(
             self.config["python_app"])
         
-        if share_directory:
-            # expose full content of shared directory
+        if share_directory and self.config["shared_content"]["share"][-4:] != "$uri":
+            #! expose full content of given path
             self.config["shared_content"]["share"] += "$uri"
 
         # set a direct acces to shared content as statics
@@ -72,14 +78,9 @@ class Unit:
     @classmethod
     def put_unit_config(cls):
 
-        # fixed settings
-        unithost = "http://localhost"
-        unitlog = "/var/log/unit.log"
-        unitsocket = "/var/run/control.unit.sock"
-
         assert cls.unitconf["listeners"]
-        assert cls.unitconf["routes"]["sweetheart"]
         assert cls.unitconf["applications"]["python_app"]
+        assert cls.unitconf["routes"]["sweetheart"][-1]["action"]
 
         echo("configuring Nginx Unit ...")
         verbose("set unit config:",cls.unitconf,level=2)
@@ -90,7 +91,7 @@ class Unit:
 
         stdout = eval(os.stdout(["sudo", "--stdin",
             "curl", "-X", "PUT", "-d", f"@{tempname}",
-            "--unix-socket", unitsocket, f"{unithost}/config/"],
+            "--unix-socket", cls.unitsocket, f"{cls.unithost}/config/"],
             check=True, **os.sudopass() ))
 
         os.remove(tempname)
@@ -107,7 +108,7 @@ class Unit:
 
         if BaseConfig.debug:
             verbose("last unit log messages:",level=0)
-            os.run(["sudo","tail",unitlog])
+            os.run(["sudo","tail",cls.unitlog])
 
 
 class Systemd:
@@ -169,7 +170,7 @@ class DataHub: #FIXME
         self.websocket = Websocket()
 
         # set default callables to catch events
-        # this can be changed for instances of DataHub
+        # this could be changed by instances of DataHub
         self.http_responder = self.on_test
         self.websocket.receiver = self.on_message
         

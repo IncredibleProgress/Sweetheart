@@ -76,9 +76,27 @@ class os:
     
     @staticmethod
     def sudopass() -> dict :
+        """
+        get password and set it at the standard input as a text,
+        allows to run sudo command into Jupyter Notebooks as follow :
 
-        """ allows using sudo command into Jupyter Notebooks as follow :
-            os.run( ["sudo", "--stdin", *command], check=True, **os.sudopass() ) """
+            os.run([ "sudo", "--stdin", *command ],
+                check=True, text=True, **os.sudopass() )
+
+            os.stdout([ "sudo", "--stdin", *command ],
+                check=True, **os.sudopass() )
+
+        NOTE:
+            text=True is mandatory for using within os.run()
+            conversely, it must be skipped using os.stdout() which set it
+
+            check=True is recommended but still optionnal
+            when True, python raises error if the subprocess fails
+
+            sudo command being critical, no magic is provided here,
+            the nature of subprocess.run() must be understood to be used
+            see https://realpython.com/python-subprocess/ for details
+        """
 
         stdin = {}
         returncode = os.run("sudo -n true",stderr=os.DEVNULL).returncode
@@ -86,6 +104,7 @@ class os:
         if  returncode == 1 :
             stdin.update(dict(
             # provide sudo password at the stdin
+            # getpass returns str, which must be handle externally
             input = os.getpass("sudo passwd required: ") ))
 
         return stdin

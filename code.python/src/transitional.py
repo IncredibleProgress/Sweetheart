@@ -1,4 +1,4 @@
-
+from sweetheart import BaseConfig
 from sweetheart.subprocess import os
 from platform import python_version_tuple
 
@@ -40,7 +40,9 @@ def init_project(
             }
     """
 
-    HOME = os.expanduser("~")
+    home = os.expanduser("~")
+    BASEDIR = f"{home}/{BaseConfig.basedir}/{project}"
+    
     install = libs.get("apt",[])
 
     if libs.get("librust"):
@@ -50,14 +52,14 @@ def init_project(
     if install:
         os.run(["sudo","apt-get","install",*install])
 
-    os.makedirs(f"{HOME}/.sweet/{project}/application/typescript/",exist_ok=True)
-    os.makedirs(f"{HOME}/.sweet/{project}/configuration/",exist_ok=True)
-    os.makedirs(f"{HOME}/.sweet/{project}/documentation/",exist_ok=True)
-    os.makedirs(f"{HOME}/.sweet/{project}/my_code/python",exist_ok=True)
+    os.makedirs(f"{BASEDIR}/application/typescript/",exist_ok=True)
+    os.makedirs(f"{BASEDIR}/configuration/",exist_ok=True)
+    os.makedirs(f"{BASEDIR}/documentation/",exist_ok=True)
+    os.makedirs(f"{BASEDIR}/my_code/python",exist_ok=True)
 
     try:
-        os.symlink(f"{HOME}/.sweet/{project}/application/typescript/",
-            f"{HOME}/.sweet/{project}/my_code/react")
+        os.symlink(f"{BASEDIR}/application/typescript/",
+            f"{BASEDIR}/my_code/react")
     except Exception as err:
         print(err)
 
@@ -66,7 +68,7 @@ def init_project(
         if not os.which("npm"):
             os.run("sudo apt-get install npm")
             
-        cwd = f"{HOME}/.sweet/{project}/application"
+        cwd = f"{BASEDIR}/application"
         os.run("npm init -y",cwd=cwd)
         os.run(["npm","install",*libs["npm"]],cwd=cwd)
 
@@ -76,7 +78,7 @@ def init_project(
         if not os.which("poetry"):
             os.run("sudo apt-get install python3-poetry")
 
-        cwd = f"{HOME}/.sweet/{project}/my_code/python"
+        cwd = f"{BASEDIR}/my_code/python"
         os.run(f"poetry init -C {cwd} -n --no-ansi --name={project}")
         os.run(["poetry","-C",cwd,"--no-ansi","add",*libs["pip"]])
 

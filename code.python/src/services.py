@@ -93,6 +93,7 @@ class RethinkDB(Systemd):
             echo("existing RethinkDB connection closed",prefix=ansi.RED)
         
         finally:
+
             # [LocalImport]
             from rethinkdb import r
 
@@ -112,9 +113,6 @@ class RethinkDB(Systemd):
             "Service": {
                 "ExecStart": f"rethinkdb --http-port {self.admin.port} -d {self.config.database}",
                 "Restart": "always",
-                "StandardOutput": "syslog",
-                "StandardError": "syslog",
-                "SyslogIdentifier": "sweetheart-rdb",
                 "User": os.getuser(),
                 "Group": os.getuser() },#FIXME
 

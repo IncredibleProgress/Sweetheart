@@ -130,15 +130,16 @@ class Systemd:
 
         for section in config.keys():
             assert section in ('Unit','Service','Install')
+
             for option,value in config[section].items():
                 if BaseConfig.debug and option not in {
 
-                    '[Unit]':
+                    'Unit':
                         ('Description','After','Before'),
-                    '[Service]':
-                        ('ExecStart','ExecReload','Restart','Type','User','Group',
-                        'StandardOutput','StandardError','SyslogIdentifier'),
-                    '[Install]':
+                    'Service':
+                        ('ExecStart','ExecReload','Restart','Type',
+                        'User','Group','StandardOutput','StandardError'),
+                    'Install':
                         ('WantedBy','RequiredBy') }[section]:
 
                     verbose(f"option '{option}' setting systemd : to check",
@@ -154,10 +155,15 @@ class Systemd:
             self.sysdconf.write(tempfile, space_around_delimiters=False )
             tempname = tempfile.name
 
-        os.run(["sudo","cp",tempname,f"/etc/systemd/system/{service}.service"])
-        os.run(["sudo","systemctl","enable",service])
+        os.run([ "sudo", "--stdin", "cp", tempname,
+            f"/etc/systemd/system/{service}.service" ],
+            check=True, text=True, **os.sudopass() )
 
         os.remove(tempname)
+        os.run(["sudo","systemctl","enable",service])
+
+    def remove_systemd_service(self,service:str):
+        raise NotImplementedError
 
 
 class DataHub: #FIXME

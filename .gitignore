@@ -4,8 +4,8 @@ code.python/src/__pycache__/
 code.node/**/dist/
 code.node/**/node_modules/
 code.node/**/*.tsbuildinfo
+code.node/**/.parcel-cache/
 code.node/**/package-lock.json
-code.node/react-ts/.parcel-cache/
 
 .vscode/
 .ipynb_checkpoints/

@@ -1,4 +1,4 @@
-import './tailwind.css'
+import '../resources/tailwind.css'
 import { render } from 'solid-js/web'
 
 function App() {
@@ -12,4 +12,4 @@ function App() {
           get at {window.location.pathname} </p>
       </div> )}
 
-render(App, document.getElementById('webapp')!)
+render(App,document.getElementById('webapp')!)

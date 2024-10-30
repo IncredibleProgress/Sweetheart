@@ -3,7 +3,7 @@
   "source": "resources/startpage.html",
   "scripts": {
     "update": "ncu -u && npm install",
-    "test": "parcel --dist-dir ~/Sweetheart/applications/sweetheart/application"
+    "build": "parcel build --no-cache --dist-dir ~/Sweetheart/applications/sweetheart/application"
   },
   "dependencies": {
     "solid-js": "^1.9.3",

@@ -44,8 +44,8 @@ class BaseConfig(UserDict):
             "shared_content": {
                 "index": "startpage.html",
                 "chroot": f"{self.root}/application",
-                "share": f"{self.root}/application/webapp-dist",
-                "fallback": {"share": f"{self.root}/application/webapp-dist/startpage.html"},
+                "share": f"{self.root}/application",
+                "fallback": {"share": f"{self.root}/application/startpage.html"},
             },
         }
     

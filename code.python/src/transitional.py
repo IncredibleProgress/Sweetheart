@@ -14,9 +14,10 @@ def init_sweetheart(system=False):
             "rethinkdb","python3-poetry"] if system else [],
         "pip":
             ["rethinkdb","pydantic","ipykernel"],
-        "npm":
-            ["typescript","parcel","tailwindcss","preact",
-            "react","react-dom","@types/react","@types/react-dom"] })
+        # "npm":
+        #     ["typescript","parcel","tailwindcss","preact",
+        #     "react","react-dom","@types/react","@types/react-dom"]
+    })
 
 
 def init_project(
@@ -45,23 +46,25 @@ def init_project(
     
     install = libs.get("apt",[])
 
-    if libs.get("librust"):
-        #FIXME: install rust crates from ubuntu/debian packages
-        install.extend([ f"librust-{lib.replace('_', '-')}-dev" for lib in libs["librust"] ])
+    if libs.get("librust"): #FIXME
+        # install rust crates from ubuntu/debian packages
+        install.extend([ f"librust-{ lib.replace('_','-') }-dev" 
+            for lib in libs["librust"] ])
 
     if install:
         os.run(["sudo","apt-get","install",*install])
 
-    os.makedirs(f"{BASEDIR}/application/typescript/",exist_ok=True)
+    os.makedirs(f"{BASEDIR}/databases/",exist_ok=True)
+    os.makedirs(f"{BASEDIR}/application/",exist_ok=True)
     os.makedirs(f"{BASEDIR}/configuration/",exist_ok=True)
     os.makedirs(f"{BASEDIR}/documentation/",exist_ok=True)
     os.makedirs(f"{BASEDIR}/my_code/python",exist_ok=True)
 
-    try:
-        os.symlink(f"{BASEDIR}/application/typescript/",
-            f"{BASEDIR}/my_code/react")
-    except Exception as err:
-        print(err)
+    # try:
+    #     os.symlink(f"{BASEDIR}/application/typescript/",
+    #         f"{BASEDIR}/my_code/react")
+    # except Exception as err:
+    #     print(err)
 
     if libs.get("npm"):
 
@@ -88,38 +91,3 @@ def init_project(
         #     os.run("sudo apt-get install cargo")
 
         raise NotImplementedError("cargo not implemented")
-
-
-# def init_sources():
-#     # tested on Ubuntu 22.04 LTS
-
-#     os.run("sudo apt update -qq && sudo apt upgrade -q -y")
-
-#     # get distro infos
-#     os_release = freedesktop_os_release()
-#     distrib = os_release['ID'].lower()
-
-#     try:
-#         codename = os_release['UBUNTU_CODENAME'].lower()
-#     except:
-#         raise NotImplementedError("UBUNTU_CODENAME not found in /etc/os-release")
-
-#     if not os.stdout("apt policy unit"): #FIXME
-
-#         os.run(["sudo","gpg","--dearmor","-o","/usr/share/keyrings/nginx-keyring.gpg"],
-#             input=urlget("https://unit.nginx.org/keys/nginx-keyring.gpg"))
-
-#         os.run(["sudo","tee","/etc/apt/sources.list.d/unit.list"],text=True,
-#             input=f"deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg]\
-#                 https://packages.nginx.org/unit/{distrib}/ {codename} unit")
-
-#     if not os.stdout("apt policy rethinkdb"): #FIXME
-
-#         op.run(["sudo","gpg","--dearmor","-o","/usr/share/keyrings/rethinkdb-archive-keyrings.gpg"],
-#             input=urlget("https://download.rethinkdb.com/repository/raw/pubkey.gpg"))
-
-#         os.run(["sudo","tee","/etc/apt/sources.list.d/rethinkdb.list"],text=True,
-#             input=f"deb [signed-by=/usr/share/keyrings/rethinkdb-archive-keyrings.gpg]\
-#                 https://download.rethinkdb.com/repository/{distrib}-{codename} {codename} main")
-
-#     os.run("sudo apt update -qq") #FIXME

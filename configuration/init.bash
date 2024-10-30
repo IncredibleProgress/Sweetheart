@@ -76,15 +76,8 @@ sudo apt-get install -q $packages || exit 1
 cd ~ && git clone https://github.com/IncredibleProgress/Sweetheart.git
 
 # set root directoty for Sweetheart project
-mkdir --parents ~/Sweetheart/applications/sweetheart
-
-# set default directories for building Sweetheart projects
-cd ~/Sweetheart/applications/sweetheart \
-&& mkdir -v application configuration documentation my_code
-
-# set default directories for custom python and react code
-mkdir application/typescript my_code/python
-ln --symbolic ../application/typescript my_code/react
+mkdir --parents ~/Sweetheart/applications/sweetheart/my_code/python
+cd ~/Sweetheart/applications/sweetheart || exit 1
 
 # init a minmal python env set for using rethinkdb and pydantic
 poetry --directory=my_code/python --no-ansi -n -q init --name=my_python
@@ -105,9 +98,6 @@ if ! grep -q "export SWS_PYTHON_ENV=" ~/.bashrc; then
     "export SWS_PYTHON_ENV=$SWS_PYTHON_ENV"\
     "alias sws='$SWS_PYTHON_ENV/bin/python3 -m $SWS_CMDLINE'"\
   >> ~/.bashrc
-# else
-#   update the given python env into .bashrc
-#   sed -i "s|^export SWS_PYTHON_ENV=.*|export SWS_PYTHON_ENV=$SWS_PYTHON_ENV|" ~/.bashrc
 fi
 
 if [[ "$1" != "--minimal" ]]; then

@@ -3,8 +3,8 @@ from collections import UserList
 
 from sweetheart import *
 from sweetheart.urllib import urlparse
-from sweetheart.snippets import Unit, Systemd, DataHub
-from sweetheart.asgi3 import AsgiLifespanRouter, Route
+from sweetheart.systemctl import Unit, Systemd
+from sweetheart.asgi3 import AsgiLifespanRouter, Route, DataHub
 
 
 class WebappServer(Unit):
@@ -26,7 +26,7 @@ class WebappServer(Unit):
             assert not hasattr(self,"mount_str_")
             self.mount_str_ = ",\n".join(args)
 
-        elif args_are((Route,)):
+        elif args_are((Route,DataHub)):
             assert not hasattr(self,"mount_str_")
             self.data.extend(args)
         

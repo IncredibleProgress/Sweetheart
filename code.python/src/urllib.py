@@ -24,13 +24,3 @@ def urlgetb(url:str,*args,**kwargs) -> bytes:
     
     assert isinstance(fileo_content,bytes)
     return fileo_content
-
-
-# def urljoin(base:str,*args,**kwargs) -> str:
-#     """ convenient way for using urllib.request.urljoin """
-
-#     # avoid unexpected behavior with urljoin
-#     if not base.endswith('/'):
-#         base += '/'
-
-#     return urllib.parse.urljoin(base,*args,**kwargs)

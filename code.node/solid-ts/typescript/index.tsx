@@ -5,7 +5,7 @@ function App() {
 
   fetch("/data",{
     method: "GET",
-    headers: {"Sweetheart-Action":"fetch.test"} })
+    headers: {"sweetheart-action":"fetch.test"} })
   .then(response => response.json())
   .then(data => { console.log(data) })
 

@@ -67,7 +67,8 @@ class Unit:
         Unit.unitconf["applications"]["python_app"].update(
             self.config["python_app"])
         
-        if share_directory and self.config["shared_content"]["share"][-4:] != "$uri":
+        if share_directory \
+        and self.config["shared_content"]["share"][-4:] != "$uri":
             #! expose full content of given path
             self.config["shared_content"]["share"] += "$uri"
 

@@ -79,9 +79,9 @@ class JSONResponse(HttpResponse):
 
         kwargs["headers"].update({
             #NOTE: no bytes here, str only
-            "Content-Length": str(len(bjson)),
-            "Content-Type": "application/json; charset=utf-8",
-            "X-Content-Type-Options": "nosniff" })
+            "content-length": str(len(bjson)),
+            "content-type": "application/json; charset=utf-8",
+            "x-content-type-options": "nosniff" })
         
         super().__init__(content=bjson,**kwargs)
 
@@ -196,46 +196,68 @@ class AsgiLifespanRouter:
                     # ensure expected http method is allowed
                     assert scope["method"] in route.methods
 
-                await route.endpoint(scope,receive,send)
+                endpoint = route.endpoint
 
             except:
-                #FIXME raise http error response
-                return HttpResponse(
-                    status = 404,
-                    content = b"Err\nasgi router error occured",
-                    headers= [(b"content-type",b"text/plain")] )
+                endpoint = JSONResponse(
+                    status = 500,
+                    content = {"Err":"asgi router error occured"})
+            
+            await endpoint(scope,receive,send)
 
 
 class DataHub:
 
-    def __init__(self):
+    def __init__(self,
+            urlpath: str,
+            websocket: Websocket ):
 
-        self.websocket = Websocket()
-        self.websocket.on_message = self.on_message
+        # set Route instance signature
+        self.path = urlpath
+        self.endpoint = self
+        self.methods = ['GET']
 
-    def on_message(self,data:dict) -> JSONResponse:
-        """ handle websocket message event """
-        raise NotImplementedError
-
-    def on_test(self,data:dict) -> JSONResponse:
-        return JSONResponse({"test":"ok"})
+        # set Websocket instance
+        self.websocket = websocket
 
     async def __call__(self,scope,receive,send):
         
         if scope["type"] == "http":
-            
-            #NOTE: latin-1 is default http/1.1 encoding
-            headers = { key.decode('latin-1'): val.decode('latin-1')
-                for key,val in scope["headers"] }
 
-            match headers.get("Sweetheart-Action"):
+            try:
+                request = await receive()
+                assert request["type"] == "http.request"
 
-                case "fetch.test":
-                    assert scope["method"] == "GET"
-                    assert request["type"] == "http.request"
-                    http_response = self.on_test(data={})
+                for key,val in scope["headers"]:
+                    #NOTE: latin-1 is default http/1.1 encoding
+                    json_response = self.match_response(
+                        header = key.decode('latin-1'),
+                        value = val.decode('latin-1'),
+                        method = scope["method"] )
 
-            await http_response(scope,receive,send)
+                    if json_response: break
+
+            except:
+                json_response = JSONResponse(
+                    status = 500,
+                    content = {"Err":"asgi datahub error occured"})
+
+            await json_response(scope,receive,send)
 
         elif scope["type"] == "websocket":
-            await self.websocket(scope,receive,send)     
+
+            await self.websocket(scope,receive,send)
+
+    def match_response(self,header,value,method) -> None|JSONResponse :
+
+        #NOTE:
+        # - asgi lowercases http headers
+        # - asgi uppercases http methods
+
+        match (header,value,method):
+
+            case ("sweetheart-action","fetch.test","GET"):
+                return JSONResponse({"test":"ok"})
+
+            case ("sweetheart-action","fetch.init","GET"):
+                raise NotImplementedError

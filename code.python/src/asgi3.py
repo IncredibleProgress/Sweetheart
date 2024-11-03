@@ -208,17 +208,16 @@ class AsgiLifespanRouter:
 
 class DataHub:
 
-    def __init__(self,
-            urlpath: str,
-            websocket: Websocket ):
+    def __init__(self,urlpath,datasystem):
+        """ convenient data service endpoint """
 
-        # set Route instance signature
+        # set Route signature
         self.path = urlpath
         self.endpoint = self
-        self.methods = ['GET']
+        self.methods = ['GET','POST']
 
-        # set Websocket instance
-        self.websocket = websocket
+        # set data service
+        self.datasystem = datasystem
 
     async def __call__(self,scope,receive,send):
         
@@ -229,11 +228,12 @@ class DataHub:
                 assert request["type"] == "http.request"
 
                 for key,val in scope["headers"]:
+
                     #NOTE: latin-1 is default http/1.1 encoding
                     json_response = self.match_response(
                         header = key.decode('latin-1'),
                         value = val.decode('latin-1'),
-                        method = scope["method"] )
+                        scope = scope, request = request)
 
                     if json_response: break
 
@@ -246,18 +246,40 @@ class DataHub:
 
         elif scope["type"] == "websocket":
 
-            await self.websocket(scope,receive,send)
+            await self.datasystem.websocket(scope,receive,send)
 
-    def match_response(self,header,value,method) -> None|JSONResponse :
+    def match_response(self,
+            header: str, value: str,
+            scope: dict, request: dict) -> JSONResponse | None :
 
         #NOTE:
-        # - asgi lowercases http headers
-        # - asgi uppercases http methods
+        # - asgi/unit lowercases http headers
+        # - asgi/unit uppercases http methods
 
-        match (header,value,method):
+        match (header,value,scope["method"]):
 
             case ("sweetheart-action","fetch.test","GET"):
                 return JSONResponse({"test":"ok"})
 
-            case ("sweetheart-action","fetch.init","GET"):
+            # case ("sweetheart-action","fetch.init","GET"):
+            #     raise NotImplementedError
+
+            # RESTful API
+
+            case ("sweetheart-action","fetch.rest","GET"):
+                body: str = request["body"].decode()
+                data: dict = json.loads(body)
+                return self.datasystem.restapi["GET"](data)
+
+            # case ("sweetheart-action","fetch.rest","PATCH"):
+            #     raise NotImplementedError
+
+            case ("sweetheart-action","fetch.rest","PUT"):
+                raise NotImplementedError
+
+            case ("sweetheart-action","fetch.rest","POST"):
+                data: dict = json.loads(body)
+                return self.datasystem.restapi["POST"](data)
+
+            case ("sweetheart-action","fetch.rest","DELETE"):
                 raise NotImplementedError

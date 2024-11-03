@@ -45,6 +45,7 @@ class BaseConfig(UserDict):
                 "index": "startpage.html",
                 "chroot": f"{self.root}/application",
                 "share": f"{self.root}/application",
+                #NOTE: fallback allows routing by startpage itself
                 "fallback": {"share": f"{self.root}/application/startpage.html"},
             },
         }

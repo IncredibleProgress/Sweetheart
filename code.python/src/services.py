@@ -1,10 +1,9 @@
 from typing import Self
-from collections import UserList
 
 from sweetheart import *
 from sweetheart.urllib import urlparse
 from sweetheart.systemctl import Unit, Systemd
-from sweetheart.asgi3 import AsgiLifespanRouter, Route, DataHub
+from sweetheart.asgi3 import AsgiLifespanRouter, Route, Websocket, DataHub
 
 
 class WebappServer(Unit):
@@ -86,6 +85,16 @@ class RethinkDB(Systemd):
         self.port = RethinkDB.serve.port
         self.host = RethinkDB.serve.hostname
 
+        self.restapi = {
+            "GET": self.on_get,
+            # "PUT": self.on_put,
+            # "PATCH": self.on_patch,
+            "POST": self.on_post,
+            # "DELETE": self.on_delete
+            }
+
+        self.websocket = Websocket()
+
     def set_client(self,dbname:str):
 
         try:
@@ -93,7 +102,6 @@ class RethinkDB(Systemd):
             echo("existing RethinkDB connection closed",prefix=ansi.RED)
         
         finally:
-
             # [LocalImport]
             from rethinkdb import r
 
@@ -101,6 +109,36 @@ class RethinkDB(Systemd):
             self.connect = r.connect(self.host,self.port,db=dbname)
 
             return self.client
+
+    def on_get(self,d:dict):
+        # Rest Api GET
+        r = self.r.table(d["table"])
+        if d.get("filter"): r.filter(d["filter"])
+        r.run(self.connect)
+
+    def on_post(self,d:dict):
+        # Rest Api POST
+        r = self.r.table(d["table"])
+        r.insert(d["data"]).run(self.connect)
+
+    # def on_patch(self,d:dict):
+    #     # Rest Api PATCH
+    #     r = self.r.table(d["table"])
+    #     r.get(d["id"]).update(d["data"]).run(self.connect)
+
+    # def def on_put(self,d:dict):
+    #     # Rest Api PUT
+    #     r = self.r.table(d["table"])
+    #     r.get(d["id"]).replace(d["data"]).run(self.connect)
+
+    # def on_delete(self,d:dict):
+    #     # Rest Api DELETE
+    #     r = self.r.table(d["table"])
+    #     r.get(d["id"]).delete().run(self.connect)
+
+    def on_reql(self,query:str):
+        # RethinkDB query
+        return self.r.expr(query).run(self.connect)
 
     def set_service(self,enable:str=None):
 

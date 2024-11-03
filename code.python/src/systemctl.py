@@ -4,7 +4,6 @@ import configparser
 from datetime import datetime
 
 from sweetheart.subprocess import os
-from sweetheart.asgi3 import JSONResponse, Websocket
 from sweetheart import BaseConfig, echo, verbose, ansi
 
 
@@ -39,9 +38,9 @@ class Unit:
             raise ValueError
 
     def set_unit_config(
-        self,
-        settings = {},
-        share_directory = False ):
+            self,
+            settings = {},
+            share_directory = False ):
 
         #NOTE: this currently manages only 1 python app
 

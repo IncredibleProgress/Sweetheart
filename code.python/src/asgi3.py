@@ -22,16 +22,13 @@ class AsgiEndpoint:
 
         if BaseConfig.debug:
 
-            # give info at stdout
-            verbose("ongoing ASGI scope:",
-                f"http version: {scope['http_version']}",
-                f"asgi version: {scope['asgi']['version']}",
-                f"asgi spec version: {scope['asgi']['spec_version']}")
-
             # ensure scope consistency with NginxUnit
             assert scope["http_version"] == "1.1"
             assert scope["asgi"]["version"] == "3.0"
             assert scope["asgi"]["spec_version"] == "2.1"
+
+class AsgiRuntimeError(Exception):
+    pass
 
 
 class HttpResponse(AsgiEndpoint):
@@ -42,6 +39,7 @@ class HttpResponse(AsgiEndpoint):
             headers: list[tuple[bytes,bytes]] | dict[str,str] = [] ):
 
         if isinstance(content,str):
+            # encode content providing charset info
             content = content.encode('utf-8')
             self.content_charset = 'utf-8'#! info only
 
@@ -56,8 +54,12 @@ class HttpResponse(AsgiEndpoint):
         
     async def __call__(self,scope,receive,send):
 
-        super().ensure_versions(scope)
-        assert scope["type"] == "http"
+        try:
+            super().ensure_versions(scope)
+            assert scope["type"] == "http"
+
+        except:
+            raise AsgiRuntimeError("HttpResponse failed")
 
         await send({
             "type": "http.response.start",
@@ -88,46 +90,55 @@ class JSONResponse(HttpResponse):
 
 class Websocket(AsgiEndpoint):
 
-    def on_message(self,message:dict):
-        """ must be implemented by Websocket instance """
+    def on_receive(self,message:dict):
+        """ must be implemented by instance """
         raise NotImplementedError
 
     async def send_json(self,data:dict):
+
+        await self.send({
+            "type": "websocket.send",
+            "text": json.dumps(data) })
+
+    async def send_bjson(self,data:dict):
+
         await self.send({
             "type": "websocket.send",
             "bytes": json.dumps(data).encode() })
 
     async def __call__(self,scope,receive,send):
 
-        super().ensure_versions(scope)
-        assert scope["type"] == "websocket"
-
         self.scope = scope
         self.send = send
 
-        # Wait for the WebSocket connect message
-        message = await receive()
-        assert message["type"] == "websocket.connect"
+        try:
+            super().ensure_versions(scope)
+            assert scope["type"] == "websocket"
+
+            # Wait for the WebSocket connect message
+            message = await receive()
+            assert message["type"] == "websocket.connect"
+        
+        except:
+            raise AsgiRuntimeError("Websocket failed")
         
         # Send WebSocket accept message
-        await send({
-            "type": "websocket.accept",
-            "headers": [] }) #FIXME
+        await send({"type": "websocket.accept"})
 
         while True:
             message = await receive()
 
             if message["type"] == "websocket.receive":
                 # React to incomming WebSocket messages
-                await self.on_message(self,message)
+                await self.on_receive(self,message)
                 
             elif message["type"] == "websocket.disconnect":
                 # Close WebSocket when required
                 await send({"type": "websocket.close"})
                 break
         
-    # async def __del__(self): #FIXME
-    #     await self.send({"type": "websocket.close"})
+    async def __del__(self):
+        await self.send({"type": "websocket.close"})
 
 
 class Route:
@@ -208,20 +219,24 @@ class AsgiLifespanRouter:
 
 class DataHub:
 
-    def __init__(self,urlpath,datasystem):
+    def __init__(self, urlpath, datasystem):
         """ convenient data service endpoint """
 
         # set Route signature
         self.path = urlpath
         self.endpoint = self
-        self.methods = ['GET','POST']
+        self.methods = ['GET','POST','PATCH','PUT','DELETE']
 
         # set data service
         self.datasystem = datasystem
 
     async def __call__(self,scope,receive,send):
+
+        if scope["type"] == "websocket":
+
+            await self.datasystem.websocket(scope,receive,send)
         
-        if scope["type"] == "http":
+        elif scope["type"] == "http":
 
             try:
                 request = await receive()
@@ -230,7 +245,7 @@ class DataHub:
                 for key,val in scope["headers"]:
 
                     #NOTE: latin-1 is default http/1.1 encoding
-                    json_response = self.match_response(
+                    json_response = self._match_case_(
                         header = key.decode('latin-1'),
                         value = val.decode('latin-1'),
                         scope = scope, request = request)
@@ -244,42 +259,36 @@ class DataHub:
 
             await json_response(scope,receive,send)
 
-        elif scope["type"] == "websocket":
-
-            await self.datasystem.websocket(scope,receive,send)
-
-    def match_response(self,
-            header: str, value: str,
-            scope: dict, request: dict) -> JSONResponse | None :
-
-        #NOTE:
-        # - asgi/unit lowercases http headers
-        # - asgi/unit uppercases http methods
+    def _match_case_(self,
+            header: str,
+            value: str,
+            scope: dict,
+            request: dict) -> JSONResponse | None :
 
         match (header,value,scope["method"]):
+
+            #NOTE:
+            # - asgi/unit lowercases http headers
+            # - asgi/unit uppercases http methods
 
             case ("sweetheart-action","fetch.test","GET"):
                 return JSONResponse({"test":"ok"})
 
-            # case ("sweetheart-action","fetch.init","GET"):
-            #     raise NotImplementedError
-
-            # RESTful API
+            # RESTful API implementation:
 
             case ("sweetheart-action","fetch.rest","GET"):
                 body: str = request["body"].decode()
                 data: dict = json.loads(body)
                 return self.datasystem.restapi["GET"](data)
 
-            # case ("sweetheart-action","fetch.rest","PATCH"):
-            #     raise NotImplementedError
+            case ("sweetheart-action","fetch.rest","PATCH"):
+                raise NotImplementedError
 
             case ("sweetheart-action","fetch.rest","PUT"):
                 raise NotImplementedError
 
             case ("sweetheart-action","fetch.rest","POST"):
-                data: dict = json.loads(body)
-                return self.datasystem.restapi["POST"](data)
+                raise NotImplementedError
 
             case ("sweetheart-action","fetch.rest","DELETE"):
                 raise NotImplementedError

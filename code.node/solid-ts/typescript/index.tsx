@@ -27,7 +27,13 @@ interface Row {
 
 async function fetchInit(): Promise<Row[]> {
   const response = await fetch("/data", {
-    headers: { "sweetheart-action": "fetch.init" }
+    headers: { 
+      "sweetheart-action": "fetch.rest",
+      "content-type": "application/json",
+      "accept": "application/json",
+    },
+    method: "GET",
+    body: JSON.stringify({ table: "test" }),
   })
   return await response.json()
 }

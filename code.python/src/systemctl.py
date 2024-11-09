@@ -137,8 +137,8 @@ class Systemd:
                     'Unit':
                         ('Description','After','Before'),
                     'Service':
-                        ('ExecStart','ExecReload','Restart','Type',
-                        'User','Group','StandardOutput','StandardError'),
+                        ('ExecStart','ExecReload','Restart','Type','User','Group',
+                        'WorkingDirectory','StandardOutput','StandardError'),
                     'Install':
                         ('WantedBy','RequiredBy') }[section]:
 

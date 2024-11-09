@@ -24,19 +24,33 @@ class BaseConfig(UserDict):
         self.conffile = f"{self.root}/configuration/config.json"
 
         self.data = {
+        #1. General Settings:
 
-            # editable database settings
-            "database":\
-                f"{self.root}/databases/rethinkdb-tests",
+            # NotImplemented yet
 
+        #2. Systemd Services Settings:
+
+            # editable rethinkdb settings
+            # these are options for rethinkdb bash command
+            "rethinkdb": {
+                "http-port": 8082,# for http admin interface
+                "driver-port": 28015,# for client connections
+                "directory": f"{self.root}/databases/rethinkdb-tests",
+                # "bind": "0.0.0.0",
+                # "cache-size": 1024,
+                # "log-file": "",
+                # "io-threads": 2,
+                # "user": os.getuser(),
+                # "password": "__undefined__",
+            },
             # editable python app settings
             # these are put into the Nginx Unit config
             "python_app": {
                 # "home": "__undefined__",
                 "path": f"{self.root}/my_code/python",
-                "module": "start",
+                "module": "start",#! no .py extension
                 "callable": "webapp",
-                "user": os.getuser(),
+                "user": os.getuser(),#FIXME
                 "group": os.getuser(),#FIXME
             },
             # editable statics setting

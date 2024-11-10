@@ -3,6 +3,7 @@ ASGI/3.0 implementation for Sweetheart
 """
 
 import json
+from sweetheart.urllib import urlparse_qs
 from sweetheart import BaseConfig, ansi, echo, verbose
 
 
@@ -74,7 +75,9 @@ class HttpResponse(AsgiEndpoint):
 class JSONResponse(HttpResponse):
     # ensures some consistency with starlette.py
 
-    def __init__(self,content:dict,**kwargs):
+    def __init__(self,
+        content: dict | list[dict],
+        **kwargs ):
 
         bjson = json.dumps(content).encode('utf-8')
         kwargs["headers"] = kwargs.get("headers",{})
@@ -152,12 +155,12 @@ class Route:
 
         self.path = urlpath
         self.endpoint = endpoint
-        self.methods = [ m.upper() for m in methods ]
+        self.methods = [m.upper() for m in methods]
 
 
 class AsgiLifespanRouter:
     """
-    implement ASGI lifespan providing a simple router
+    Implement ASGI lifespan providing a simple router.
     """
 
     def __init__(self,
@@ -195,26 +198,17 @@ class AsgiLifespanRouter:
 
         elif scope["type"] in ("http","websocket"):
             
-            try:
-                # try matching route from the given url path
-                # this implements here a basic router concept
+            # try matching route from the given url path
+            # this implements here a basic router concept
+            route = list( filter(
+                lambda route: route.path == scope["path"],
+                self.routes ))[0]#! first match
 
-                route = list( filter(
-                    lambda route: route.path == scope["path"],
-                    self.routes ))[0]#! first match
-
-                if "method" in scope:
-                    # ensure expected http method is allowed
-                    assert scope["method"] in route.methods
-
-                endpoint = route.endpoint
-
-            except:
-                endpoint = JSONResponse(
-                    status = 500,
-                    content = {"Err":"asgi router error occured"})
+            if "method" in scope:
+                # ensure expected http method is allowed
+                assert scope["method"] in route.methods
             
-            await endpoint(scope,receive,send)
+            await route.endpoint(scope,receive,send)
 
 
 class DataHub:
@@ -228,6 +222,7 @@ class DataHub:
         self.methods = ['GET','POST','PATCH','PUT','DELETE']
 
         # set data service
+        datasystem.connect()
         self.datasystem = datasystem
 
     async def __call__(self,scope,receive,send):
@@ -238,24 +233,18 @@ class DataHub:
         
         elif scope["type"] == "http":
 
-            try:
-                request = await receive()
-                assert request["type"] == "http.request"
+            request = await receive()
+            assert request["type"] == "http.request"
 
-                for key,val in scope["headers"]:
+            for key,val in scope["headers"]:
 
-                    #NOTE: latin-1 is default http/1.1 encoding
-                    json_response = self._match_case_(
-                        header = key.decode('latin-1'),
-                        value = val.decode('latin-1'),
-                        scope = scope, request = request)
+                #NOTE: latin-1 is default http/1.1 encoding
+                json_response = self._match_case_(
+                    header = key.decode('latin-1'),
+                    value = val.decode('latin-1'),
+                    scope = scope, request = request)
 
-                    if json_response: break
-
-            except:
-                json_response = JSONResponse(
-                    status = 500,
-                    content = {"Err":"asgi datahub error occured"})
+                if json_response: break
 
             await json_response(scope,receive,send)
 
@@ -277,8 +266,9 @@ class DataHub:
             # RESTful API implementation:
 
             case ("sweetheart-action","fetch.rest","GET"):
-                body: str = request["body"].decode()
-                data: dict = json.loads(body)
+                #! assumes query_string is utf-8 encoded
+                query: str = "?"+scope["query_string"].decode()
+                data: dict = urlparse_qs(query,strict_parsing=True)
                 return self.datasystem.restapi["GET"](data)
 
             case ("sweetheart-action","fetch.rest","PATCH"):

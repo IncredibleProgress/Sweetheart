@@ -26,14 +26,12 @@ interface Row {
 // fetch initial data:
 
 async function fetchInit(): Promise<Row[]> {
-  const response = await fetch("/data", {
+  const params = new URLSearchParams({table: "testtable"})
+  const response = await fetch(`/data?${params.toString()}`,{
     headers: { 
       "sweetheart-action": "fetch.rest",
-      "content-type": "application/json",
       "accept": "application/json",
-    },
-    method: "GET",
-    body: JSON.stringify({ table: "test" }),
+    }
   })
   return await response.json()
 }
@@ -55,7 +53,7 @@ function Table() {
       <Show when={data.error}>
         <div>error: {data.error.message}</div> </Show>
 
-      <Show when={data()}>
+      <Show when={!data.loading && !data.error}>
         {(data) => (
           <table class="table-auto mx-auto border-collapse border">
             <thead>

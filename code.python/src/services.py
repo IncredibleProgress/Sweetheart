@@ -1,11 +1,8 @@
 from typing import Self
 from pathlib import Path
-
 from rethinkdb import RethinkDB as R
-from rethinkdb.errors import ReqlDriverError, ReqlOpFailedError
 
 from sweetheart import *
-from sweetheart.urllib import urlparse
 from sweetheart.systemctl import Unit, Systemd
 from sweetheart.asgi3 import AsgiLifespanRouter, Route, Websocket, DataHub, JSONResponse
 
@@ -16,49 +13,52 @@ class WebappServer(Unit):
         
         self.data = []
         self.config = config
-        WebappServer._config_ = config
         self.middelware = None #FIXME
+
+        # keep current app config available 
+        WebappServer._config_ = config
 
     def mount(self,
         *args: Route|DataHub ) -> Self:
+
+        # unrelevant instances forbidden
+        allow = (Route,DataHub)
+        assert all([isinstance(arg,allow) for arg in args])
         
         self.data.extend(args)
         return self
 
     def app(self,
         *args: Route|DataHub ) -> AsgiLifespanRouter:
-        """ Create ASGI app from given args"""
 
-        if args: assert self.data == []
-        else: args = self.data
+        """ Return ASGI app built from given args, callable by NginxUnit. 
+            Intends to keep some consistency with https://www.starlette.io."""
 
-        # allow only Route and DataHub instances
-        allow = (Route,DataHub)
-        assert all([isinstance(arg,allow) for arg in args])
-
-        self.mount(*args)
+        # mount args with mount() or app() but not both
+        if args:
+            assert self.data == []
+            self.mount(*args)
+        
+        routes = self.data
         del self.data#! new mount forbidden
 
         return AsgiLifespanRouter(
-            routes = args,
+            routes = routes,
             debug = BaseConfig.debug,
             middelware = self.middelware )
 
-    def set_service(self,
-            unit = False,
-            share_directory = True,
-            source: str = "json", ):
+    def set_service(self,unit=False):
 
         pyconf = self.config["python_app"]
         pyfile = Path(pyconf['path']) / f"{pyconf['module']}.py"
 
-        pyfile.parent.mkdir(parents=True,exist_ok=True)
+        pyfile.parent.mkdir(parents=True,exist_ok=True) #FIXME
         pyfile.write_text(self.generate_python_script(pyconf))
 
         if unit:
             # force new NginxUnit config
-            self.load_unit_config(source)
-            self.set_unit_config(share_directory)
+            self.load_unit_config(source="json")
+            self.set_unit_config(share_directory=True)
             Unit.put_unit_config()
 
     @staticmethod
@@ -86,7 +86,8 @@ class RethinkDB(Systemd):
     A RethinkDB wrapper providing endpoints and systemd service management.
     """
 
-    def __init__(self,config:BaseConfig=None):
+    def __init__(self,
+            config: BaseConfig = None ):
         
         if config is None:
             # auto-set current app config
@@ -105,21 +106,17 @@ class RethinkDB(Systemd):
             # "DELETE": self.on_delete
         }
 
-    def connect(self,database:str):
+    def connect(self,options={}):
 
-        try: 
-            conn = self.r.connect(
-                host = self.host,
-                port = self.port,
-                db = database )
-                # user = self.config["rethinkdb"]["user"],
-                # password = self.config["rethinkdb"]["password"] )
+        kwargs = dict(
+            #NOTE: rethinkdb set default db="test"
+            host = "localhost",
+            port = self.rconfig["driver-port"] )
 
-        except ReqlDriverError as err:
-            echo("Connection to RethinkDB failed",prefix=ansi.RED)
+        kwargs.update(options)
+        self.conn = self.r.connect(**kwargs)
 
-        self.conn = conn
-        return conn
+        return self.conn
 
     def run_expr(self,query:str,conn=None):
         """ run given RethinkDB query """
@@ -157,8 +154,8 @@ class RethinkDB(Systemd):
         # Rest Api GET
         r = self.r.table(d["table"])
         if d.get("filter"): r.filter(d["filter"])
-        cursor = r.run(self.conn)
-        return JSONResponse(cursor)
+        cursor: r.net.Cursor = r.run(self.conn)
+        return JSONResponse(list(cursor))
 
     # def on_post(self,d:dict):
     #     # Rest Api POST

@@ -1,8 +1,6 @@
-
 import json
 import configparser
 from datetime import datetime
-
 from sweetheart.subprocess import os
 from sweetheart import BaseConfig, echo, verbose, ansi
 
@@ -34,8 +32,7 @@ class Unit:
             #NOTE: allows updating current unit config
             raise NotImplementedError
         
-        else:
-            raise ValueError
+        else: raise ValueError
 
     def set_unit_config(
             self,

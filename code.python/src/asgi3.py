@@ -76,8 +76,8 @@ class JSONResponse(HttpResponse):
     # ensures some consistency with starlette.py
 
     def __init__(self,
-        content: dict | list[dict],
-        **kwargs ):
+            content: dict | list[dict],
+            **kwargs ):
 
         bjson = json.dumps(content).encode('utf-8')
         kwargs["headers"] = kwargs.get("headers",{})
@@ -90,6 +90,24 @@ class JSONResponse(HttpResponse):
         
         super().__init__(content=bjson,**kwargs)
 
+
+class JSONMessage():
+
+    def __init__(self,
+            content: dict | list[dict],
+            type: str = "text" ):
+
+        if self.type == "text":
+            self.bytes = None
+            self.text = json.dumps(content)
+
+        elif self.type == "bytes":
+            self.text = None
+            self.bytes = json.dumps(content).encode()
+
+        else: raise ValueError(
+            "JSONMessage type must be 'text' or 'bytes'" )
+        
 
 class Websocket(AsgiEndpoint):
 
@@ -132,8 +150,18 @@ class Websocket(AsgiEndpoint):
             message = await receive()
 
             if message["type"] == "websocket.receive":
-                # React to incomming WebSocket messages
-                await self.on_receive(self,message)
+                # react to incomming WebSocket messages
+                status = self.on_receive(message)
+
+                if isinstance(status,JSONMessage):
+                    # accept JSONMessage as a valid status
+                    await send({
+                        "type": "websocket.send",
+                        "text": status.text,
+                        "bytes": status.bytes })
+                        
+                # ignore any other status
+                else: pass
                 
             elif message["type"] == "websocket.disconnect":
                 # Close WebSocket when required

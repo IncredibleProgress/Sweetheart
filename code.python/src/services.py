@@ -1,10 +1,12 @@
+from sweetheart import *
 from typing import Self
 from pathlib import Path
 from rethinkdb import RethinkDB as R
-
-from sweetheart import *
 from sweetheart.systemctl import Unit, Systemd
-from sweetheart.asgi3 import AsgiLifespanRouter, Route, Websocket, DataHub, JSONResponse
+
+from sweetheart.asgi3 import (
+    AsgiLifespanRouter, Route, DataHub, 
+    Websocket, JSONResponse, JSONMessage )
 
 
 class WebappServer(Unit):
@@ -101,8 +103,8 @@ class RethinkDB(Systemd):
         self.restapi = {
             "GET": self.on_GET,
             # "PUT": self.on_put,
-            # "PATCH": self.on_patch,
-            # "POST": self.on_post,
+            "PATCH": self.on_PATCH,
+            "POST": self.on_POST,
             # "DELETE": self.on_delete
         }
 
@@ -124,48 +126,66 @@ class RethinkDB(Systemd):
         return self.r.expr(query).run(conn)
 
     def on_receive(self,data:dict):
-        """ Handle incoming websocket data """
+        """ Handle incoming websocket data. """
+
+        #1. Get json content from data:
 
         if data.get("text"):
             # get json content from text
             assert data.get("bytes") is None
-            json: dict = json.loads(data["text"])
+            content: dict = json.loads(data["text"])
 
         elif data.get("bytes"):
             # get json content from bytes
-            json: dict = json.loads(data["bytes"].decode())
+            content: dict = json.loads(data["bytes"].decode())
 
-        if json.get("action") == "ws.reql":
+        #2. Handle content from given action:
+
+        if content.get("action") == "ws.reql":
+
+            # execute any RethinkDB query (development only)
             assert os.getenv("SWS_OPERATING_STATE") == "development"
-            # execute any RethinkDB query
-            cursor = self.run_expr(json["query"])
-            return JSONResponse(cursor)
+            cursor = self.r.expr(content["query"]).run(self.conn)
 
-        elif json.get("action")[:7] == "ws.rest":
-            # execute given Rest Api query (e.g., ws.rest.get)
-            method = json["action"][8:].upper()       
-            return self.restapi[method](json)
+            self.websocket.send_json(list(cursor))
 
+        elif content.get("action")[:7] == "ws.rest":
+
+            # let execute given Rest Api query (e.g., ws.rest.get)
+            method = content["action"][8:].upper()       
+            feedback = self.restapi[method](content)
+
+            if isinstance(feedback,JSONResponse):
+                #NOTE: hook for accepting here JSONResponse
+                # this allows using Rest Api with Websocket
+                self.websocket.send({
+                    "type": "websocket.send",
+                    "bytes": feedback.bjson })
+
+            elif isinstance(feedback,JSONMessage):
+                raise TypeError(
+                    "JSONMessage not expected for 'ws.rest' action")
         else:
             self.websocket.send_json(
                 {"Err": "Invalid websocket action"})
 
+
     def on_GET(self,d:dict) -> JSONResponse:
-        # Rest Api GET
+        # Rest Api: GET
         r = self.r.table(d["table"])
         if d.get("filter"): r.filter(d["filter"])
         cursor: r.net.Cursor = r.run(self.conn)
         return JSONResponse(list(cursor))
 
-    # def on_post(self,d:dict):
-    #     # Rest Api POST
-    #     r = self.r.table(d["table"])
-    #     r.insert(d["data"]).run(self.connect)
-
-    # def on_patch(self,d:dict):
-    #     # Rest Api PATCH
-    #     r = self.r.table(d["table"])
-    #     r.get(d["id"]).update(d["data"]).run(self.connect)
+    def on_POST(self,d:dict):
+        # Rest Api: POST
+        r = self.r.table(d["table"])
+        r.insert(d["row"]).run(self.conn)
+            
+    def on_PATCH(self,d:dict):
+        # Rest Api PATCH
+        r = self.r.table(d["table"]).get(d["id"])
+        r.update({d["field"]: d["value"]}).run(self.conn)
 
     # def def on_put(self,d:dict):
     #     # Rest Api PUT
@@ -176,6 +196,7 @@ class RethinkDB(Systemd):
     #     # Rest Api DELETE
     #     r = self.r.table(d["table"])
     #     r.get(d["id"]).delete().run(self.connect)
+
 
     def set_service(self,enable:str=None):
 

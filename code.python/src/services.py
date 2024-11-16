@@ -83,10 +83,31 @@ config = set_config({{
 )"""
 
 
+class DataSystem(Systemd): #FIXME
+    """ Interface for database wrappers. """
+
+    # set Rest Api methods
+    #NOTE: asgi/unit uppercases http methods
+    restapi = { "GET": self.on_GET }
+
+    def connect(self,options={}):
+        """ Connect to database. """
+        raise NotImplementedError
+
+    def on_GET(self,data:dict) -> JSONResponse:
+        """ Handle http get request. """
+        raise NotImplementedError
+
+    def on_receive(self,data:dict) -> JSONMessage:
+        """ Handle incoming websocket message. """
+        raise NotImplementedError
+
+    def set_service(self) -> None:
+        """ Set systemd service for database. """
+        raise NotImplementedError
+
+
 class RethinkDB(Systemd):
-    """
-    A RethinkDB wrapper providing endpoints and systemd service management.
-    """
 
     def __init__(self,
             config: BaseConfig = None ):
@@ -97,16 +118,13 @@ class RethinkDB(Systemd):
 
         self.r = R()
         self.rconfig = config["rethinkdb"]
-        self.websocket = Websocket()
-        self.websocket.on_receive = self.on_receive
 
         self.restapi = {
+            #NOTE: methods are uppercased
             "GET": self.on_GET,
             # "PUT": self.on_put,
             "PATCH": self.on_PATCH,
-            "POST": self.on_POST,
-            # "DELETE": self.on_delete
-        }
+            "POST": self.on_POST }
 
     def connect(self,options={}):
 
@@ -117,58 +135,33 @@ class RethinkDB(Systemd):
 
         kwargs.update(options)
         self.conn = self.r.connect(**kwargs)
-
         return self.conn
 
     def run_expr(self,query:str,conn=None):
-        """ run given RethinkDB query """
+        """ Run given RethinkDB query. """
+
         if not conn: conn = self.conn
         return self.r.expr(query).run(conn)
 
-    def on_receive(self,data:dict):
-        """ Handle incoming websocket data. """
-
-        #1. Get json content from data:
-
-        if data.get("text"):
-            # get json content from text
-            assert data.get("bytes") is None
-            content: dict = json.loads(data["text"])
-
-        elif data.get("bytes"):
-            # get json content from bytes
-            content: dict = json.loads(data["bytes"].decode())
-
-        #2. Handle content from given action:
-
-        if content.get("action") == "ws.reql":
-
-            # execute any RethinkDB query (development only)
-            assert os.getenv("SWS_OPERATING_STATE") == "development"
-            cursor = self.r.expr(content["query"]).run(self.conn)
-
-            self.websocket.send_json(list(cursor))
-
-        elif content.get("action")[:7] == "ws.rest":
-
-            # let execute given Rest Api query (e.g., ws.rest.get)
-            method = content["action"][8:].upper()       
-            feedback = self.restapi[method](content)
+    def on_receive(self,data:dict) -> JSONMessage | None:
+        
+        if data.get("action")[:7] == "ws.rest":
+            # hook to reuse Rest Api methods with websocket
+            method = data["action"][8:].upper()# ws.rest.get -> GET 
+            feedback = self.datasystem.restapi[method](data)
 
             if isinstance(feedback,JSONResponse):
-                #NOTE: hook for accepting here JSONResponse
-                # this allows using Rest Api with Websocket
-                self.websocket.send({
-                    "type": "websocket.send",
-                    "bytes": feedback.bjson })
+                #NOTE: hook to accept http JSONResponse
+                return JSONMessage(feedback.bjson,type="bytes")
 
-            elif isinstance(feedback,JSONMessage):
-                raise TypeError(
-                    "JSONMessage not expected for 'ws.rest' action")
-        else:
-            self.websocket.send_json(
-                {"Err": "Invalid websocket action"})
+        elif data.get("action") == "ws.reql":
+            # execute any RethinkDB query (development only)
+            assert os.getenv("SWS_OPERATING_STATE") == "development"
+            cursor = self.r.expr(data["query"]).run(self.conn)
+            self.websocket.send_bjson(list(cursor))
 
+        else: return JSONMessage({
+            "Err": "Invalid websocket action." })
 
     def on_GET(self,d:dict) -> JSONResponse:
         # Rest Api: GET
@@ -196,7 +189,6 @@ class RethinkDB(Systemd):
     #     # Rest Api DELETE
     #     r = self.r.table(d["table"])
     #     r.get(d["id"]).delete().run(self.connect)
-
 
     def set_service(self,enable:str=None):
 

@@ -239,25 +239,45 @@ class AsgiLifespanRouter:
             await route.endpoint(scope,receive,send)
 
 
-class DataHub:
+class DataHub(AsgiEndpoint):
 
     def __init__(self, urlpath, datasystem):
-        """ convenient data service endpoint """
+        """ Set route/endpoint for given datasystem """
 
-        # set Route signature
+        # set Route-like signature
         self.path = urlpath
         self.endpoint = self
         self.methods = ['GET','POST','PATCH','PUT','DELETE']
 
-        # set data service
+        # init given data service
         datasystem.connect()
         self.datasystem = datasystem
+
+        # set a Websocket instance
+        #NOTE: datasystem must implement on_receive()
+        self.websocket = Websocket()
+        self.websocket.on_receive = self.on_receive
+
+    def on_receive(self,message:dict) -> JSONMessage | None:
+        """ Handle incoming WebSocket messages. """
+
+        if message.get("text"):
+            # get json content from text
+            assert message.get("bytes") is None #FIXME
+            data: dict = json.loads(message["text"])
+
+        elif message.get("bytes"):
+            # get json content from bytes
+            data: dict = json.loads(message["bytes"].decode())
+
+        # delegate action to given datasystem
+        return self.datasystem.on_receive(data)
 
     async def __call__(self,scope,receive,send):
 
         if scope["type"] == "websocket":
 
-            await self.datasystem.websocket(scope,receive,send)
+            await self.websocket(scope,receive,send)
         
         elif scope["type"] == "http":
 
@@ -267,7 +287,7 @@ class DataHub:
             for key,val in scope["headers"]:
 
                 #NOTE: latin-1 is default http/1.1 encoding
-                json_response = self._match_case_(
+                json_response = self._http_match_case_(
                     header = key.decode('latin-1'),
                     value = val.decode('latin-1'),
                     scope = scope, request = request)
@@ -276,17 +296,17 @@ class DataHub:
 
             await json_response(scope,receive,send)
 
-    def _match_case_(self,
+    def _http_match_case_(self,
             header: str,
             value: str,
             scope: dict,
-            request: dict) -> JSONResponse | None :
+            request: dict) -> JSONResponse | None:
+
+        #NOTE:
+        # - asgi/unit lowercases http headers
+        # - asgi/unit uppercases http methods
 
         match (header,value,scope["method"]):
-
-            #NOTE:
-            # - asgi/unit lowercases http headers
-            # - asgi/unit uppercases http methods
 
             case ("sweetheart-action","fetch.test","GET"):
                 return JSONResponse({"test":"ok"})
@@ -300,13 +320,15 @@ class DataHub:
                 return self.datasystem.restapi["GET"](data)
 
             case ("sweetheart-action","fetch.rest","PATCH"):
-                raise NotImplementedError
+                data: dict = json.loads(request["body"])
+                return self.datasystem.restapi["PATCH"](data)
 
             case ("sweetheart-action","fetch.rest","PUT"):
                 raise NotImplementedError
 
             case ("sweetheart-action","fetch.rest","POST"):
-                raise NotImplementedError
+                data: dict = json.loads(request["body"])
+                return self.datasystem.restapi["POST"](data)
 
             case ("sweetheart-action","fetch.rest","DELETE"):
                 raise NotImplementedError

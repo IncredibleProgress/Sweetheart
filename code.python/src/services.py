@@ -86,9 +86,8 @@ config = set_config({{
 class DataSystem(Systemd): #FIXME
     """ Interface for database wrappers. """
 
-    # set Rest Api methods
-    #NOTE: asgi/unit uppercases http methods
-    restapi = { "GET": self.on_GET }
+    # Rest Api methods
+    restapi = {} 
 
     def connect(self,options={}):
         """ Connect to database. """
@@ -148,10 +147,10 @@ class RethinkDB(Systemd):
         if data.get("action")[:7] == "ws.rest":
             # hook to reuse Rest Api methods with websocket
             method = data["action"][8:].upper()# ws.rest.get -> GET 
-            feedback = self.datasystem.restapi[method](data)
+            feedback = self.restapi[method](data)
 
             if isinstance(feedback,JSONResponse):
-                #NOTE: hook to accept http JSONResponse
+                #NOTE: hook accepting http JSONResponse
                 return JSONMessage(feedback.bjson,type="bytes")
 
         elif data.get("action") == "ws.reql":
@@ -177,8 +176,9 @@ class RethinkDB(Systemd):
             
     def on_PATCH(self,d:dict):
         # Rest Api PATCH
-        r = self.r.table(d["table"]).get(d["id"])
-        r.update({d["field"]: d["value"]}).run(self.conn)
+        database,table = d["target"].split(".") #FIXME
+        r = self.r.table(table).get(d["id"])
+        r.update({d["name"]: d["value"]}).run(self.conn)
 
     # def def on_put(self,d:dict):
     #     # Rest Api PUT

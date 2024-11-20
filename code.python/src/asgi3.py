@@ -232,9 +232,9 @@ class AsgiLifespanRouter:
                 lambda route: route.path == scope["path"],
                 self.routes ))[0]#! first match
 
-            if "method" in scope:
-                # ensure expected http method is allowed
-                assert scope["method"] in route.methods
+            # if "method" in scope:
+            #     # ensure expected http method is allowed
+            #     assert scope["method"] in route.methods
             
             await route.endpoint(scope,receive,send)
 

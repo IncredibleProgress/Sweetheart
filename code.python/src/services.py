@@ -11,7 +11,7 @@ from sweetheart.asgi3 import (
 
 class WebappServer(Unit):
 
-    def __init__(self,config:BaseConfig):
+    def __init__(self, config: BaseConfig ):
         
         self.data = []
         self.config = config
@@ -20,8 +20,7 @@ class WebappServer(Unit):
         # keep current app config available 
         WebappServer._config_ = config
 
-    def mount(self,
-        *args: Route|DataHub ) -> Self:
+    def mount(self, *args: Route|DataHub ) -> Self:
 
         # unrelevant instances forbidden
         allow = (Route,DataHub)
@@ -30,8 +29,7 @@ class WebappServer(Unit):
         self.data.extend(args)
         return self
 
-    def app(self,
-        *args: Route|DataHub ) -> AsgiLifespanRouter:
+    def app(self, *args: Route|DataHub ) -> AsgiLifespanRouter:
 
         """ Return ASGI app built from given args, callable by NginxUnit. 
             Intends to keep some consistency with https://www.starlette.io."""
@@ -42,14 +40,14 @@ class WebappServer(Unit):
             self.mount(*args)
         
         routes = self.data
-        del self.data#! new mount forbidden
+        del self.data #! new mount forbidden
 
         return AsgiLifespanRouter(
             routes = routes,
             debug = BaseConfig.debug,
             middelware = self.middelware )
 
-    def set_service(self,unit=False):
+    def set_service(self, unit=False):
 
         pyconf = self.config["python_app"]
         pyfile = Path(pyconf['path']) / f"{pyconf['module']}.py"
@@ -57,7 +55,7 @@ class WebappServer(Unit):
         pyfile.parent.mkdir(parents=True,exist_ok=True) #FIXME
         pyfile.write_text(self.generate_python_script(pyconf))
 
-        if unit:
+        if unit is True:
             # force new NginxUnit config
             self.load_unit_config(source="json")
             self.set_unit_config(share_directory=True)
@@ -83,29 +81,6 @@ config = set_config({{
 )"""
 
 
-class DataSystem(Systemd): #FIXME
-    """ Interface for database wrappers. """
-
-    # Rest Api methods
-    restapi = {} 
-
-    def connect(self,options={}):
-        """ Connect to database. """
-        raise NotImplementedError
-
-    def on_GET(self,data:dict) -> JSONResponse:
-        """ Handle http get request. """
-        raise NotImplementedError
-
-    def on_receive(self,data:dict) -> JSONMessage:
-        """ Handle incoming websocket message. """
-        raise NotImplementedError
-
-    def set_service(self) -> None:
-        """ Set systemd service for database. """
-        raise NotImplementedError
-
-
 class RethinkDB(Systemd):
 
     def __init__(self,
@@ -120,12 +95,17 @@ class RethinkDB(Systemd):
 
         self.restapi = {
             #NOTE: methods are uppercased
-            "GET": self.on_GET,
-            # "PUT": self.on_put,
-            "PATCH": self.on_PATCH,
-            "POST": self.on_POST }
+            "GET": self.rql_FILTER,
+            "POST": self.rql_INSERT,
+            "PATCH": self.rql_UPDATE,
+            # "PUT": self.rql_REPLACE,
+            # "DELETE": self.rql_DELETE
+        }
 
-    def connect(self,options={}):
+    def connect(self, options={}):
+
+        """ Start new connection to RethinkDB server,
+            options override settings from the app config. """
 
         kwargs = dict(
             #NOTE: rethinkdb set default db="test"
@@ -133,59 +113,66 @@ class RethinkDB(Systemd):
             port = self.rconfig["driver-port"] )
 
         kwargs.update(options)
-        self.conn = self.r.connect(**kwargs)
-        return self.conn
+        connect = self.r.connect(**kwargs)
 
-    def run_expr(self,query:str,conn=None):
-        """ Run given RethinkDB query. """
+        # keep first connection as the default one
+        if not hasattr(self,"conn"): self.conn = connect
 
+        return connect
+
+    def rql_expr(self, query:str, conn=None) -> tuple:
+        """ Run any given RethinkDB query. """
+
+        # set default connection
         if not conn: conn = self.conn
-        return self.r.expr(query).run(conn)
 
-    def on_receive(self,data:dict) -> JSONMessage | None:
-        
-        if data.get("action")[:7] == "ws.rest":
-            # hook to reuse Rest Api methods with websocket
-            method = data["action"][8:].upper()# ws.rest.get -> GET 
-            feedback = self.restapi[method](data)
+        # return result as tuple (status, value)
+        return "Ok", self.r.expr(query).run(conn)
 
-            if isinstance(feedback,JSONResponse):
-                #NOTE: hook accepting http JSONResponse
-                return JSONMessage(feedback.bjson,type="bytes")
+    def rql_FILTER(self, d:dict, conn=None) -> tuple:
 
-        elif data.get("action") == "ws.reql":
-            # execute any RethinkDB query (development only)
-            assert os.getenv("SWS_OPERATING_STATE") == "development"
-            cursor = self.r.expr(data["query"]).run(self.conn)
-            self.websocket.send_bjson(list(cursor))
+        # set default connection
+        if not conn: conn = self.conn
 
-        else: return JSONMessage({
-            "Err": "Invalid websocket action." })
-
-    def on_GET(self,d:dict) -> JSONResponse:
-        # Rest Api: GET
+        # apply Rest Api: GET
         r = self.r.table(d["table"])
         if d.get("filter"): r.filter(d["filter"])
-        cursor: r.net.Cursor = r.run(self.conn)
-        return JSONResponse(list(cursor))
 
-    def on_POST(self,d:dict):
-        # Rest Api: POST
-        r = self.r.table(d["table"])
-        r.insert(d["row"]).run(self.conn)
+        # return result as tuple (status, value)
+        return "Ok", list(r.run(conn))
+
+    def rql_INSERT(self, d:dict, conn=None) -> tuple:
+
+        # set default connection
+        if not conn: conn = self.conn
+
+        # apply Rest Api: POST
+        r = self.r.table(d["table"]).insert(d["row"])
+        r.run(conn)
+
+        # return result as tuple (status, value)
+        return "Ok", None
             
-    def on_PATCH(self,d:dict):
-        # Rest Api PATCH
+    def rql_UPDATE(self, d:dict, conn=None) -> tuple:
+
+        # set default connection
+        if not conn: conn = self.conn
+
+        # Rest Api: PATCH
         database,table = d["target"].split(".") #FIXME
         r = self.r.table(table).get(d["id"])
-        r.update({d["name"]: d["value"]}).run(self.conn)
+        r.update({ d["name"]: d["value"] })
+        r.run(conn)
 
-    # def def on_put(self,d:dict):
-    #     # Rest Api PUT
+        # return result as tuple (status, value)
+        return "Ok", None
+
+    # def def ReQL_REPLACE(self,d:dict):
+    #     # Rest Api: PUT
     #     r = self.r.table(d["table"])
     #     r.get(d["id"]).replace(d["data"]).run(self.connect)
 
-    # def on_delete(self,d:dict):
+    # def ReQL_DELETE(self,d:dict):
     #     # Rest Api DELETE
     #     r = self.r.table(d["table"])
     #     r.get(d["id"]).delete().run(self.connect)
@@ -213,29 +200,6 @@ class RethinkDB(Systemd):
             self.enable_systemd_service(enable)
 
     def __del__(self):
-
-        if hasattr(self,"conn"):
-            self.conn.close()
-
-
-# --- --- Legacy Code --- ---
-
-# def mount(self,*args:str|Route|DataHub) -> Self:
-
-    #     def args_are(typ):
-    #         # return True when all args are instances of typ
-    #         return all([isinstance(arg, typ) for arg in args])
-
-    #     if args_are(str):
-    #         assert not self.data
-    #         assert not hasattr(self,"mount_str_")
-    #         self.mount_str_ = ",\n".join(args)
-
-    #     elif args_are((Route,DataHub)):
-    #         assert not hasattr(self,"mount_str_")
-    #         self.data.extend(args)
-        
-    #     else:
-    #         raise Exception("Invalid args given to mount()")
-
-    #     return self
+        """ Close default connection when object is deleted. """
+        #NOTE: multiple connections must be managed explicitly
+        if hasattr(self,"conn"): self.conn.close()

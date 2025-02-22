@@ -98,7 +98,7 @@ class JSONMessage:
 
     def __init__(self,
             content: dict | list[dict],# json
-            type: "text"|"bytes" = "text" ):
+            type: str = "text" ):
 
         if self.type == "text":
             self.bytes = None
@@ -119,7 +119,7 @@ class JSONMessage:
     #     return self.bytes or self.text.encode()
 
     @staticmethod
-    def encode_from(promise: tuple[str, str|dict|list]) -> JSONMessage:
+    def encode_from(promise: tuple[str, str|dict|list]):
         """ Create encoded JSONMessage from promise. """
 
         status, content = promise[0].capitalize(), promise[1]
@@ -260,8 +260,8 @@ class AsgiLifespanRouter:
             route = list( filter(
                 lambda route: route.path == scope["path"], self.routes))[0]
 
-            if scope.get("method"):
-                # ensure expected http method is allowed
+            if scope["type"] == "http" and scope["method"] != "OPTIONS":
+                #FIXME: ensure expected http method is allowed
                 assert scope["method"] in route.methods
             
             await route.endpoint(scope,receive,send)

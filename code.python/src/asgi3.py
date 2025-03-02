@@ -1,5 +1,6 @@
 """
 ASGI/3.0 implementation for Sweetheart
+which provides Http and Websocket interfaces
 """
 
 import json
@@ -28,13 +29,17 @@ class AsgiEndpoint:
             assert scope["asgi"]["spec_version"] == "2.1"
 
 class AsgiRuntimeError(Exception):
+    """ For raising AsgiEndpoint runtime errors. """
     pass
 
 
 class HttpResponse(AsgiEndpoint):
 
+    """ Base class and interface for setting Asgi/3 http responses.
+        It supports CORS headers and handling of preflight requests. """
+
     def __init__(self, 
-            status: int = 200,
+            status: int = 200,# ok status
             content: bytes | str = b"",
             headers: list[tuple[bytes,bytes]] | dict[str,str] = [] ):
 
@@ -48,27 +53,113 @@ class HttpResponse(AsgiEndpoint):
                 ( key.encode("latin-1"), val.encode("latin-1") )
                 for key,val in headers.items() ]
 
+        # response settings
         self.status = status
-        self.headers = headers
-        self.content = content
+        self.encoded_headers = headers
+        self.encoded_content = content
         
+        # default CORS attributes
+        self.allow_origin: str = "*" # unsafe
+        self.allow_methods: str = "GET"
+
+    def _apply_CORS_policy_(self,
+            origin_b: bytes,
+            method_b: bytes,
+            headers_b: bytes ) -> None:
+
+        self.encoded_CORS_headers = []
+        origin = origin.decode("ascii")
+        method = method.decode("ascii")
+        headers = method.decode("latin-1")
+
+        #1. Handle origin policy
+        if "*" in self.allow_origin or origin in self.allow_origin:
+            allow_origin = (b"access-control-allow-origin",origin_b)
+            self.encoded_CORS_headers.append(allow_origin)
+            self.encoded_headers.append(allow_origin)
+
+        #2. Handle method policy
+        if method in self.allow_methods:
+            bmethods = self.allow_methods.encode("ascii")
+            self.encoded_CORS_headers.append(
+                (b"access-control-allow-methods",bmethods))
+
+        #3. Handle headers policy
+        if headers and hasattr(self,"allow_headers") \
+        and all([h.strip() in self.allow_headers for h in header.split(",")]):
+            bheaders = self.allow_headers.encode("latin-1")
+            self.encoded_CORS_headers.append(
+                (b"access-control-allow-headers",bheaders))
+
+        #4. Handle max-age policy
+        if hasattr(self,"max_age"):
+            assert type(self.max_age) is int
+            bmax_age = str(self.max_age).encode()
+            self.encoded_CORS_headers.append(
+                (b"access-control-max-age",bmax_age))
+
+        #FIXME: still to complete
+    
+    # def getHeaderValue(self,header:str): -> str | None:
+    #     """ Get header value from encoded headers with ease. """
+        
+    #     target = header.lower().encode("latin-1")
+    #     headers = dict(self.encoded_headers)
+    #     value = headers.get(target)
+
+    #     if not value and hasattr(self,"encoded_CORS_headers"):
+    #         # get header within CORS headers
+    #         headers = dict(self.encoded_CORS_headers)
+    #         value = headers.get(target) 
+        
+    #     if value is not None:
+    #         return value.decode("latin-1")
+    
     async def __call__(self,scope,receive,send):
 
         try:
             super().ensure_versions(scope)
             assert scope["type"] == "http"
 
-        except:
-            raise AsgiRuntimeError("HttpResponse failed")
+        except: raise AsgiRuntimeError(
+            "Invalid HttpResponse scope.")
 
-        await send({
-            "type": "http.response.start",
-            "status": self.status,
-            "headers": self.headers })
-        
-        await send({
-            "type": "http.response.body",
-            "body": self.content })
+        #! ASGI lowercases http headers
+        #! ASGI uppercases http methods
+        gethd = lambda hd: scope["headers"].get(hd,b"")
+
+        if scope["method"] == "OPTIONS":
+            # --- CORS Preflight Requests --- #
+
+            self._apply_CORS_policy_(
+                origin_b = gethd(b"origin"),
+                method_b = gethd(b"access-control-request-method")
+                headers_b = gethd(b"access-control-request-headers") )
+
+            await send({
+                "type": "http.response.start",
+                "status": 204, # No Content
+                "headers": self.encoded_CORS_headers })
+
+            await send({
+                "type": "http.response.body",
+                "body": b"" })
+
+        elif scope["method"] in self.allow_methods:
+            # --- Mainstream Http Requests --- #
+
+            await send({
+                "type": "http.response.start",
+                "status": self.status,
+                "headers": self.encoded_headers })
+            
+            await send({
+                "type": "http.response.body",
+                "body": self.encoded_content })
+            
+        else: raise AsgiRuntimeError(
+            f"Method {scope['method']} not allowed.")
+
 
 class JSONResponse(HttpResponse):
 
@@ -88,13 +179,17 @@ class JSONResponse(HttpResponse):
             "content-type": "application/json; charset=utf-8",
             "x-content-type-options": "nosniff" })
         
+        # init HttpResponse instance
         super().__init__(content=bjson,**kwargs)
 
+        # set CORS attributes
+        self.allow_headers = "content-type, sweetheart-action"
 
+        
 class JSONMessage:
 
     """ Interface for setting Asgi/3 JSON websocket messages.
-        Content is encoded as bytes when type is 'bytes'. """
+        Content is encoded as bytes when given type is 'bytes'. """
 
     def __init__(self,
             content: dict | list[dict],# json
@@ -123,7 +218,6 @@ class JSONMessage:
         """ Create encoded JSONMessage from promise. """
 
         status, content = promise[0].capitalize(), promise[1]
-
         assert status in ("Ok","Unsafe","Err")
         return JSONMessage({ status: content }, type="bytes")
         
@@ -208,11 +302,15 @@ class Route:
     def __init__(self,
         urlpath: str,
         endpoint: AsgiEndpoint,
-        methods: list = ['GET'] ):
+        methods: list[str] = ["GET"] ):
 
         self.path = urlpath
         self.endpoint = endpoint
         self.methods = [m.upper() for m in methods]
+
+        # set relevant CORS headers for the endpoint
+        assert hasattr(endpoint,"allow_methods")
+        endpoint.allow_methods = ", ".join(self.methods)
 
 
 class AsgiLifespanRouter:
@@ -259,10 +357,6 @@ class AsgiLifespanRouter:
 
             route = list( filter(
                 lambda route: route.path == scope["path"], self.routes))[0]
-
-            if scope["type"] == "http" and scope["method"] != "OPTIONS":
-                #FIXME: ensure expected http method is allowed
-                assert scope["method"] in route.methods
             
             await route.endpoint(scope,receive,send)
 

@@ -1,5 +1,12 @@
 import { render } from "solid-js/web"
-import { Tabulator } from "./tabulator"
+import { RtTable } from "./rtable"
+
+fetch("http://localhost:8080/data?table=testtable&database=test", {
+headers: { 
+    "Accept": "application/json",
+    "Sweetheart-Action": "fetch.rest" }
+}).then(response => response.json())
 
 // render app for testing:
-render(() => <Tabulator />, document.getElementById('webapp')!)
+// const TestApp = () => <><br/><h1>Test App</h1></>
+render(() => <RtTable />, document.getElementById('webapp')!)

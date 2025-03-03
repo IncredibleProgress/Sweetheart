@@ -126,14 +126,14 @@ class HttpResponse(AsgiEndpoint):
 
         #! ASGI lowercases http headers
         #! ASGI uppercases http methods
-        gethd = lambda hd: scope["headers"].get(hd,b"")
+        gethd = lambda hd: dict(scope["headers"]).get(hd,b"")
 
         if scope["method"] == "OPTIONS":
             # --- CORS Preflight Requests --- #
 
             self._apply_CORS_policy_(
                 origin_b = gethd(b"origin"),
-                method_b = gethd(b"access-control-request-method")
+                method_b = gethd(b"access-control-request-method"),
                 headers_b = gethd(b"access-control-request-headers") )
 
             await send({
@@ -352,7 +352,7 @@ class AsgiLifespanRouter:
         elif scope["type"] in ("http","websocket"):
 
             # try matching route from the given url path
-            # this implements here a predictale basic router concept
+            # this implements here a predictable basic router concept
             # which provides the first match found for the given path
 
             route = list( filter(
@@ -398,37 +398,30 @@ class DataHub(AsgiEndpoint):
         """ Handle HTTP and WebSocket connections. """
 
         if scope["type"] == "websocket":
-
             # redirect to Websocket instance
             # which calls on_receive() given hereafter
 
             await self.websocket(scope,receive,send)
         
         elif scope["type"] == "http":
+            #! ASGI lowercases http headers
+            #! ASGI uppercases http methods
 
             request = await receive()
             assert request["type"] == "http.request"
 
-            #! asgi/unit lowercases http headers
-            #! asgi/unit uppercases http methods
+            action = dict(scope["headers"])\
+                .get(b"sweetheart-action",b"")\
+                .decode('latin-1')
 
-            # process http headers for finding action
-            for key,val in scope["headers"]:
+            if action:
 
-                #NOTE: latin-1 is default http/1.1 encoding
-                header = key.decode('latin-1')
-                method = val.decode('latin-1')
+                json_response = \
+                    self.endpoints["http"][action](scope,request)
 
-                # Do some header processing here
-                if header == "sweetheart-action":
-                    
-                    json_response = \
-                        self.endpoints["http"][method](scope,request)
+                if json_response is not None:
+                    await json_response(scope,receive,send)
 
-                    if json_response is not None:
-                        await json_response(scope,receive,send)
-                        break
-    
     # --- --- Websocket processing --- ---
 
     def on_receive(self, message:dict) -> JSONMessage | None:

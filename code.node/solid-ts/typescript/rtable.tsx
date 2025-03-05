@@ -1,13 +1,17 @@
 import '../resources/tailwind.css'
-// import * as datasystem from './datasystem'
+import * as datasystem from './datasystem'
 import { For, Suspense, createResource } from 'solid-js'
 
 
 type DataRow = {
-  id: number
-  key: string
-  value: number
-  [key: string]: any // Index signature
+  id: number | string
+  [key: string]: string | number | null
+}
+
+type TableColumn = {
+  title: string
+  field: string
+  class?: string
 }
 
 function fakeColumns() { return [
@@ -24,30 +28,33 @@ function fakeData() { return [
     { id: 6, key: "six", value: 6 },
     { id: 7, key: "seven", value: 7 } ]}
 
+
 export const RtTable = () => {
   // Real-time Table Component
 
+  const target = "test.testtable"
+  const ws = new datasystem.WebSocket()
+
+  async function fetchData(): Promise<DataRow[]> {
+    // fetch data from http REST API
+    const params = new URLSearchParams({
+      database: target.split(".")?.[0],
+      table: target.split(".")?.[1]
+    })
+    return await fetch(
+      `http://localhost:8080/data?${params.toString()}`,
+      {
+        headers: { 
+          "accept": "application/json",
+          "sweetheart-action": "fetch.rest" }
+      })
+      .then(response => response.json())
+      .then(json => json.Ok)
+  }
+
   const columns = fakeColumns()
-  const [ data ] = createResource(fakeData)
-
-  // const target = "test.testtable"
-  // const ws = new datasystem.WebSocket()
-
-  // async function fetchData(): Promise<datasystem.DataRow[]> {
-  //   // allow fetching data from http REST API
-  //   const params = new URLSearchParams({
-  //     database: target.split(".")?.[0],
-  //     table: target.split(".")?.[1]
-  //   })
-  //   return await fetch(
-  //     `${datasystem.source("http")}?${params.toString()}`,
-  //     {
-  //       headers: { 
-  //         "accept": "application/json",
-  //         "sweetheart-action": "fetch.rest" }
-  //     }
-  //   ).then(response => response.json())
-  // }
+  // const [ data ] = createResource(fakeData)
+  const [ data ] = createResource(fetchData)
 
   return (
     <Suspense fallback={ <div>loading...</div> }>
@@ -55,7 +62,7 @@ export const RtTable = () => {
         <thead>
           <tr class="font-semibold bg-slate-300">
             <For each={columns}>
-              {(column) => (  
+              {(column: TableColumn) => (  
                 <th data-field={column.field}>
                   { column.title } </th> )}
             </For>
@@ -63,16 +70,16 @@ export const RtTable = () => {
         </thead>
         <tbody>
           <For each={data()}>
-            {(row:DataRow) => (
+            {(row: DataRow) => (
               <tr>
                 <For each={columns}>
-                  {(column) => (
+                  {(column: TableColumn) => (
                     <td
                       class={column.class}
                       data-rowid={row.id}
                       data-field={column.field}
                       onclick={evt => console.log(evt.target)}
-                    > {row[column.field]} </td> )}
+                    > { row[column.field] } </td> )}
                 </For>  
               </tr>
             )}

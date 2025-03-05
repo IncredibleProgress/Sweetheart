@@ -4,7 +4,7 @@ import { RtTable } from "./rtable"
 fetch("http://localhost:8080/data?table=testtable&database=test", {
 headers: { 
     "Accept": "application/json",
-    "Sweetheart-Action": "fetch.rest" }
+    "Sweetheart-Action": "fetch.test" }
 }).then(response => response.json())
 
 // render app for testing:

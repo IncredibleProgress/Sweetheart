@@ -1,17 +1,17 @@
 // Sweetheart Data System API
 
-// set data types:
-export interface DataRow {
-  id: string | null
-  [field: string]: string | number | null
-}
+// // set data types:
+// export interface DataRow {
+//   id: string | null
+//   [field: string]: string | number | null
+// }
 
 // set websocket connection:
 export class WebSocket extends window.WebSocket {
 
   constructor(url?: string) {
 
-    if (!url) { url= "http://localhost:8080/data" } // default
+    if (!url) { url= "ws://localhost:8080/data" } // default
     super(url)
 
     this.onmessage = (ev) => { this.on_message(ev) }

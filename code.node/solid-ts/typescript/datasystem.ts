@@ -14,7 +14,7 @@ export class WebSocket extends window.WebSocket {
     if (!url) { url= "ws://localhost:8080/data" } // default
     super(url)
 
-    this.onmessage = (ev) => { this.on_message(ev) }
+    this.onmessage = (evt) => { this.on_message(evt) }
     this.onopen = () => {console.log('WebSocket connection open')}
     this.onerror = () => {console.log('WebSocket connection error')}
     this.onclose = () => { alert('WebSocket connection closed') }
@@ -23,8 +23,8 @@ export class WebSocket extends window.WebSocket {
     // given for convenience
     super.send(JSON.stringify(data))
   }
-  on_message(ev: MessageEvent) {
-    const data = JSON.parse(ev.data)
+  on_message(evt: MessageEvent) {
+    const data = JSON.parse(evt.data)
     // ... do something with data
   }
 }

@@ -78,7 +78,7 @@ class HttpResponse(AsgiEndpoint):
             self.encoded_CORS_headers.append(allow_origin)
             self.encoded_headers.append(allow_origin)
 
-        #2. Handle method policy
+        #2. Handle methods policy
         if method in self.allow_methods:
             bmethods = self.allow_methods.encode("ascii")
             self.encoded_CORS_headers.append(
@@ -98,7 +98,7 @@ class HttpResponse(AsgiEndpoint):
             self.encoded_CORS_headers.append(
                 (b"access-control-max-age",bmax_age))
 
-        #FIXME: still to complete
+        #FIXME: to test and complete
     
     # def getHeaderValue(self,header:str): -> str | None:
     #     """ Get header value from encoded headers with ease. """
@@ -195,11 +195,11 @@ class JSONMessage:
             content: dict | list[dict],# json
             type: str = "text" ):
 
-        if self.type == "text":
+        if type == "text":
             self.bytes = None
             self.text = json.dumps(content)
 
-        elif self.type == "bytes":
+        elif type == "bytes":
             self.text = None
             #NOTE: content is here encoded as bytes
             self.bytes = json.dumps(content).encode()

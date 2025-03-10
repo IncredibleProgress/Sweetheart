@@ -172,8 +172,7 @@ class RethinkDB(Systemd):
         if not conn: conn = self.conn
 
         # Rest Api: PATCH
-        database,table = d["target"].split(".") #FIXME
-        r = self.r.table(table).get(d["id"])
+        r = self.r.table(d["table"]).get(d["id"])
         r.update({ d["name"]: d["value"] })
         r.run(conn)
 

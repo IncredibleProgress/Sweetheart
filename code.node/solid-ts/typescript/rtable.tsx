@@ -9,38 +9,37 @@ type DataRow = {
 }
 
 type TableColumn = {
-  title: string
-  field: string
+  header: string
+  fieldname: string
+  input?: string
   class?: string
+  hidden?: boolean
 }
 
 function fakeColumns() { return [
-  { title: "Id", field: "id", hidden: true },
-  { title: "Name", field: "key", class: "p-1 text-center" },
-  { title: "Value", field: "value", class: "p-1 text-center" } ]}
+  // { header: "Id", name: "id", hidden: true },
+  { header: "Name", fieldname: "key", class: "w-32 p-1 text-center" },
+  { header: "Value", fieldname: "value", class: "w-32 p-1 text-center" } ]}
 
-function fakeData() { return [
-    { id: 1, key: "one", value: 1 },
-    { id: 2, key: "two", value: 2 },
-    { id: 3, key: "three", value: 3 },
-    { id: 4, key: "four", value: 4 },
-    { id: 5, key: "five", value: 5 },
-    { id: 6, key: "six", value: 6 },
-    { id: 7, key: "seven", value: 7 } ]}
+// function fakeData() { return [
+//     { id: 1, key: "one", value: 1 },
+//     { id: 2, key: "two", value: 2 },
+//     { id: 3, key: "three", value: 3 },
+//     { id: 4, key: "four", value: 4 },
+//     { id: 5, key: "five", value: 5 },
+//     { id: 6, key: "six", value: 6 },
+//     { id: 7, key: "seven", value: 7 } ]}
 
 
 export const RtTable = () => {
   // Real-time Table Component
 
-  const target = "test.testtable"
+  const target = {table:"testtable"}
   const ws = new datasystem.WebSocket()
 
   async function fetchData(): Promise<DataRow[]> {
     // fetch data from http REST API
-    const params = new URLSearchParams({
-      database: target.split(".")?.[0],
-      table: target.split(".")?.[1]
-    })
+    const params = new URLSearchParams(target)
     return await fetch(
       `http://localhost:8080/data?${params.toString()}`,
       {
@@ -52,19 +51,56 @@ export const RtTable = () => {
       .then(json => json.Ok)
   }
 
+  function onDataClick(elt: HTMLTableCellElement) {
+
+    if (elt.querySelector("input")) {
+      // input already exists
+      return }
+    else {
+      // create input element
+      const input = document.createElement("input")
+      // 
+      input.value = elt.innerText
+      input.type = elt.dataset.input!
+      // 
+      input.oninput = () => {
+        // update or insert data in real-time
+        if (input.dataset.rowid !== "new") {
+          ws.send_json({
+            action: "ws.rest.PATCH",// update
+            table: target.table,
+            id: elt.dataset.rowid,
+            name: elt.dataset.fieldname,
+            value: input.value }) }
+        else {
+          ws.send_json({
+            action: "ws.rest.POST",// insert
+            table: target.table,
+            row: {[elt.dataset.fieldname!]:input.value} }) }
+      }
+      input.onblur = () => {
+        elt.innerText = input.value
+        input.remove()
+      }
+      // set html input element
+      elt.innerText = ""
+      elt.appendChild(input)
+      input.focus()
+    }
+  }
+
   const columns = fakeColumns()
   // const [ data ] = createResource(fakeData)
   const [ data ] = createResource(fetchData)
 
   return (
-    <Suspense fallback={ <div>loading...</div> }>
+    <Suspense fallback={ <div class="m-2">loading...</div> }>
       <table>
         <thead>
           <tr class="font-semibold bg-slate-300">
             <For each={columns}>
               {(column: TableColumn) => (  
-                <th data-field={column.field}>
-                  { column.title } </th> )}
+                <th>{ column.header }</th> )}
             </For>
           </tr>
         </thead>
@@ -76,10 +112,15 @@ export const RtTable = () => {
                   {(column: TableColumn) => (
                     <td
                       class={column.class}
+                      hidden={column.hidden}
+                      // style={{ display: column.hidden ? 'none' : null }}
+                      onclick={evt => onDataClick(evt.currentTarget)}
+                      // set data attributes
                       data-rowid={row.id}
-                      data-field={column.field}
-                      onclick={evt => console.log(evt.target)}
-                    > { row[column.field] } </td> )}
+                      data-fieldname={column.fieldname}
+                      data-input={ column.input || "text" }
+                    // set cell value
+                    > {row[column.fieldname]} </td> )}
                 </For>  
               </tr>
             )}

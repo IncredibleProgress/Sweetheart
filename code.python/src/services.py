@@ -5,7 +5,7 @@ from rethinkdb import RethinkDB as R
 from sweetheart.systemctl import Unit, Systemd
 
 from sweetheart.asgi3 import (
-    AsgiLifespanRouter, Route, DataHub, 
+    AsgiLifespanRouter, DataHub, Route, 
     Websocket, JSONResponse, JSONMessage )
 
 
@@ -146,38 +146,37 @@ class RethinkDB(Systemd):
 
         # set default connection
         if not conn: conn = self.conn
-
         # apply Rest Api: GET
         r = self.r.table(d["table"])
-        if d.get("filter"): r.filter(d["filter"])
+        if d.get("filter"): r = r.filter(d["filter"])
 
         # return result as tuple (status, value)
-        return "Ok", list(r.run(conn))
+        return "Ok",list(r.run(conn))
 
     def rql_INSERT(self, d:dict, conn=None) -> tuple:
 
         # set default connection
         if not conn: conn = self.conn
-
         # apply Rest Api: POST
-        r = self.r.table(d["table"]).insert(d["row"])
-        r.run(conn)
+        query = self.r.table(d["table"]).insert(d["row"]).run(conn)
 
         # return result as tuple (status, value)
-        return "Ok", None
+        if query["errors"]: return "Err",query["errors"]
+        elif query["inserted"]==1: return "Ok",None
+        else: return "Err","No data inserted"
             
     def rql_UPDATE(self, d:dict, conn=None) -> tuple:
 
         # set default connection
         if not conn: conn = self.conn
-
         # Rest Api: PATCH
-        r = self.r.table(d["table"]).get(d["id"])
-        r.update({ d["name"]: d["value"] })
-        r.run(conn)
-
+        query = self.r.table(d["table"]).get(d["id"])\
+            .update({ d["name"]: d["value"] }).run(conn)
+            
         # return result as tuple (status, value)
-        return "Ok", None
+        if query["errors"]: return "Err",query["errors"]
+        elif query["replaced"]==1: return "Ok",None
+        else: return "Err","No data updated"
 
     # def def ReQL_REPLACE(self,d:dict):
     #     # Rest Api: PUT

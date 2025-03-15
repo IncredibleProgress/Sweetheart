@@ -4,6 +4,7 @@ which provides Http and Websocket interfaces
 """
 
 import json
+from typing import Self
 from sweetheart.urllib import urlparse_qs
 from sweetheart import BaseConfig, ansi, echo, verbose
 
@@ -94,7 +95,7 @@ class HttpResponse(AsgiEndpoint):
         #4. Handle max-age policy
         if hasattr(self,"max_age"):
             assert type(self.max_age) is int
-            bmax_age = str(self.max_age).encode()
+            bmax_age = str(self.max_age).encode("latin-1")
             self.encoded_CORS_headers.append(
                 (b"access-control-max-age",bmax_age))
 
@@ -126,7 +127,8 @@ class HttpResponse(AsgiEndpoint):
 
         #! ASGI lowercases http headers
         #! ASGI uppercases http methods
-        gethd = lambda hd: dict(scope["headers"]).get(hd,b"")
+        request_headers = dict(scope["headers"]) # bytes
+        gethd = lambda hd: request_headers.get(hd,b"")
 
         if scope["method"] == "OPTIONS":
             # --- CORS Preflight Requests --- #
@@ -214,17 +216,29 @@ class JSONMessage:
     #     return self.bytes or self.text.encode()
 
     @staticmethod
-    def encode_from(promise: tuple[str, str|dict|list]):
+    def safer(promise:tuple, uuid:str=None) -> Self:
         """ Create encoded JSONMessage from promise. """
 
-        status, content = promise[0].capitalize(), promise[1]
-        assert status in ("Ok","Unsafe","Err")
-        return JSONMessage({ status: content }, type="bytes")
+        try:
+            content = promise[1]
+            status = promise[0].capitalize()
+            assert status in ("Ok","Err")
+
+        except KeyError:
+            raise AsgiRuntimeError(
+                "Promise must be tuple of (status,content).")
+
+        except AssertionError:
+            raise AsgiRuntimeError(
+                "Promise status must be 'Ok' or 'Err'.")
+        
+        return JSONMessage({ "uuid":uuid, status:content })
         
 
 class Websocket(AsgiEndpoint):
 
-    def on_receive(self,message:dict):
+    def on_receive(self,message:dict) -> JSONMessage | None:
+
         """ Hook for handling incoming messages, which must be implemented by instance.
         It should return a JSONMessage instance for sending to the client or None. """
 
@@ -302,17 +316,25 @@ class Route:
     def __init__(self,
         urlpath: str,
         endpoint: AsgiEndpoint,
-        methods: list[str] = ["GET"] ):
+        methods: str | list[str] = "GET" ):
 
         self.path = urlpath
         self.endpoint = endpoint
-        self.methods = [m.upper() for m in methods]
 
-        # set relevant CORS headers for the endpoint
-        assert hasattr(endpoint,"allow_methods")
-        endpoint.allow_methods = ", ".join(self.methods)
+        # set CORS headers for the endpoint
 
+        if isinstance(methods,str):
+            #NOTE: , separated methods exoected
+            endpoint.allow_methods = methods.upper()
 
+        elif isinstance(methods,list):
+            endpoint.allow_methods = ", ".join(
+                [m.upper() for m in methods] )
+
+        else: raise ValueError(
+            "Route methods must be str or list of str.")
+
+        
 class AsgiLifespanRouter:
     """ Implement ASGI lifespan providing a simple router. """
 
@@ -361,15 +383,16 @@ class AsgiLifespanRouter:
             await route.endpoint(scope,receive,send)
 
 
-class DataHub(AsgiEndpoint):
+class DataHub(Route,AsgiEndpoint):
 
-    def __init__(self, urlpath, datasystem):
+    def __init__(self,urlpath,datasystem):
         """ Ensure data exchanges with given datasystem. """
 
         # set Route-like signature
-        self.path = urlpath
-        self.endpoint = self
-        self.methods = ['GET','POST','PATCH','PUT','DELETE']
+        super().__init__(
+            urlpath,
+            endpoint = self,# AsgiEndpoint
+            methods = "GET, POST, PATCH, PUT, DELETE" )
 
         # init given data service
         datasystem.connect()
@@ -381,26 +404,23 @@ class DataHub(AsgiEndpoint):
 
         # set Http and Websocket methods
         self.endpoints = {
-
             "http": {
                 "fetch.test": self.fetch_TEST,
                 "fetch.rest": self.fetch_REST },
-
             "websocket": {
                 "ws.reql": self.ws_ReQL,
                 "ws.rest.GET": self.ws_REST,
                 "ws.rest.POST": self.ws_REST,
                 "ws.rest.PATCH": self.ws_REST }}
     
-    # --- --- Dedicated Asgi/3 endpoint --- ---
+    # --- --- Dedicated Asgi/3 endpoint --- --- #
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self,scope,receive,send):
         """ Handle HTTP and WebSocket connections. """
 
         if scope["type"] == "websocket":
             # redirect to Websocket instance
             # which calls on_receive() given hereafter
-
             await self.websocket(scope,receive,send)
         
         elif scope["type"] == "http":
@@ -416,15 +436,15 @@ class DataHub(AsgiEndpoint):
 
             if action:
 
-                json_response = \
+                json_response =\
                     self.endpoints["http"][action](scope,request)
 
                 if json_response is not None:
                     await json_response(scope,receive,send)
 
-    # --- --- Websocket processing --- ---
+    # --- --- Websocket processing --- --- #
 
-    def on_receive(self, message:dict) -> JSONMessage | None:
+    def on_receive(self,message:dict) -> JSONMessage | None:
         """ Handle incoming Asgi/3 WebSocket messages. """
         
         if message.get("text"):
@@ -440,31 +460,30 @@ class DataHub(AsgiEndpoint):
             # redirect to dedicated websocket action
             return self.endpoints["websocket"][data["action"]](data)
 
-        else: return JSONMessage.encode_from(
-            ("Err", "Invalid websocket action.") )
+        else: return JSONMessage({"Err":"Invalid websocket action."})
 
-    def ws_ReQL(self, data:dict) -> JSONMessage:
+    def ws_ReQL(self,data:dict) -> JSONMessage:
         """ Execute any RethinkDB query from WebSocket. """
 
-        #FIXME: available only for development mode
+        #FIXME: available for development only
         assert os.getenv("SWS_OPERATING_STATE") == "development"
 
-        status, value = self.datasystem.rql_expr(data["query"])
-        return JSONMessage.encode_from((status, value))
+        message: tuple = self.datasystem.rql_expr(data["query"])
+        return JSONMessage.safer(message,data.get("uuid"))
 
-    def ws_REST(self, data:dict) -> JSONMessage:
+    def ws_REST(self,data:dict) -> JSONMessage:
         """ Hook which handle RESTful API from WebSocket. """ 
 
-        method = data["action"][8:].upper()# ws.rest.get -> GET 
-        promise = self.datasystem.restapi[method](data)
-        return JSONMessage.encode_from(promise)
+        method = data["action"][8:].upper() # ws.rest.get -> GET 
+        message: tuple = self.datasystem.restapi[method](data)
+        if message == ("Ok",None): return None # no message to send back
+        return JSONMessage.safer(message,data.get("uuid"))
 
-    # --- --- Http processing --- ---
+    # --- --- Http processing --- --- #
 
     def fetch_TEST(self,scope,request):
         """ Handle test action from Http. """
-
-        return JSONResponse({ "test": "ok" })
+        return JSONResponse({"test":"ok"})
 
     def fetch_REST(self,scope,request):
         """ Handle RESTful API from Http. """
@@ -475,12 +494,12 @@ class DataHub(AsgiEndpoint):
                 #! this assumes query_string is utf-8 encoded
                 query: str = "?"+scope["query_string"].decode()
                 data: dict = urlparse_qs(query,strict_parsing=True)
-                status, value = self.datasystem.restapi["GET"](data)
+                status,value = self.datasystem.restapi["GET"](data)
                 return JSONResponse({ status: value })
 
             case "PATCH":
                 data: dict = json.loads(request["body"])
-                status, value = self.datasystem.restapi["PATCH"](data)
+                status,value = self.datasystem.restapi["PATCH"](data)
                 assert (status,value) == ("Ok",None) #FIXME
                 return JSONResponse({ status: value })
 
@@ -489,7 +508,7 @@ class DataHub(AsgiEndpoint):
 
             case "POST":
                 data: dict = json.loads(request["body"])
-                status, value = self.datasystem.restapi["POST"](data)
+                status,value = self.datasystem.restapi["POST"](data)
                 assert (status,value) == ("Ok",None) #FIXME
                 return JSONResponse({ status: value })
 

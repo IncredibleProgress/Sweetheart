@@ -16,19 +16,10 @@ type TableColumn = {
   hidden?: boolean
 }
 
-function fakeColumns() { return [
+const columns: TableColumn[] =  [
   // { header: "Id", name: "id", hidden: true },
   { header: "Name", fieldname: "key", class: "w-32 p-1 text-center" },
-  { header: "Value", fieldname: "value", class: "w-32 p-1 text-center" } ]}
-
-// function fakeData() { return [
-//     { id: 1, key: "one", value: 1 },
-//     { id: 2, key: "two", value: 2 },
-//     { id: 3, key: "three", value: 3 },
-//     { id: 4, key: "four", value: 4 },
-//     { id: 5, key: "five", value: 5 },
-//     { id: 6, key: "six", value: 6 },
-//     { id: 7, key: "seven", value: 7 } ]}
+  { header: "Value", fieldname: "value", class: "w-32 p-1 text-center" } ]
 
 
 export const RtTable = () => {
@@ -37,22 +28,10 @@ export const RtTable = () => {
   const target = {table:"testtable"}
   const ws = new datasystem.WebSocket()
 
-  async function fetchData(): Promise<DataRow[]> {
-    // fetch data from http REST API
-    const params = new URLSearchParams(target)
-    return await fetch(
-      `http://localhost:8080/data?${params.toString()}`,
-      {
-        headers: { 
-          "accept": "application/json",
-          "sweetheart-action": "fetch.rest" }
-      })
-      .then(response => response.json())
-      .then(json => json.Ok)
-  }
+  const [ data ] = createResource(
+    () => ws.fetch_table(target.table) as Promise<DataRow[]> )
 
   function onDataClick(elt: HTMLTableCellElement) {
-
     if (elt.querySelector("input")) {
       // input already exists
       return }
@@ -65,7 +44,7 @@ export const RtTable = () => {
       // 
       input.oninput = () => {
         // update or insert data in real-time
-        if (input.dataset.rowid !== "new") {
+        if (input.dataset.rowid !== "NEW") {
           ws.send_json({
             action: "ws.rest.PATCH",// update
             table: target.table,
@@ -88,10 +67,6 @@ export const RtTable = () => {
       input.focus()
     }
   }
-
-  const columns = fakeColumns()
-  // const [ data ] = createResource(fakeData)
-  const [ data ] = createResource(fetchData)
 
   return (
     <Suspense fallback={ <div class="m-2">loading...</div> }>
@@ -130,3 +105,29 @@ export const RtTable = () => {
     </Suspense>
   )
 }
+
+
+// --- --- legacy code below --- --- //
+
+// function fakeData() { return [
+//     { id: 1, key: "one", value: 1 },
+//     { id: 2, key: "two", value: 2 },
+//     { id: 3, key: "three", value: 3 },
+//     { id: 4, key: "four", value: 4 },
+//     { id: 5, key: "five", value: 5 },
+//     { id: 6, key: "six", value: 6 },
+//     { id: 7, key: "seven", value: 7 } ]}
+
+// async function fetchData(): Promise<DataRow[]> {
+  //   // fetch data from http REST API
+  //   const params = new URLSearchParams(target)
+  //   return await fetch(
+  //     `http://localhost:8080/data?${params.toString()}`,
+  //     {
+  //       headers: { 
+  //         "accept": "application/json",
+  //         "sweetheart-action": "fetch.rest" }
+  //     })
+  //     .then(response => response.json())
+  //     .then(json => json.Ok)
+  // }

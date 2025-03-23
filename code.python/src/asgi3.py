@@ -5,6 +5,7 @@ which provides Http and Websocket interfaces
 
 import json
 from typing import Self
+from sweetheart.subprocess import os
 from sweetheart.urllib import urlparse_qs
 from sweetheart import BaseConfig, ansi, echo, verbose
 
@@ -87,7 +88,7 @@ class HttpResponse(AsgiEndpoint):
 
         #3. Handle headers policy
         if headers and hasattr(self,"allow_headers") \
-        and all([h.strip() in self.allow_headers for h in header.split(",")]):
+        and all([h.strip() in self.allow_headers for h in headers.split(",")]):
             bheaders = self.allow_headers.encode("latin-1")
             self.encoded_CORS_headers.append(
                 (b"access-control-allow-headers",bheaders))
@@ -409,9 +410,9 @@ class DataHub(Route,AsgiEndpoint):
                 "fetch.rest": self.fetch_REST },
             "websocket": {
                 "ws.reql": self.ws_ReQL,
-                "ws.rest.GET": self.ws_REST,
-                "ws.rest.POST": self.ws_REST,
-                "ws.rest.PATCH": self.ws_REST }}
+                "ws.rest.GET": self.ws_REST, "ws.rest.get": self.ws_REST,
+                "ws.rest.POST": self.ws_REST, "ws.rest.post": self.ws_REST,
+                "ws.rest.PATCH": self.ws_REST, "ws.rest.patch": self.ws_REST }}
     
     # --- --- Dedicated Asgi/3 endpoint --- --- #
 
@@ -458,7 +459,7 @@ class DataHub(Route,AsgiEndpoint):
 
         if data.get("action") in self.endpoints["websocket"]:
             # redirect to dedicated websocket action
-            return self.endpoints["websocket"][data["action"]](data)
+            return self.endpoints["websocket"][data["action"]](data) #!
 
         else: return JSONMessage({"Err":"Invalid websocket action."})
 
@@ -474,10 +475,10 @@ class DataHub(Route,AsgiEndpoint):
     def ws_REST(self,data:dict) -> JSONMessage:
         """ Hook which handle RESTful API from WebSocket. """ 
 
-        method = data["action"][8:].upper() # ws.rest.get -> GET 
+        method = data["action"][8:].upper() # ws.rest.get -> GET
         message: tuple = self.datasystem.restapi[method](data)
         if message == ("Ok",None): return None # no message to send back
-        return JSONMessage.safer(message,data.get("uuid"))
+        return JSONMessage.safer(message,uuid=data.get("uuid"))
 
     # --- --- Http processing --- --- #
 

@@ -3,10 +3,22 @@
 // set websocket connection:
 export class WebSocket extends window.WebSocket {
 
-  constructor(url?: string) {
+  connectDB: { 
+    database?: string,
+    table: string,
+    user?: string, //FIXME
+    password?: string, //FIXME
+  }
 
-    if (!url) { url= "ws://localhost:8080/data" } // default
-    super(url)
+  constructor(url?: string, table?: string) {
+
+    url= url || "ws://localhost:8080/data"
+    super(url,["json"]) // set sub-protocols to json
+
+    this.connectDB = {
+      database: "test", // default
+      table: table || "testtable" // default
+    } 
 
     // this.onmessage must be implemented by the user
     this.onopen = () => {console.log("WebSocket connection open.")}
@@ -51,11 +63,48 @@ export class WebSocket extends window.WebSocket {
           this.addEventListener("message",messageHandler)
           this.send_json({
             uuid: request_uuid,
-            action: "ws.rest.GET",
+            action: "ws.rest.get",
             table: table }) })
         .catch((err) => { 
           clearTimeout(timeoutId)
           reject(err) })
     })
+  }
+  editValue(elt: HTMLTableCellElement, className?: string) {
+    if (elt.querySelector("input")) {
+      // input already exists, do nothing
+      return }
+    else {
+      // create input element, for editing
+      const input = document.createElement("input")
+      // 
+      input.value = elt.innerText
+      input.type = elt.dataset.input!
+      input.className = className || ""
+      // 
+      input.oninput = () => {
+        // update or insert data in real-time
+        if (input.dataset.rowid == "TO INSERT") {
+          this.send_json({
+            action: "ws.rest.post",// insert
+            table: this.connectDB.table,
+            row: {[elt.dataset.fieldname!]:input.value} }) }
+        else {
+          this.send_json({
+            action: "ws.rest.patch",// update
+            table: this.connectDB.table,
+            id: elt.dataset.rowid,
+            name: elt.dataset.fieldname,
+            value: input.value }) }
+      }
+      input.onblur = () => {
+        elt.innerText = input.value
+        input.remove()
+      }
+      // set html input element
+      elt.innerText = ""
+      elt.appendChild(input)
+      input.focus()
+    }
   }
 }

@@ -26,7 +26,7 @@ class BaseConfig(UserDict):
         self.data = {
         #1. General Settings:
 
-            # NotImplemented yet
+            "allow_databases": ["test"],
 
         #2. Systemd Services Settings:
 

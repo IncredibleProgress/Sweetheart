@@ -78,7 +78,7 @@ if __name__ == "__main__":
     cli.set_function(_command_init)
 
 
-    # Execute Sweetheart Command Line Arguments
+    # --- Execute Sweetheart Command Line Arguments ---
     # process given arguments and apply the related function
 
     argv = cli.set_parser()

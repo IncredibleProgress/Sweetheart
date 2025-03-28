@@ -5,20 +5,19 @@ export class WebSocket extends window.WebSocket {
 
   connectDB: { 
     database?: string,
-    table: string,
+    table: string | undefined,
     user?: string, //FIXME
     password?: string, //FIXME
   }
 
-  constructor(url?: string, table?: string) {
+  constructor(url?: string, db?: string) {
 
     url= url || "ws://localhost:8080/data"
-    super(url,["json"]) // set sub-protocols to json
+    super(url,"json") // set json sub-protocol
 
     this.connectDB = {
-      database: "test", // default
-      table: table || "testtable" // default
-    } 
+      database: db || "test", // default
+      table: undefined, }
 
     // this.onmessage must be implemented by the user
     this.onopen = () => {console.log("WebSocket connection open.")}
@@ -43,7 +42,7 @@ export class WebSocket extends window.WebSocket {
         this.addEventListener("error",()=>{ reject(false) },{once:true})
       } })
   }
-  fetch_table(table: string) {
+  fetchTable(table: string) {
     return new Promise((resolve, reject) => {
 
       const timeoutId = setTimeout(() => { reject(
@@ -60,11 +59,13 @@ export class WebSocket extends window.WebSocket {
 
       this.waitForConnection()
         .then(() => {
+          this.connectDB.table = table
           this.addEventListener("message",messageHandler)
           this.send_json({
             uuid: request_uuid,
             action: "ws.rest.get",
-            table: table }) })
+            table: this.connectDB.table,
+            database: this.connectDB.database }) })
         .catch((err) => { 
           clearTimeout(timeoutId)
           reject(err) })

@@ -262,22 +262,26 @@ class Websocket(AsgiEndpoint):
     async def __call__(self,scope,receive,send):
         """ Handle WebSocket connections. """
 
-        self.scope = scope
-        self.send = send
+        # self.scope = scope
+        # self.send = send
 
         try:
             super().ensure_versions(scope)
             assert scope["type"] == "websocket"
+            assert list(scope["subprotocols"]) == ["json"]
 
             # Wait for the WebSocket connect message
             message = await receive()
             assert message["type"] == "websocket.connect"
         
         except:
-            raise AsgiRuntimeError("Websocket failed")
+            raise AsgiRuntimeError(
+                "Websocket connection failed.")
         
         # Send WebSocket accept message
-        await send({"type": "websocket.accept"})
+        await send({
+            "type": "websocket.accept",
+            "subprotocol": "json" })
 
         while True:
             message = await receive()
@@ -298,16 +302,17 @@ class Websocket(AsgiEndpoint):
                     pass
 
                 else: raise ValueError(
-                    "on_receive() must return JSONMessage instance or None")
+                    "Function on_receive() must return JSONMessage instance or None.")
                 
             elif message["type"] == "websocket.disconnect":
                 # close WebSocket when required
                 await send({"type": "websocket.close"})
                 break
         
-    async def __del__(self):
-        #FIXME: ensure WebSocket is closed
-        await self.send({"type": "websocket.close"})
+    # async def __del__(self):
+    #     await self.send({
+    #         "type": "websocket.close", "code": 1011,
+    #         "reason": "WebSocket instance deleted at server side." })
 
 
 class Route:
@@ -322,7 +327,7 @@ class Route:
         self.path = urlpath
         self.endpoint = endpoint
 
-        # set CORS headers for the endpoint
+        # set CORS headers for the endpoint:
 
         if isinstance(methods,str):
             #NOTE: , separated methods exoected
@@ -340,14 +345,17 @@ class AsgiLifespanRouter:
     """ Implement ASGI lifespan providing a simple router. """
 
     def __init__(self,
+        # intends to ensure some consistency with Starlette
             routes: list = [],
             debug: bool = BaseConfig.debug,
-            middelware: list = [] ):
+            middelware: list[tuple] | None = [] ):
         
-        self.debug = debug #FIXME
         self.routes = routes
+        self.middelware = middelware or []
+        self.middelware.append(("debug",debug))
 
     async def __call__(self,scope,receive,send):
+        #FIXME: should use asynccontextmanager
 
         if scope["type"] == "lifespan":
 
@@ -356,19 +364,25 @@ class AsgiLifespanRouter:
 
                 if message["type"] == "lifespan.startup":
 
+                    middelware = dict(self.middelware)
+                    startup = middelware.pop("lifespan.startup",None)
+                    shutdown = middelware.pop("lifespan.shutdown",None)
+
+                    scope["status"] = middelware # remaining entries
+
                     try:
-                        # assert scope["state"] #FIXME
-                        # Do some startup here, provided by middleware
+                        #NOTE: startup() must return tuple of (scope,receive,send)
+                        if startup: scope,receive,send = startup(scope,receive,send)
                         await send({ "type": "lifespan.startup.complete" })
 
                     except:
                         await send({
                             "type": "lifespan.startup.failed",
-                            "message": "missing state starting lifespan" })
+                            "message": "ASGI lifespan startup failed." })
                         
                 elif message["type"] == "lifespan.shutdown":
-
-                    # Do some shutdown here, provided by middleware
+                    
+                    if shutdown: shutdown(status=scope["status"])
                     await send({ "type": "lifespan.shutdown.complete" })
                     break
 
@@ -378,9 +392,13 @@ class AsgiLifespanRouter:
             # this implements here a predictable basic router concept
             # which provides the first match found for the given path
 
-            route = list( filter(
-                lambda route: route.path == scope["path"], self.routes))[0]
+            try: 
+                route = list( filter(
+                    lambda route: route.path == scope["path"], self.routes))[0]
             
+            except IndexError: raise AsgiRuntimeError(
+                f"No route found for {scope["path"]} in AsgiLifespanRouter.")
+
             await route.endpoint(scope,receive,send)
 
 
@@ -395,8 +413,7 @@ class DataHub(Route,AsgiEndpoint):
             endpoint = self,# AsgiEndpoint
             methods = "GET, POST, PATCH, PUT, DELETE" )
 
-        # init given data service
-        datasystem.connect()
+        # set related data system
         self.datasystem = datasystem
         
         # set Websocket instance and its receiver
@@ -470,7 +487,7 @@ class DataHub(Route,AsgiEndpoint):
         assert os.getenv("SWS_OPERATING_STATE") == "development"
 
         message: tuple = self.datasystem.rql_expr(data["query"])
-        return JSONMessage.safer(message,data.get("uuid"))
+        return JSONMessage.safer(message,uuid=data.get("uuid"))
 
     def ws_REST(self,data:dict) -> JSONMessage:
         """ Hook which handle RESTful API from WebSocket. """ 
@@ -484,7 +501,7 @@ class DataHub(Route,AsgiEndpoint):
 
     def fetch_TEST(self,scope,request):
         """ Handle test action from Http. """
-        return JSONResponse({"test":"ok"})
+        return JSONResponse({ "test": "ok" })
 
     def fetch_REST(self,scope,request):
         """ Handle RESTful API from Http. """

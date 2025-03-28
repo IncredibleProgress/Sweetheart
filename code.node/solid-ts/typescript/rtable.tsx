@@ -18,64 +18,74 @@ type TableColumn = {
 
 const columns: TableColumn[] =  [
   // { header: "Id", name: "id", hidden: true },
-  { header: "Name", fieldname: "key", class: "w-32 p-1 text-center" },
-  { header: "Value", fieldname: "value", class: "w-32 p-1 text-center" } ]
+  { header: "Name", fieldname: "key", class: "w-32 p-1 border text-center" },
+  { header: "Value", fieldname: "value", class: "w-32 p-1 border text-center" } 
+]
+
+const twcss = {
+  // table: "border-collapse w-full",
+  data: "border border-white",
+  handler: "w-4 border border-white text-xs text-gray-400 text-center bg-gray-200",
+  header: "border border-white font-semibold bg-gray-200",
+  input: "p-1 focus:outline-2 focus:outline-pink-400" 
+}
 
 
-export const RtTable = () => {
+export const RtTable = (table: string = "testtable") => {
   // Real-time Table Component
 
-  const target = {table:"testtable"}
   const ws = new datasystem.WebSocket()
-
+  
   const [ data ] = createResource(
-    () => ws.fetch_table(target.table) as Promise<DataRow[]> )
+    () => ws.fetchTable(table) as Promise<DataRow[]> )
 
-  function onDataClick(elt: HTMLTableCellElement) {
-    if (elt.querySelector("input")) {
-      // input already exists
-      return }
-    else {
-      // create input element
-      const input = document.createElement("input")
-      // 
-      input.value = elt.innerText
-      input.type = elt.dataset.input!
-      // 
-      input.oninput = () => {
-        // update or insert data in real-time
-        if (input.dataset.rowid !== "NEW") {
-          ws.send_json({
-            action: "ws.rest.PATCH",// update
-            table: target.table,
-            id: elt.dataset.rowid,
-            name: elt.dataset.fieldname,
-            value: input.value }) }
-        else {
-          ws.send_json({
-            action: "ws.rest.POST",// insert
-            table: target.table,
-            row: {[elt.dataset.fieldname!]:input.value} }) }
-      }
-      input.onblur = () => {
-        elt.innerText = input.value
-        input.remove()
-      }
-      // set html input element
-      elt.innerText = ""
-      elt.appendChild(input)
-      input.focus()
-    }
-  }
+  // function onDataClick(elt: HTMLTableCellElement) {
+  //   if (elt.querySelector("input")) {
+  //     // input already exists
+  //     return }
+  //   else {
+  //     // create input element
+  //     const input = document.createElement("input")
+  //     // 
+  //     input.value = elt.innerText
+  //     input.type = elt.dataset.input!
+  //     input.className = twcss.input
+  //     // 
+  //     input.oninput = () => {
+  //       // update or insert data in real-time
+  //       if (input.dataset.rowid == "NEW") {
+  //         ws.send_json({
+  //           action: "ws.rest.POST",// insert
+  //           table: target.table,
+  //           row: {[elt.dataset.fieldname!]:input.value} }) }
+  //       else {
+  //         ws.send_json({
+  //           action: "ws.rest.PATCH",// update
+  //           table: target.table,
+  //           id: elt.dataset.rowid,
+  //           name: elt.dataset.fieldname,
+  //           value: input.value }) } 
+  //     }
+  //     input.onblur = () => {
+  //       elt.innerText = input.value
+  //       input.remove()
+  //     }
+  //     // set html input element
+  //     elt.innerText = ""
+  //     elt.appendChild(input)
+  //     input.focus()
+  //   }
+  // }
 
   return (
     <Suspense fallback={ <div class="m-2">loading...</div> }>
       <table>
         <thead>
-          <tr class="font-semibold bg-slate-300">
-            <For each={columns}>
+          <tr>
+            <th class={ twcss.header }></th>
+            <For each={ columns }>
               {(column: TableColumn) => (  
-                <th>{ column.header }</th> )}
+                <th class={ twcss.header }>{ column.header }</th> )}
             </For>
           </tr>
         </thead>
@@ -83,19 +93,24 @@ export const RtTable = () => {
           <For each={data()}>
             {(row: DataRow) => (
               <tr>
-                <For each={columns}>
+                <td 
+                  class={ twcss.handler }
+                  data-rowid={ row.id }
+                  // oncontextmenu={evt => onContextMenu(evt.currentTarget)}
+                ></td>
+                <For each={ columns }>
                   {(column: TableColumn) => (
                     <td
-                      class={column.class}
-                      hidden={column.hidden}
+                      class={ column.class }
+                      hidden={ column.hidden }
                       // style={{ display: column.hidden ? 'none' : null }}
-                      onclick={evt => onDataClick(evt.currentTarget)}
+                      ondblclick={evt => ws.editValue(evt.currentTarget)}
                       // set data attributes
-                      data-rowid={row.id}
-                      data-fieldname={column.fieldname}
+                      data-rowid={ row.id }
+                      data-fieldname={ column.fieldname }
                       data-input={ column.input || "text" }
                     // set cell value
-                    > {row[column.fieldname]} </td> )}
+                    >{ row[column.fieldname] }</td> )}
                 </For>  
               </tr>
             )}

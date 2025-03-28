@@ -11,7 +11,7 @@ from sweetheart.asgi3 import (
 
 class WebappServer(Unit):
 
-    def __init__(self, config: BaseConfig ):
+    def __init__(self, config:BaseConfig):
         
         self.data = []
         self.config = config
@@ -95,19 +95,21 @@ config = set_config({{
 
 class RethinkDB(Systemd):
 
-    def __init__(self,
-            config: BaseConfig = None ):
+    def __init__(self, config:BaseConfig=None):
         
         if config is None:
             # get config from WebappServer
             config = WebappServer._config_
 
-        self.r = R()
-        self.rconfig: dict = config["rethinkdb"]
-        #NOTE: rconfig contains rethinkdb cli options
+        # set default config for single instance
+        self.rconfig: dict = config["rethinkdb"] # cli options
+        self.allow_databases: list = config["allow_databases"]
+
+        # self.r = R()
+        # self.rdb = lambda dbname: self.r.db(dbname)
 
         self.restapi = {
-            #NOTE: methods are uppercased
+            #NOTE: methods uppercased
             "GET": self.rql_FILTER,
             "POST": self.rql_INSERT,
             "PATCH": self.rql_UPDATE,
@@ -115,39 +117,60 @@ class RethinkDB(Systemd):
             # "DELETE": self.rql_DELETE
         }
 
-    def connect(self, options={}):
+    def connect(self, settings={}):
 
         """ Start new connection to RethinkDB server,
-            options override settings from the app config. """
+            settings override settings given by app config. """
 
+        # set default settings
+        default_db = "test"
+        default_host = "localhost"
+
+        # set connection settings
+        #NOTE: db must be provided in settings
         kwargs = dict(
-            #NOTE: rethinkdb set default db="test"
-            host = "localhost",
-            port = self.rconfig["driver-port"] )
+            host = default_host,
+            port = self.rconfig["driver-port"],
+            db = settings["db"] or default_db )
 
-        kwargs.update(options)
+        kwargs.update(settings)
+        assert kwargs["db"] in self.allow_databases # safer
+
+        # connect to RethinkDB server
+        if not hasattr(self,"r"): self.r = R()
         connect = self.r.connect(**kwargs)
 
-        # keep first connection as the default one
-        if not hasattr(self,"conn"): self.conn = connect
-
+        if not hasattr(self,"conn"):
+            #NOTE: keep 1st connection as attribute
+            self.conn = connect
+            
         return connect
 
-    def rql_expr(self, query:str, conn=None) -> tuple:
-        """ Run any given RethinkDB query. """
+    # def rql_expr(self, query:str, conn=None) -> tuple:
+    #     """ Run any given RethinkDB query. """
 
-        # set default connection
-        if not conn: conn = self.conn
-
-        # return result as tuple (status, value)
-        return "Ok", self.r.expr(query).run(conn)
+    #     # set default connection
+    #     if not conn: conn = self.conn
+    #     # return result as tuple (status, value)
+    #     return "Ok", self.r.expr(query).run(conn) #FIXME
 
     def rql_FILTER(self, d:dict, conn=None) -> tuple:
 
-        # set default connection
-        if not conn: conn = self.conn
+        if conn is None:
+            conn = getattr(self,"conn",
+                # default: self.conn  = first connection
+                # this assumes FILTER is used for fetching data
+                # when None, default 'db' is provided in self.connect()
+                self.connect({ "db": d.get("database",None) }) )
+
+        if d.get("database"):
+            assert d["database"] in self.allow_databases
+            r = self.r.db(d["database"])
+        else:
+            r = self.r # default db
+                
         # apply Rest Api: GET
-        r = self.r.table(d["table"])
+        r = r.table(d["table"])
         if d.get("filter"): r = r.filter(d["filter"])
 
         # return result as tuple (status, value)
@@ -156,9 +179,17 @@ class RethinkDB(Systemd):
     def rql_INSERT(self, d:dict, conn=None) -> tuple:
 
         # set default connection
-        if not conn: conn = self.conn
+        if conn is None:
+            conn = self.conn
+
+        if d.get("database"):
+            assert d["database"] in self.allow_databases
+            r = self.r.db(d["database"])
+        else:
+            r = self.r # default db
+
         # apply Rest Api: POST
-        query = self.r.table(d["table"]).insert(d["row"]).run(conn)
+        query = r.table(d["table"]).insert(d["row"]).run(conn)
 
         # return result as tuple (status, value)
         if query["errors"]: return "Err",query["errors"]
@@ -168,9 +199,17 @@ class RethinkDB(Systemd):
     def rql_UPDATE(self, d:dict, conn=None) -> tuple:
 
         # set default connection
-        if not conn: conn = self.conn
+        if conn is None:
+            conn = self.conn
+
+        if d.get("database"):
+            assert d["database"] in self.allow_databases
+            r = self.r.db(d["database"])
+        else:
+            r = self.r # default db
+
         # Rest Api: PATCH
-        query = self.r.table(d["table"]).get(d["id"])\
+        query = r.table(d["table"]).get(d["id"]) \
             .update({ d["name"]: d["value"] }).run(conn)
             
         # return result as tuple (status, value)

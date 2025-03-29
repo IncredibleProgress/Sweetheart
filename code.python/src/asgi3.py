@@ -427,9 +427,9 @@ class DataHub(Route,AsgiEndpoint):
                 "fetch.rest": self.fetch_REST },
             "websocket": {
                 "ws.reql": self.ws_ReQL,
-                "ws.rest.GET": self.ws_REST, "ws.rest.get": self.ws_REST,
-                "ws.rest.POST": self.ws_REST, "ws.rest.post": self.ws_REST,
-                "ws.rest.PATCH": self.ws_REST, "ws.rest.patch": self.ws_REST }}
+                "ws.rest.get": self.ws_REST,
+                "ws.rest.post": self.ws_REST,
+                "ws.rest.patch": self.ws_REST }}
     
     # --- --- Dedicated Asgi/3 endpoint --- --- #
 
@@ -450,7 +450,7 @@ class DataHub(Route,AsgiEndpoint):
 
             action = dict(scope["headers"])\
                 .get(b"sweetheart-action",b"")\
-                .decode('latin-1')
+                .decode('latin-1').lower()
 
             if action:
 
@@ -476,7 +476,8 @@ class DataHub(Route,AsgiEndpoint):
 
         if data.get("action") in self.endpoints["websocket"]:
             # redirect to dedicated websocket action
-            return self.endpoints["websocket"][data["action"]](data) #!
+            action = data["action"].lower()
+            return self.endpoints["websocket"][action](data) #!
 
         else: return JSONMessage({"Err":"Invalid websocket action."})
 
@@ -501,7 +502,7 @@ class DataHub(Route,AsgiEndpoint):
 
     def fetch_TEST(self,scope,request):
         """ Handle test action from Http. """
-        return JSONResponse({ "test": "ok" })
+        return JSONResponse({ "Test": "Ok" })
 
     def fetch_REST(self,scope,request):
         """ Handle RESTful API from Http. """

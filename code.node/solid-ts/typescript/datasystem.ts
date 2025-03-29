@@ -85,7 +85,7 @@ export class WebSocket extends window.WebSocket {
       // 
       input.oninput = () => {
         // update or insert data in real-time
-        if (input.dataset.rowid == "TO INSERT") {
+        if (input.dataset.rowid == "NEW_DATA") {
           this.send_json({
             action: "ws.rest.post",// insert
             table: this.connectDB.table,

@@ -2,6 +2,18 @@ import '../resources/tailwind.css'
 import * as datasystem from './datasystem'
 import { For, Suspense, createResource } from 'solid-js'
 
+// TailwindCss classes
+// https://play.tailwindcss.com
+
+const tw = {
+  handler: "w-4 border border-white bg-gray-200",// row handler
+  header: "border border-white font-semibold bg-gray-200",
+  data: "w-32 p-1 border text-center",// default cell class
+  input: "w-32 px-1 focus:outline-2 focus:outline-pink-400" 
+}
+
+// Data types and columns settings
+// https://www.typescriptlang.org/docs/handbook/2/everyday-types.html
 
 type DataRow = {
   id: number | string
@@ -12,89 +24,43 @@ type TableColumn = {
   header: string
   fieldname: string
   input?: string
-  class?: string
+  class?: string  // TwCss cell class
+  iclass?: string // TwCss input class
   hidden?: boolean
 }
 
 const columns: TableColumn[] =  [
   // { header: "Id", name: "id", hidden: true },
-  { header: "Name", fieldname: "key", class: "w-32 p-1 border text-center" },
-  { header: "Value", fieldname: "value", class: "w-32 p-1 border text-center" } 
+  { header: "Name", fieldname: "key", class: tw.data, iclass: tw.input },
+  { header: "Value", fieldname: "value", class: tw.data, iclass: tw.input } 
 ]
 
-const twcss = {
-  // table: "border-collapse w-full",
-  data: "border border-white",
-  handler: "w-4 border border-white text-xs text-gray-400 text-center bg-gray-200",
-  header: "border border-white font-semibold bg-gray-200",
-  input: "p-1 focus:outline-2 focus:outline-pink-400" 
-}
-
+// Real-time Table Component
+// https://docs.solidjs.com
 
 export const RtTable = (table: string = "testtable") => {
-  // Real-time Table Component
 
   const ws = new datasystem.WebSocket()
-  
-  const [ data ] = createResource(
-    () => ws.fetchTable(table) as Promise<DataRow[]> )
-
-  // function onDataClick(elt: HTMLTableCellElement) {
-  //   if (elt.querySelector("input")) {
-  //     // input already exists
-  //     return }
-  //   else {
-  //     // create input element
-  //     const input = document.createElement("input")
-  //     // 
-  //     input.value = elt.innerText
-  //     input.type = elt.dataset.input!
-  //     input.className = twcss.input
-  //     // 
-  //     input.oninput = () => {
-  //       // update or insert data in real-time
-  //       if (input.dataset.rowid == "NEW") {
-  //         ws.send_json({
-  //           action: "ws.rest.POST",// insert
-  //           table: target.table,
-  //           row: {[elt.dataset.fieldname!]:input.value} }) }
-  //       else {
-  //         ws.send_json({
-  //           action: "ws.rest.PATCH",// update
-  //           table: target.table,
-  //           id: elt.dataset.rowid,
-  //           name: elt.dataset.fieldname,
-  //           value: input.value }) } 
-  //     }
-  //     input.onblur = () => {
-  //       elt.innerText = input.value
-  //       input.remove()
-  //     }
-  //     // set html input element
-  //     elt.innerText = ""
-  //     elt.appendChild(input)
-  //     input.focus()
-  //   }
-  // }
+  const [ data ] = createResource(() => ws.fetchTable(table))
 
   return (
     <Suspense fallback={ <div class="m-2">loading...</div> }>
       <table>
         <thead>
           <tr>
-            <th class={ twcss.header }></th>
+            <th class={ tw.header }></th>
             <For each={ columns }>
               {(column: TableColumn) => (  
-                <th class={ twcss.header }>{ column.header }</th> )}
+                <th class={ tw.header }>{ column.header }</th> )}
             </For>
           </tr>
         </thead>
         <tbody>
-          <For each={data()}>
+          <For each={data() as DataRow[]}>
             {(row: DataRow) => (
               <tr>
                 <td 
-                  class={ twcss.handler }
+                  class={ tw.handler }
                   data-rowid={ row.id }
                   // oncontextmenu={evt => onContextMenu(evt.currentTarget)}
                 ></td>
@@ -104,7 +70,7 @@ export const RtTable = (table: string = "testtable") => {
                       class={ column.class }
                       hidden={ column.hidden }
                       // style={{ display: column.hidden ? 'none' : null }}
-                      ondblclick={evt => ws.editValue(evt.currentTarget)}
+                      onclick={evt => ws.editValue(evt.currentTarget,tw.input)}
                       // set data attributes
                       data-rowid={ row.id }
                       data-fieldname={ column.fieldname }
@@ -123,15 +89,6 @@ export const RtTable = (table: string = "testtable") => {
 
 
 // --- --- legacy code below --- --- //
-
-// function fakeData() { return [
-//     { id: 1, key: "one", value: 1 },
-//     { id: 2, key: "two", value: 2 },
-//     { id: 3, key: "three", value: 3 },
-//     { id: 4, key: "four", value: 4 },
-//     { id: 5, key: "five", value: 5 },
-//     { id: 6, key: "six", value: 6 },
-//     { id: 7, key: "seven", value: 7 } ]}
 
 // async function fetchData(): Promise<DataRow[]> {
   //   // fetch data from http REST API

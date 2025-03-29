@@ -64,29 +64,29 @@ Maintenance and security topics are underlayed into Sweetheart. You don't need r
 
 Sweetheart manages dependencies and sourcing, making most relevant choices for firstly building the buisiness apps you need, and secondly processing data without technical limitations, AI area included. Dependencies can be splitted in 3 separated categories of open-source solutions as follow. 
 
-#### 1/ Rely on most valuable open-source technologies
-##### Ubuntu Server - Nginx - Node - Python - Rust - Chromium
+##### 1/ Rely on most valuable open-source technologies
+###### Ubuntu Server - Nginx - Node - Python - Rust - Chromium
 specifications:
   - most adopted, observed, and studied technologies
   - major technologies, managed by top-rated organizations
   - clear objectives and strategy, advisable for long-term solutions
 
-#### 2/ Use highly valuable open-source solutions
-##### Typescript - React - TailwindCss - D3js - Jupyter - Pydantic - Pandas ...
+##### 2/ Use highly valuable open-source solutions
+###### Typescript - React - TailwindCss - D3js - Jupyter - Pydantic - Pandas ...
 specifications:
   - widely adopted, observed, and studied libraries
   - recognized solutions, managed by established organizations
   - predictable objectives and strategy, advisable for middle-term solutions at least 
 
-#### 3/ Integrate some of the most brillant open-source initiatives
-##### NginxUnit - SolidJS - RethinkDB
+##### 3/ Integrate some of the most brillant open-source initiatives
+###### NginxUnit - SolidJS - RethinkDB
 specifications:
   - innovative, breaking, and emerging ideas
   - superlative design and code quality
   - adopted by recognized people and organizations
   - but needs to be followed and supported for long-term solutions
 
-##### why RethinkDB should be used in businesses ?
+###### why RethinkDB should be used in businesses ?
 
 Some of you could be surprised with regards to RethinkDB, because this is not a best known database solution. Believe it will become one of these within next years. Sweetheart intends to provide a NoSQL and JSON-based database for performances and versatility purposes. In comparison RethinkDB won't support big binaries like some others can do, but this is not a concern for considered enterprise solutions here. On the other hand collaborative work between people must be considered at the highest level in any enterprise and organization. Meaning that working together on same data using several devices has to be the normal way, not a big challenge. Usually implementing realtime capabilities on database systems is technically sophisticated. Because originally the involved technologies were not made for such expectations. RethinkDB is designed for it. Furthermore the admin interface is great, the queries made with ReQL are great, there is no need of any ORM, and no SQL injection attacks risk exists, which are breaking changes in term of integration and simplicity.
 

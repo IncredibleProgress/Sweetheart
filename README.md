@@ -80,7 +80,7 @@ specifications:
 
 ##### 3/ Integrate some of the most brillant open-source initiatives
 ###### NginxUnit - SolidJS - RethinkDB
-specifications:
+
   - innovative, breaking, and emerging ideas
   - superlative design and code quality
   - adopted by recognized people and organizations

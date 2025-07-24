@@ -6,7 +6,7 @@ import { For, Suspense, createResource } from 'solid-js'
 // https://play.tailwindcss.com
 
 const tw = {
-  handler: "w-4 border border-white bg-gray-200",// row handler
+  handler: "w-3 border border-white bg-gray-200 hover:bg-pink-200",// row handler
   header: "border border-white font-semibold bg-gray-200",
   data: "w-32 p-1 border text-center",// default cell class
   input: "w-32 px-1 focus:outline-2 focus:outline-pink-400" 

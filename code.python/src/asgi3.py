@@ -41,7 +41,7 @@ class HttpResponse(AsgiEndpoint):
         It supports CORS headers and handling of preflight requests. """
 
     def __init__(self, 
-            status: int = 200,# ok status
+            status: int = 200,# Ok status
             content: bytes | str = b"",
             headers: list[tuple[bytes,bytes]] | dict[str,str] = [] ):
 
@@ -70,9 +70,9 @@ class HttpResponse(AsgiEndpoint):
             headers_b: bytes ) -> None:
 
         self.encoded_CORS_headers = []
-        origin = origin.decode("ascii")
-        method = method.decode("ascii")
-        headers = method.decode("latin-1")
+        origin = origin_b.decode("ascii")
+        method = method_b.decode("ascii")
+        headers = headers_b.decode("latin-1")
 
         #1. Handle origin policy
         if "*" in self.allow_origin or origin in self.allow_origin:
@@ -118,6 +118,7 @@ class HttpResponse(AsgiEndpoint):
     #         return value.decode("latin-1")
     
     async def __call__(self,scope,receive,send):
+        """ Endpoint for handling Http responses. """
 
         try:
             super().ensure_versions(scope)
@@ -129,15 +130,15 @@ class HttpResponse(AsgiEndpoint):
         #! ASGI lowercases http headers
         #! ASGI uppercases http methods
         request_headers = dict(scope["headers"]) # bytes
-        gethd = lambda hd: request_headers.get(hd,b"")
+        gethdr = lambda hd: request_headers.get(hd,default=b"") #FIXME
 
         if scope["method"] == "OPTIONS":
             # --- CORS Preflight Requests --- #
 
             self._apply_CORS_policy_(
-                origin_b = gethd(b"origin"),
-                method_b = gethd(b"access-control-request-method"),
-                headers_b = gethd(b"access-control-request-headers") )
+                origin_b = gethdr(b"origin"),
+                method_b = gethdr(b"access-control-request-method"),
+                headers_b = gethdr(b"access-control-request-headers") )
 
             await send({
                 "type": "http.response.start",
@@ -171,19 +172,20 @@ class JSONResponse(HttpResponse):
 
     def __init__(self,
             content: dict | list[dict],
-            **kwargs ):
-
+            headers: dict[str,str] = {} ):
+        
         bjson = json.dumps(content).encode('utf-8')
-        kwargs["headers"] = kwargs.get("headers",{})
-
-        kwargs["headers"].update({
+        headers.update({
             #NOTE: no bytes here, use str only
             "content-length": str(len(bjson)),
             "content-type": "application/json; charset=utf-8",
             "x-content-type-options": "nosniff" })
         
         # init HttpResponse instance
-        super().__init__(content=bjson,**kwargs)
+        super().__init__(
+            status= 200, # Ok status
+            content= bjson,
+            headers= headers )
 
         # set CORS attributes
         self.allow_headers = "content-type, sweetheart-action"
@@ -330,12 +332,11 @@ class Route:
         # set CORS headers for the endpoint:
 
         if isinstance(methods,str):
-            #NOTE: , separated methods exoected
+            #NOTE: , separated methods expected
             endpoint.allow_methods = methods.upper()
 
         elif isinstance(methods,list):
-            endpoint.allow_methods = ", ".join(
-                [m.upper() for m in methods] )
+            endpoint.allow_methods = ", ".join([m.upper() for m in methods])
 
         else: raise ValueError(
             "Route methods must be str or list of str.")
@@ -346,13 +347,13 @@ class AsgiLifespanRouter:
 
     def __init__(self,
         # intends to ensure some consistency with Starlette
-            routes: list = [],
-            debug: bool = BaseConfig.debug,
-            middelware: list[tuple] | None = [] ):
+        routes: list = [],
+        debug: bool = BaseConfig.debug,
+        middleware: list[tuple] = [] ):
         
         self.routes = routes
-        self.middelware = middelware or []
-        self.middelware.append(("debug",debug))
+        self.middleware = middleware
+        self.middleware.append(("debug",debug))
 
     async def __call__(self,scope,receive,send):
         #FIXME: should use asynccontextmanager
@@ -364,11 +365,10 @@ class AsgiLifespanRouter:
 
                 if message["type"] == "lifespan.startup":
 
-                    middelware = dict(self.middelware)
-                    startup = middelware.pop("lifespan.startup",None)
-                    shutdown = middelware.pop("lifespan.shutdown",None)
-
-                    scope["status"] = middelware # remaining entries
+                    middleware = dict(self.middleware)
+                    startup = middleware.pop("lifespan.startup",default=None)
+                    shutdown = middleware.pop("lifespan.shutdown",default=None)
+                    scope["status"] = middleware # set the remaining entries
 
                     try:
                         #NOTE: startup() must return tuple of (scope,receive,send)
@@ -403,38 +403,48 @@ class AsgiLifespanRouter:
 
 
 class DataHub(Route,AsgiEndpoint):
+    """
+    Wrapper for ensuring data exchanges with given datasystem,
+    with both WebSocket and Http scope type interfaces.
 
-    def __init__(self,urlpath,datasystem):
-        """ Ensure data exchanges with given datasystem. """
+    DataHub instance can be used as Route and AsgiEndpoint.
+    """
+
+    def __init__(self, urlpath: str, datasystem):
 
         # set Route-like signature
-        super().__init__(
+        super(Route).__init__(
             urlpath,
             endpoint = self,# AsgiEndpoint
             methods = "GET, POST, PATCH, PUT, DELETE" )
 
         # set related data system
         self.datasystem = datasystem
-        
+
+        assert hasattr(self.datasystem,"restapi")\
+            and isinstance(self.datasystem.restapi,dict)
+
         # set Websocket instance and its receiver
         self.websocket = Websocket()
         self.websocket.on_receive = self.on_receive
 
-        # set Http and Websocket methods
+        # set Http and Websocket endpoints
         self.endpoints = {
             "http": {
-                "fetch.test": self.fetch_TEST,
-                "fetch.rest": self.fetch_REST },
+                "fetch.test": self._fetch_TEST,
+                "fetch.rest": self._fetch_REST },
             "websocket": {
-                "ws.reql": self.ws_ReQL,
-                "ws.rest.get": self.ws_REST,
-                "ws.rest.post": self.ws_REST,
-                "ws.rest.patch": self.ws_REST }}
-    
+                "ws.reql": self._ws_ReQL,
+                "ws.rest.get": self._ws_REST,
+                "ws.rest.post": self._ws_REST,
+                "ws.rest.patch": self._ws_REST }}
+
     # --- --- Dedicated Asgi/3 endpoint --- --- #
 
     async def __call__(self,scope,receive,send):
-        """ Handle HTTP and WebSocket connections. """
+
+        """ Handle HTTP and WebSocket connections.
+        Redirect action through sweetheart-action header. """
 
         if scope["type"] == "websocket":
             # redirect to Websocket instance
@@ -442,12 +452,12 @@ class DataHub(Route,AsgiEndpoint):
             await self.websocket(scope,receive,send)
         
         elif scope["type"] == "http":
-            #! ASGI lowercases http headers
-            #! ASGI uppercases http methods
-
+            
             request = await receive()
             assert request["type"] == "http.request"
 
+            # get sweetheart-action header, lowercased
+            #NOTE: ASGI lowercases every http headers
             action = dict(scope["headers"])\
                 .get(b"sweetheart-action",b"")\
                 .decode('latin-1').lower()
@@ -477,40 +487,41 @@ class DataHub(Route,AsgiEndpoint):
         if data.get("action") in self.endpoints["websocket"]:
             # redirect to dedicated websocket action
             action = data["action"].lower()
-            return self.endpoints["websocket"][action](data) #!
+            return self.endpoints["websocket"][action](data)
 
         else: return JSONMessage({"Err":"Invalid websocket action."})
 
-    def ws_ReQL(self,data:dict) -> JSONMessage:
+    def _ws_ReQL(self,data:dict) -> JSONMessage:
         """ Execute any RethinkDB query from WebSocket. """
 
-        #FIXME: available for development only
+        #NOTE: available for development only
         assert os.getenv("SWS_OPERATING_STATE") == "development"
 
         message: tuple = self.datasystem.rql_expr(data["query"])
         return JSONMessage.safer(message,uuid=data.get("uuid"))
 
-    def ws_REST(self,data:dict) -> JSONMessage:
-        """ Hook which handle RESTful API from WebSocket. """ 
+    def _ws_REST(self,data:dict) -> JSONMessage:
+        """ Hook which handle RESTful API from WebSocket. """
 
         method = data["action"][8:].upper() # ws.rest.get -> GET
         message: tuple = self.datasystem.restapi[method](data)
+
         if message == ("Ok",None): return None # no message to send back
         return JSONMessage.safer(message,uuid=data.get("uuid"))
 
     # --- --- Http processing --- --- #
 
-    def fetch_TEST(self,scope,request):
+    def _fetch_TEST(self,scope,request):
         """ Handle test action from Http. """
         return JSONResponse({ "Test": "Ok" })
 
-    def fetch_REST(self,scope,request):
+    def _fetch_REST(self,scope,request):
         """ Handle RESTful API from Http. """
 
         match scope["method"]:
 
             case "GET":
-                #! this assumes query_string is utf-8 encoded
+                #NOTE: this assumes query_string is utf-8 encoded
                 query: str = "?"+scope["query_string"].decode()
                 data: dict = urlparse_qs(query,strict_parsing=True)
                 status,value = self.datasystem.restapi["GET"](data)

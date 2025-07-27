@@ -8,8 +8,8 @@ import { render } from "solid-js/web"
 //     "Sweetheart-Action": "fetch.test" }
 // }).then(response => response.json())
 
-const style = {
-  // TailwindCss style classes
+const preset = {
+  // TailwindCss style classes - presets
   body: {
     color: "bg-gray-50",
     spacing: "max-w-screen-lg mx-auto"
@@ -21,18 +21,21 @@ const style = {
   }
 }
 
-function twcss(
-  classes: Record<string, string>,
-  variant?: string ): string
-{ return Object.values(classes).join(" ")+` ${variant}` }
+const twcss = (preset: Object, ...classes: string[]) => 
+  [Object.values(preset).join(" "), ...classes].join(" ")
+
+const variant = {
+  // TailwindCss style classes - variants
+  biggerHeader: twcss(preset.header,"lg:text-8xl")
+}
 
 const WelcomePage = () => 
 <div class="">
-  <h1 class={twcss(style.header,"lg:text-8xl")}>
+  <h1 class={ variant.biggerHeader }>
     Sweetheart </h1>
   <h2>
     innovative foundations for enterprise-grade solutions </h2>
 </div>
 
-document.body.className = twcss(style.body)
+document.body.className = twcss(preset.body)
 render(WelcomePage,document.getElementById("app")!)

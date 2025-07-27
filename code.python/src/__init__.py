@@ -48,7 +48,7 @@ class BaseConfig(UserDict):
             "python_app": {
                 # "home": "__undefined__",
                 "path": f"{self.root}/my_code/python",
-                "module": "start",#! no .py extension
+                "module": "start",#! no .py extension here
                 "callable": "webapp",
                 "user": os.getuser(),#FIXME
                 "group": os.getuser(),#FIXME

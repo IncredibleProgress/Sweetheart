@@ -15,7 +15,10 @@ class WebappServer(Unit):
         
         self.data = []
         self.config = config
-        self.middelware = None #FIXME
+        self.middleware = None #FIXME
+
+        # allow testing python apps
+        self.PythonAppType = AsgiLifespanRouter
 
         # keep current app config available 
         WebappServer._config_ = config
@@ -42,10 +45,10 @@ class WebappServer(Unit):
         routes = self.data
         del self.data #! new mount forbidden
 
-        return AsgiLifespanRouter(
+        return self.PythonAppType(
             routes = routes,
             debug = BaseConfig.debug,
-            middelware = self.middelware )
+            middleware = self.middleware )
 
     def set_service(self, unit=False):
 
@@ -107,9 +110,9 @@ class RethinkDB(Systemd):
 
         self.restapi = {
             #NOTE: methods are uppercased
-            "GET": self.rql_FILTER,
-            "POST": self.rql_INSERT,
-            "PATCH": self.rql_UPDATE,
+            "GET": self._rql_FILTER,
+            "POST": self._rql_INSERT,
+            "PATCH": self._rql_UPDATE,
             # "PUT": self.rql_REPLACE,
             # "DELETE": self.rql_DELETE
         }
@@ -117,16 +120,13 @@ class RethinkDB(Systemd):
     def connect(self, settings={}):
         """ Start new connection with RethinkDB server. """
 
-        # set default settings
-        default_db = "test"
-        default_host = "localhost"
+        assert isinstance(settings,dict)
 
-        # set connection settings
-        #NOTE: db must be provided in settings
+        # set default settings as kwargs
         kwargs = dict(
-            host = default_host,
-            port = self.rconfig["driver-port"],
-            db = settings["db"] or default_db )
+            db = "test",
+            host = "localhost",
+            port = self.rconfig["driver-port"] )
 
         kwargs.update(settings)
         assert kwargs["db"] in self.allow_databases # safer
@@ -141,7 +141,7 @@ class RethinkDB(Systemd):
             
         return connect
 
-    # def rql_expr(self, query:str, conn=None) -> tuple:
+    # def _rql_expr(self, query:str, conn=None) -> tuple:
     #     """ Run any given RethinkDB query. """
 
     #     # set default connection
@@ -149,20 +149,20 @@ class RethinkDB(Systemd):
     #     # return result as tuple (status, value)
     #     return "Ok", self.r.expr(query).run(conn) #FIXME
 
-    def rql_FILTER(self, d:dict, conn=None) -> tuple:
+    def _rql_FILTER(self, d:dict, conn=None) -> tuple:
 
         if conn is None:
             conn = getattr(self,"conn",
                 # default: set conn establishing a first connection
-                # this assumes that rql_FILTER is used for fetching data
+                # this assumes that rql_FILTER is used first for fetching data
                 # when 'db' is None, a default value is provided in self.connect()
-                self.connect({ "db": d.get("database",None) }) )
+                self.connect({ "db": d.get("database",default=None) }) )
 
         if d.get("database"):
             assert d["database"] in self.allow_databases
             r = self.r.db(d["database"])
         else:
-            r = self.r # means db provided by conn
+            r = self.r # means db is provided by conn
                 
         # apply Rest Api: GET
         r = r.table(d["table"])
@@ -171,7 +171,7 @@ class RethinkDB(Systemd):
         # return result as tuple (status, value)
         return "Ok", list(r.run(conn))
 
-    def rql_INSERT(self, d:dict, conn=None) -> tuple:
+    def _rql_INSERT(self, d:dict, conn=None) -> tuple:
 
         # set default connection
         if conn is None:
@@ -190,8 +190,8 @@ class RethinkDB(Systemd):
         if query["errors"]: return ("Err",query["errors"])
         elif query["inserted"]==1: return ("Ok",None)
         else: return ("Err","No data inserted")
-            
-    def rql_UPDATE(self, d:dict, conn=None) -> tuple:
+
+    def _rql_UPDATE(self, d:dict, conn=None) -> tuple:
 
         # set default connection
         if conn is None:

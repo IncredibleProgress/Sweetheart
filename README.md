@@ -66,14 +66,14 @@ Sweetheart manages dependencies and sourcing, making most relevant choices for f
 
 ##### 1/ Rely on most valuable open-source technologies
 ###### Ubuntu Server - Nginx - Postgres - Rust - Python
-specifications:
+
   - most adopted, observed, and studied technologies
   - major technologies, managed by top-rated organizations
   - clear objectives and strategy, advisable for long-term solutions
 
 ##### 2/ Use highly valuable open-source solutions
 ###### Typescript - React - TailwindCss - Pydantic - Pandas ...
-specifications:
+
   - widely adopted, observed, and studied libraries
   - recognized solutions, managed by established organizations
   - predictable objectives and strategy, advisable for middle-term solutions at least 

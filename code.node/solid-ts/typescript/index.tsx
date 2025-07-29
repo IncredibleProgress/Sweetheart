@@ -2,10 +2,14 @@ import '../resources/tailwind.css'
 import { render } from "solid-js/web"
 
 
-class Style {
-  // Interface for TailwindCss style classes
+// ---- ---- TailwindCss style classes ---- ---- //
 
-  presetValues = {
+type TwClasses = Record<string, string>
+type TwVariant = [ TwClasses, ...string[] ]
+
+class Style {
+
+  presetValues: Record<string, TwClasses> = {
     body: {
       color: "bg-gray-50",
       spacing: "max-w-screen-lg mx-auto"
@@ -17,41 +21,44 @@ class Style {
     }
   }
 
-  variantValues = {
+  variantValues: Record<string, TwVariant> = {
     biggerHeader: [ this.presetValues.header, "lg:text-8xl" ]
-  }
-
-  className (preset: Object, ...classes: string[]): string {
-    return [...Object.values(preset), ...classes].join(" ") as string;
   }
   
   preset: Record<string, () => string> = {};
   variant: Record<string, () => string> = {};
 
-  constructor () {
+  className(...classes: TwVariant): string {
+    return [...Object.values(classes[0]), ...classes.slice(1)].join(" ");
+  }
+
+  constructor() {
+
     Object.entries(this.presetValues).forEach(([key, value]) => {
       this.preset[key as keyof typeof this.presetValues] = () => this.className(value);
     })
+
     Object.entries(this.variantValues).forEach(([key, value]) => {
-      this.variant[key as keyof typeof this.variantValues] = () => 
-        this.className(...value as [Object, ...string[]]);
+      this.variant[key as keyof typeof this.variantValues] = () => this.className(...value);
     })
   }
 }
 
-
 const twcss = new Style()
 document.body.className = twcss.preset.body()
 
+
+// ---- ---- Main page ---- ---- //
+
 const WelcomePage = () => 
-<div class="">
+<>
   <h1 class={ twcss.variant.biggerHeader() }>
     Sweetheart </h1>
   <h2>
     innovative foundations for enterprise-grade solutions </h2>
-</div>
+</>
 
-render(()=> WelcomePage(), document.getElementById("app")!)
+render(() => <WelcomePage />, document.getElementById("app")!)
 
 
 // ---- ---- Legacy code ---- ---- //

@@ -48,7 +48,7 @@ const twcss = new Style()
 document.body.className = twcss.preset.body()
 
 
-// ---- ---- Main page ---- ---- //
+// ---- ---- Main component rendering ---- ---- //
 
 const WelcomePage = () => 
 <>

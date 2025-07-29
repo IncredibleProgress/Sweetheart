@@ -365,9 +365,11 @@ class AsgiLifespanRouter:
 
                 if message["type"] == "lifespan.startup":
 
+                    #FIXME: to test and complete
                     middleware = dict(self.middleware)
-                    startup = middleware.pop("lifespan.startup",default=None)
-                    shutdown = middleware.pop("lifespan.shutdown",default=None)
+                    startup = middleware.pop("lifespan.startup",None)
+                    shutdown = middleware.pop("lifespan.shutdown",None)
+                    # scope["status"] is used to keep current app status
                     scope["status"] = middleware # set the remaining entries
 
                     try:
@@ -413,9 +415,10 @@ class DataHub(Route,AsgiEndpoint):
     def __init__(self, urlpath: str, datasystem):
 
         # set Route-like signature
-        super(Route).__init__(
+        Route.__init__(
+            self,
             urlpath,
-            endpoint = self,# AsgiEndpoint
+            endpoint = self, # AsgiEndpoint
             methods = "GET, POST, PATCH, PUT, DELETE" )
 
         # set related data system

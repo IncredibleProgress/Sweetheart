@@ -15,7 +15,7 @@ class WebappServer(Unit):
         
         self.data = []
         self.config = config
-        self.middleware = None #FIXME
+        self.middleware = [] #FIXME
 
         # allow testing python apps
         self.PythonAppType = AsgiLifespanRouter

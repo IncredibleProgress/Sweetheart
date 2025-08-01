@@ -1,5 +1,5 @@
 import '../resources/tailwind.css'
-import * as datasystem from './datasystem'
+import * as datasystem from './sweetheart'
 import { For, Suspense, createResource } from 'solid-js'
 
 // TailwindCss classes

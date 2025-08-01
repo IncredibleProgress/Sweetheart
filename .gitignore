@@ -3,6 +3,7 @@ applications/
 code.python/src/poetry.lock
 code.python/src/__pycache__/
 
+code.node/**/dist/
 code.node/**/node_modules/
 code.node/**/.parcel-cache/
 code.node/**/package-lock.json

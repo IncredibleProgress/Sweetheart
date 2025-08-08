@@ -1,5 +1,5 @@
 import '../resources/tailwind.css'
-import * as datasystem from './sweetheart'
+import * as sweetheart from './sweetheart'
 import { For, Suspense, createResource } from 'solid-js'
 
 // TailwindCss classes
@@ -40,7 +40,7 @@ const columns: TableColumn[] =  [
 
 export const RtTable = (table: string = "testtable") => {
 
-  const ws = new datasystem.WebSocket()
+  const ws = new sweetheart.WebSocket()
   const [ data ] = createResource(() => ws.fetchTable(table))
 
   return (

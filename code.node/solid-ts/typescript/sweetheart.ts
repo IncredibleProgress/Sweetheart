@@ -1,7 +1,5 @@
 // This file is a part of Sweetheart project.
 
-import '../resources/tailwind.css'
-
 /* Syntaxic Tricks:
 
   //FIXME
@@ -34,8 +32,24 @@ export class Style {
     header:  {
       font: "text-5xl italic",
       color: "text-pink-500",
-      spacing: "my-4"
-    }
+      spacing: "mt-4 mb-2"
+    },
+    subtitle: {
+      font: "text-xl italic",
+      color: "text-gray-500",
+      spacing: "my-2"
+    },
+    highlight: {
+      font: "text-lg",
+      color: "text-pink-500",
+      spacing: "my-2"
+    },
+    button: {
+      font: "text-lg",
+      color: "text-white bg-pink-500 hover:bg-pink-600",
+      spacing: "m-4 px-4 py-2",
+      shape: "rounded-sm"
+    },
   }
 
   // Define customized style classes.
@@ -43,10 +57,11 @@ export class Style {
   {
     biggerHeader: { 
       preset: this.presetValues.header,
-      chain: "text-center lg:text-8xl"
+      chain: "lg:text-8xl"
     },
-    subTitle: {
-      chain: "text-gray-400 text-center italic lg:text-2xl",
+    biggerSubtitle: {
+      preset: this.presetValues.subtitle,
+      chain: "lg:text-2xl",
     }
   }
   

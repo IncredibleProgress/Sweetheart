@@ -3,7 +3,8 @@
   "source": "resources/startpage.html",
   "scripts": {
     "update": "ncu -u && npm install",
-    "build": "parcel build --no-cache --dist-dir ~/Sweetheart/applications/sweetheart/application"
+    "build": "parcel build --no-cache --dist-dir ~/Sweetheart/applications/sweetheart/application",
+    "serve": "parcel serve --open --dist-dir ~/Sweetheart/applications/sweetheart/application"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.11",

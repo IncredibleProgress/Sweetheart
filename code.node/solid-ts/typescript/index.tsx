@@ -39,7 +39,7 @@ const Welcome = (): JSX.Element =>
 <br />
 
   <p class="text-gray-300 text-sm">
-    by Nicolas Champion, sweetheart maker for a better life </p>
+    by Nicolas Champion, sweetheart's maker for better lifes </p>
 
 </div>
 render(() => <Welcome />, document.getElementById("app")!)

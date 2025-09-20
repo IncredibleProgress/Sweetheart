@@ -3,7 +3,7 @@
 
 ## A supercharged heart for the non-expert hands
 
-What about security, big-data, realtime databases, responsive interfaces and AI? Sweetheart comes with the highest quality components widely used by the GAFAM and others, also the best coding practices, and makes the hard stuff for you. Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open source code for processing your data at full power!
+What about security, big-data, real-time databases, responsive interfaces and AI? Sweetheart comes with the highest quality components widely used by the GAFAM and others, also the best coding practices, and makes the hard stuff for you. Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open source code for processing your data at full power!
 
 Since Ubuntu operating system can be used in any cloud services and as usual software within Windows 10/11, it provides an incredible way for any organization to develop, deploy, and administrate powerful responsive apps including AI keeping high capabilities of integration with the already existing tools like databases, MS-Excel, or SAP.
 
@@ -58,28 +58,28 @@ Sweetheart offers hardenest coding approach for new development projects. Reason
 
 #### Maintenance & security are the 1st concerns
 
-Maintenance and security topics are underlayed into Sweetheart. You don't need really to care about it, just be trained enough, use provided reference documents, and be aware for adopting some good habits, e.g. testing your apps. This allows you making coding efficiently being focused on your buisiness topics only. The rest is a matter for experts working hard for providing Sweetheart!
+Maintenance and security topics are integrated within Sweetheart. You don't need really to care about it, just be trained enough, use provided reference documents, and be aware for adopting some good habits, e.g. testing your apps. This allows you making coding efficiently being focused on your business topics only. The rest is a matter for experts working hard for providing Sweetheart!
 
 #### Open-source dependencies strategy is included
 
-Sweetheart manages dependencies and sourcing, making most relevant choices for firstly building the buisiness apps you need, and secondly processing data without technical limitations, AI area included. Dependencies can be splitted in 3 separated categories of open-source solutions as follow. 
+Sweetheart manages dependencies and sourcing, making most relevant choices for firstly building the business apps you need, and secondly processing data without technical limitations, AI area included. Dependencies can be split in 3 separated categories of open-source solutions as follow. 
 
 ##### 1/ Rely on most valuable open-source technologies
-###### Ubuntu Server - Nginx - Postgres - Rust - Python
+###### e.g. Ubuntu Server - Vault - Postgres - Rust - Python - Typescript
 
   - most adopted, observed, and studied technologies
   - major technologies, managed by top-rated organizations
   - clear objectives and strategy, advisable for long-term solutions
 
 ##### 2/ Use highly valuable open-source solutions
-###### Typescript - React - TailwindCss - Pydantic - Pandas ...
+###### e.g. Caddy - React - JSX - TailwindCss - Pydantic - Pandas ...
 
   - widely adopted, observed, and studied libraries
   - recognized solutions, managed by established organizations
   - predictable objectives and strategy, advisable for middle-term solutions at least 
 
 ##### 3/ Integrate some of the most brillant open-source initiatives
-###### NginxUnit - SolidJS - RethinkDB
+###### e.g. NginxUnit - Gel/EdgeDB - SolidJS
 
   - innovative, breaking, and emerging ideas
   - superlative design and code quality

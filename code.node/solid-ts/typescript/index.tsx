@@ -37,9 +37,10 @@ const Welcome = (): JSX.Element =>
     start now </button>
 
 <br />
+<br />
 
   <p class="text-gray-300 text-sm">
-    by Nicolas Champion, sweetheart's maker for better lifes </p>
+    by Nicolas Champion, Sweetheart's maker for better lifes </p>
 
 </div>
 render(() => <Welcome />, document.getElementById("app")!)

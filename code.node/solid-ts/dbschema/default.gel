@@ -1,0 +1,49 @@
+module default {
+
+  type StaffMember {
+    required staff_id: int32;
+    required first_name: str;
+    required last_name: str;
+    required email: str;
+    phone: str;
+    position: str;
+    department: str;
+    location: str;
+    is_external: bool;
+    is_active: bool;
+  };
+
+  type Notification {
+    status: str;
+    required number: int32;
+    required short_text: str;
+    required created_by: StaffMember;
+    required created_at: datetime;
+    long_text: str;
+    updated_by: array<StaffMember>;
+    updated_at: array<datetime>;
+  };
+
+  type Operation {
+    status: str;
+    required operation_id: int32;
+    required description: str;
+    required assigned_to: array<StaffMember>;
+    subcontractor: str;
+    materials: array<SparePart>;
+    scheduled_date: datetime;
+    completed_date: datetime;
+  };
+
+  type SparePart {
+    required part_id: int32;
+    required name: str;
+    required plant_location: str;
+    required warehouse_location: str;
+    required quantity_in_stock: int32;
+    category: str;
+    criticality: str;
+    specifications: str;
+  };
+
+}

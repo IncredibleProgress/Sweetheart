@@ -1,5 +1,8 @@
 module default {
 
+  # Str derivated scalar types
+  # set default values and formats
+
   scalar type PlantLocation extending enum<
     'BR','EP','ET','MA','RS','RC' >;
 
@@ -7,97 +10,165 @@ module default {
     'MEC','CHA','ERA','SGN','SYS','ZO1','ZO2','ZO3','EXT' >;
 
   scalar type StaffCode extending str {
-    description := 'format: SLxxxxx where x is a digit';
+    # format = SLxxxxx where x is a digit
     constraint regexp(r'^SL\d{5}$'); }
 
-  # Sequence scalar types for auto IDs
-  scalar type EquipmenId extending sequence;
-  scalar type PurchasedItemId extending sequence; 
-  scalar type NotificationId extending sequence;
-  scalar type OperationId extending sequence;
+  scalar type Currency extending enum<
+    'EUR','USD','GBP','CHF','SEK','NOK','DKK','PLN','CZK','HUF' >;
+
+  # Sequence scalar types for IDs
+  # each type has its own range for easy identification
+
+  scalar type EquipmentId extending sequence {
+    constraint min_ex_value(10000000);
+    constraint max_ex_value(20000000);
+  }
+  scalar type PurchasedItemId extending sequence {
+    constraint min_ex_value(20000000);
+    constraint max_ex_value(30000000);
+  }
+  scalar type OperationId extending sequence {
+    constraint min_ex_value(30000000);
+    constraint max_ex_value(40000000);
+  }
+  scalar type NotificationId extending sequence {
+    constraint min_ex_value(40000000);
+    constraint max_ex_value(50000000);
+  }
+
+  # Data model types
+  # related to maintenance management
   
   type StaffMember {
-    required staff_id: StaffCode { constraint exclusive }
+    required staff_id: StaffCode {constraint exclusive}
     required first_name: str;
     required last_name: str;
-    required email: str;
+    optional email: str;
     optional phone: str;
     optional position: str;
+    optional pay_index: float32 {constraint min_value(0.0)}
     optional plant_location: PlantLocation;
     optional business_area: BusinessArea;
-    optional is_active: bool;
+    optional is_active: bool {default := true};
   }
 
   type Equipment {
-    required equipment_id: EquipmenId {
-      constraint exclusive;
-      constraint min_ex_value(10000000);
-      constraint max_ex_value(20000000); }
+    required equipment_id: EquipmentId {constraint exclusive}
     required description: str;
-    required criticality: str {
-      constraint one_of('HIGH','MEDIUM','LOW') }
+    required failure_tolerance: str {
+      constraint one_of('8H','48H','DAYS','WEEKS') }
+    required failure_impact: str {
+      constraint one_of('UNACCEPTABLE','MAJOR','SIGNIFICANT','ACCEPTABLE') }
     required plant_location: PlantLocation;
     optional manufacturer: str;
     optional model_number: str;
     optional serial_number: str;
+    optional current_location: str;
     optional installation_date: datetime;
-    optional assigned_to: BusinessArea;
-    optional is_active: bool;
+    optional business_area: BusinessArea;
+    optional purchased_item: PurchasedItem;
+    optional multi components: Equipment;
+    optional multi spare_parts: PurchasedItem;
+    optional multi planned_operations: Operation;
+    optional is_active: bool {default := true};
   }
 
-  type PurchasedItem {
-    required item_id: int32 {
-      constraint exclusive;
-      constraint min_ex_value(10000000) }
-    required description: str;
-    required plant_location: str;
-    optional warehouse_location: str;
-    optional unit_of_measure: str {
-      constraint one_of('UNIT','BUNDLE','KG','L','M') }
-    optional quantity_in_stock: int16;
-    optional reorder_level: int16;
-    required category: str {
-      constraint one_of('SPARE','TOOL','CONSUMABLE','CHEMICAL','PACKAGING') }
-    optional regulatory_info: str;
-    optional specifications: str;
-    optional vendor_references: array<VendorReference>;
-    optional multi identical_items: PurchasedItem;
-    optional is_maintainable: bool;
-    optional is_active: bool;
-  }
-
-  abstract type VendorReference {
+  type VendorReference {
     required vendor_identifier: str;
     optional vendor_item_reference: str;
-    optional vendor_item_price: float32;
-    optional vendor_item_currency: str;
+    optional vendor_item_price: float32 {constraint min_value(0.0)}
+    optional vendor_item_currency: Currency;
     optional vendor_item_lead_time_days: int16;
     optional vendor_order_quantity: int16;
     optional vendor_instructions: str;
   }
 
+  type PurchasedItem {
+    required item_id: PurchasedItemId {constraint exclusive}
+    required description: str;
+    required plant_location: PlantLocation;
+    optional storage_location: str;
+    optional unit_of_measure: str {
+      constraint one_of('UNIT','BUNDLE','KG','L','M') }
+    optional quantity_in_stock: int16 {constraint min_value(0)}
+    optional reorder_level: int16 {constraint min_value(0)}
+    required category: str {
+      constraint one_of('SPARE','TOOL','CONSUMABLE','CHEMICAL','PACKAGING') }
+    optional regulatory_info: str {
+      constraint one_of('FOOD','FEED','ATEX') }
+    optional specifications: str;
+    optional multi vendor_references: VendorReference;
+    optional multi identical_items: PurchasedItem;
+    optional is_maintainable: bool {default := false};
+    optional is_active: bool {default := true};
+  }
+
+  abstract type CostsReport {
+    # Accounting fields
+    required cost_allocation: str;
+    required cost_currency: Currency {default := 'EUR'};
+    optional accounting_carryover: float32;
+    # labor costs
+    optional planned_labor_hours: float32 {constraint min_value(0.0)}
+    optional planned_labor_cost: float32 {constraint min_value(0.0)}
+    optional actual_labor_hours: float32 {constraint min_value(0.0)}
+    optional actual_labor_cost: float32 {constraint min_value(0.0)}
+    # Material costs
+    optional planned_material_cost: float32 {constraint min_value(0.0)}
+    optional actual_material_cost: float32 {constraint min_value(0.0)}
+    # External costs
+    optional planned_external_cost: float32 {constraint min_value(0.0)}
+    optional actual_external_cost: float32 {constraint min_value(0.0)}
+    # Total costs
+    optional planned_total_costs: float32 {constraint min_value(0.0)}
+    required actual_total_costs := .actual_labor_cost ?? 0.0 
+                              + .actual_material_cost ?? 0.0 
+                              + .actual_external_cost ?? 0.0
+                              + .accounting_carryover ?? 0.0;
+  }
+
+  type TaskPlanning {
+    required interval: int16 {constraint min_value(1)}
+    required frequency: str {constraint one_of('DAY','MONTH','YEAR')}
+    required next_due_date: datetime;
+    optional last_completed_date: datetime;
+  }
+
+  type Operation extending CostsReport {
+    required operation_id: OperationId {constraint exclusive}
+    required status: str {
+      constraint one_of('OPEN','PLANNED','HOLD','DONE','SUPP') }
+    required activity: str {
+      constraint one_of('CLEAN','PREVENT','PREPARE','ACCESS','REPAIR') }
+    required description: str;
+    optional subcontractor: str;
+    optional business_area: BusinessArea;
+    optional planification: TaskPlanning;
+    optional multi performed_by: StaffMember;
+    optional multi materials: PurchasedItem;
+    optional multi tools: PurchasedItem;
+    optional scheduled_date: datetime;
+    optional completed_date: datetime;
+  }
+
+  type TextUpdate {
+    required updated_by: StaffMember;
+    required updated_at: datetime;
+    optional diff_text: str;
+  }
+
   type Notification {
-    optional status: str;
-    required number: int32;
+    required notification_id: NotificationId {constraint exclusive}
+    required status: str {
+      constraint one_of('OPEN','PLANNED','HOLD','CLOSED') }
+    required equipment: Equipment;
     required short_text: str;
+    optional long_text: str;
     required created_by: StaffMember;
     required created_at: datetime;
-    optional long_text: str;
-    optional updated_by: array<StaffMember>;
-    optional updated_at: array<datetime>;
+    
+    optional multi updates: TextUpdate;
+    optional multi operations: Operation;
   }
-
-  type Operation {
-    status: str;
-    required operation_id: int32;
-    required description: str;
-    required assigned_to: array<StaffMember>;
-    subcontractor: str;
-    materials: array<SparePart>;
-    scheduled_date: datetime;
-    completed_date: datetime;
-  }
-
-  
 
 }

@@ -1,3 +1,4 @@
+.vscode/
 applications/
 
 code.python/poetry.lock
@@ -8,4 +9,4 @@ code.node/**/node_modules/
 code.node/**/.parcel-cache/
 code.node/**/package-lock.json
 
-.vscode/
+code.node/**/dbschema/migrations/

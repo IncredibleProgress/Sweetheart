@@ -9,11 +9,8 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+gel = "^3.1.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[sweetheart-codespace]
-source = "/workspaces/Sweetheart/code.python/src"
-symlink = "/home/codespace/.cache/pypoetry/virtualenvs/sweetheart-kYq1UJ0L-py3.10/lib/python3.10/site-packages/sweetheart"

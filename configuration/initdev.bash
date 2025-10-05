@@ -21,11 +21,17 @@ command -v caddy || sudo sudo snap install caddy || exit 1
 command -v vault || sudo sudo snap install vault || exit 1
 command -v npm || sudo sudo snap install node --classic || exit 1
 
+if ! command -v cargo; then
+  # snapcraft provides last stable version of Rust
+  sudo snap install rustup --classic || exit 1
+  rustup default stable || exit 1
+fi
+
 if ! command -v ~/.local/bin/gel; then
-    #NOTE: direct installation using script from Geldata
-    command -v curl || sudo apt-get install -q -y curl || exit 1
-    curl https://www.geldata.com/sh --proto "=https" -sSf1 | sh
-    export PATH="$HOME/.local/bin:$PATH"
+  # install gel cli via official script from geldata
+  command -v curl || sudo apt-get install -q -y curl || exit 1
+  curl https://www.geldata.com/sh --proto "=https" -sSf1 | sh
+  export PATH="$HOME/.local/bin:$PATH"
 fi
 
 if ! command -v unitd; then
@@ -52,6 +58,7 @@ if [[ "$reload" == "enabled" ]];
 # install required packages for development and testing
 command -v git || sudo apt-get install -q -y git || exit 1
 command -v unitd || sudo apt-get install -q -y unit "$unit_python" || exit 1
+command -v ~/.cargo/bin/mdbook || cargo install -q mdbook || exit 1
 command -v poetry || sudo apt-get install -q -y python3-poetry || exit 1
 
 #2. Set Sweetheart Dev Environment #
@@ -99,7 +106,7 @@ mkdir --parents ~/.cache/sweetheart-master
 printf "\navailable for dev:\n"
 python3 --version || exit 1
 echo "Node $(node --version)" || exit 1
-gel --version || exit 1
+rustc --version || exit 1
 
 # exit message
 printf "\n%s" "all done, start your project in $HOME/My_code"

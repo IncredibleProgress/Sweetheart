@@ -1,5 +1,5 @@
 # [Sweetheart 0.1.3]()
-*innovative foundations for enterprise-grade solutions*
+*innovative foundations for business-grade solutions*
 
 ## A supercharged heart for the non-expert hands
 
@@ -7,7 +7,7 @@ What about security, big-data, real-time databases, responsive interfaces and AI
 
 Since Ubuntu operating system can be used in any cloud services and as usual software within Windows 10/11, it provides an incredible way for any organization to develop, deploy, and administrate powerful responsive apps including AI keeping high capabilities of integration with the already existing tools like databases, MS-Excel, or SAP.
 
-Sweetheart provides a Python/React centric approach leading you implementing best components and best practices. Due to the top-rated place of the Python language regarding to data processing, calculations and AI, this makes sweetheart a fast and ideal toolkit for innovative ideas.
+Sweetheart provides a Python|JSX centric approach leading you implementing best components and best practices. Due to the top-rated place of the Python language regarding to data processing, calculations and AI, this makes Sweetheart a fast and ideal toolkit for innovative ideas.
 
 Sweetheart is shared under the [CeCILL-C FREE SOFTWARE LICENSE AGREEMENT](http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html).
 
@@ -29,7 +29,7 @@ It comes too with some pragmatic intentions at its heart :
 
 ## Stick to worldwide best practices without thinking about it
 
-Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It will transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the included documentation you will **learn to make great apps with Python and React** including up-to-date best practices and patterns. You won't learn Sweetheart itself, you will learn Python/React real coding-life like any other developer, but skipping some tedious considerations. That means especially you don't need any kind of expertise to use good things in the right way. Be quite, sweetheart is made for low resources consumption, high security level, and best performances :
+Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It intends to transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the provided documentation you will **learn to make great apps with Python and TypeScript|JSX** including up-to-date best practices and patterns. With Sweetheart, you will learn real coding-life like any other developer, but skipping tedious considerations and being focused on business concerns. That means you don't need any kind of experience to use good things in the right way. And keep quite, under the hood Sweetheart is made for low resources consumption, high security level, and best performances :
 
   - it ensures code reliability and maintainability
   - it ensures an enterprise-grade security level
@@ -37,13 +37,13 @@ Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. I
   - it ensures the efficiency of your coding effort
   - it allows you to operate without cloud services
 
-Dive into sweetheart looking at
-[Zen of Sweetheart](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/Zen%20of%20Sweetheart.md)
-and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/core%20concepts.md).
+Dive into Sweetheart looking at
+[Zen of Sweetheart](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/src/Zen%20of%20Sweetheart.md)
+and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/src/core%20concepts.md).
 
 ## Rely on rock-solid pillars keeping innovative capabilities
 
-Sweetheart offers hardenest coding approach for new development projects. Reason is: it integrates the well known causes of programs failures and dysfunctions. Many coding technologies are great, I sincerely encourage for using it, today you can innovate only making code, but I will discourage you to implement it into a company without fixing a fine-tuned frame, which provides enough guaranties.
+Sweetheart offers hardenest coding approach for new development projects. Reason is: it integrates the well known causes of programs failures and dysfunctions. Many coding technologies are great, I sincerely encourage for using it, today you can innovate only making code, but I will discourage you to implement it into a company without fixing a fine-tuned frame and methods providing enough guaranties.
 
 ### why your programs will fail ?
 
@@ -72,14 +72,14 @@ Sweetheart manages dependencies and sourcing, making most relevant choices for f
   - clear objectives and strategy, advisable for long-term solutions
 
 ##### 2/ Use highly valuable open-source solutions
-###### e.g. Caddy - React - JSX - TailwindCss - Pydantic - Pandas ...
+###### e.g. Caddy - React - TailwindCss - Pydantic - Pandas ...
 
   - widely adopted, observed, and studied libraries
   - recognized solutions, managed by established organizations
   - predictable objectives and strategy, advisable for middle-term solutions at least 
 
 ##### 3/ Integrate some of the most brillant open-source initiatives
-###### e.g. NginxUnit - Gel/EdgeDB - SolidJS
+###### e.g. NginxUnit - Gel/EdgeQL - SolidJS
 
   - innovative, breaking, and emerging ideas
   - superlative design and code quality

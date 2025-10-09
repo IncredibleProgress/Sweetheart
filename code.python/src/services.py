@@ -1,7 +1,7 @@
 from sweetheart import *
 from typing import Self
 from pathlib import Path
-from rethinkdb import RethinkDB as R
+# from rethinkdb import RethinkDB as R
 from sweetheart.systemctl import Unit, Systemd
 
 from sweetheart.asgi3 import (
@@ -26,8 +26,8 @@ class WebappServer(Unit):
     def mount(self, *args: Route|DataHub ) -> Self:
 
         # unrelevant instances forbidden
-        allow = (Route,DataHub)
-        assert all([isinstance(arg,allow) for arg in args])
+        allowed = (Route,DataHub)
+        assert all([isinstance(arg,allowed) for arg in args])
         
         self.data.extend(args)
         return self
@@ -86,17 +86,19 @@ config = set_config({{
 # Set Python Asgi/3 App for data:
 
 # create here a runable entry point for your data traffic
-# default and recommended is a RetinkDB data driver at the url /data
+# default and recommended is a PostgresUnchained data driver at the url /geldata
 # NOTE: Sweetheart aims to serve statics directly via NginxUnit, not Asgi/3
 
 {pyconf["callable"]} = WebappServer(config).app(
-    # DataHub("/sql-data", PostgreSQL()), #! Unsupported
-    DataHub("/data", RethinkDB()) )
+    # DataHub("/data", RethinkDB()) #! deprecated
+    DataHub("/geldata", PostgresUnchained())
+)
 
-# --- end of Python3 script --- #"""
+# --- end of script --- #"""
 
 
-class RethinkDB(Systemd):
+class PostgresUnchained(Systemd):
+    #FIXME: incomplete, untested
 
     def __init__(self, config:BaseConfig=None):
         
@@ -105,146 +107,184 @@ class RethinkDB(Systemd):
             config = WebappServer._config_
 
         # set default config for single instance
-        self.rconfig: dict = config["rethinkdb"] # cli options
+        self.pconfig: dict = config["postgresql"] # cli options
         self.allow_databases: list = config["allow_databases"]
 
         self.restapi = {
             #NOTE: methods are uppercased
-            "GET": self._rql_FILTER,
-            "POST": self._rql_INSERT,
-            "PATCH": self._rql_UPDATE,
-            # "PUT": self.rql_REPLACE,
-            # "DELETE": self.rql_DELETE
+            "GET": self._edgeQL_SELECT,
+            "POST": self._edgeQL_INSERT,
+            "PATCH": self._edgeQL_UPDATE,
+            # "PUT": self.edgeQL_REPLACE,
+            # "DELETE": self.edgeQL_DELETE
         }
 
-    def connect(self, settings={}):
-        """ Start new connection with RethinkDB server. """
+    def connect(self,settings={}):
+        
+        # [LocalImport]
+        import gel
 
-        assert isinstance(settings,dict)
-
-        # set default settings as kwargs
-        kwargs = dict(
-            db = "test",
-            host = "localhost",
-            port = self.rconfig["driver-port"] )
-
-        kwargs.update(settings)
-        assert kwargs["db"] in self.allow_databases # safer
-
-        # connect to RethinkDB server
-        if not hasattr(self,"r"): self.r = R()
-        connect = self.r.connect(**kwargs)
-
-        if not hasattr(self,"conn"):
-            #NOTE: keep 1st connection as attribute
-            self.conn = connect
-            
-        return connect
-
-    # def _rql_expr(self, query:str, conn=None) -> tuple:
-    #     """ Run any given RethinkDB query. """
-
-    #     # set default connection
-    #     if not conn: conn = self.conn
-    #     # return result as tuple (status, value)
-    #     return "Ok", self.r.expr(query).run(conn) #FIXME
-
-    def _rql_FILTER(self, d:dict, conn=None) -> tuple:
-
-        if conn is None:
-            conn = getattr(self,"conn",
-                # default: set conn establishing a first connection
-                # this assumes that rql_FILTER is used first for fetching data
-                # when 'db' is None, a default value is provided in self.connect()
-                self.connect({ "db": d.get("database",default=None) }) )
-
-        if d.get("database"):
-            assert d["database"] in self.allow_databases
-            r = self.r.db(d["database"])
-        else:
-            r = self.r # means db is provided by conn
-                
-        # apply Rest Api: GET
-        r = r.table(d["table"])
-        if d.get("filter"): r = r.filter(d["filter"])
-
-        # return result as tuple (status, value)
-        return "Ok", list(r.run(conn))
-
-    def _rql_INSERT(self, d:dict, conn=None) -> tuple:
-
-        # set default connection
-        if conn is None:
-            conn = self.conn
-
-        if d.get("database"):
-            assert d["database"] in self.allow_databases
-            r = self.r.db(d["database"])
-        else:
-            r = self.r # means db provided by conn
-
-        # apply Rest Api: POST
-        query = r.table(d["table"]).insert(d["row"]).run(conn)
-
-        # return result as tuple (status, value)
-        if query["errors"]: return ("Err",query["errors"])
-        elif query["inserted"]==1: return ("Ok",None)
-        else: return ("Err","No data inserted")
-
-    def _rql_UPDATE(self, d:dict, conn=None) -> tuple:
-
-        # set default connection
-        if conn is None:
-            conn = self.conn
-
-        if d.get("database"):
-            assert d["database"] in self.allow_databases
-            r = self.r.db(d["database"])
-        else:
-            r = self.r # means db provided by conn
-
-        # Rest Api: PATCH
-        query = r.table(d["table"]).get(d["id"]) \
-            .update({ d["name"]: d["value"] }).run(conn)
-            
-        # return result as tuple (status, value)
-        if query["errors"]: return "Err",query["errors"]
-        elif query["replaced"]==1: return "Ok",None
-        else: return "Err","No data updated"
-
-    # def def ReQL_REPLACE(self,d:dict):
-    #     # Rest Api: PUT
-    #     r = self.r.table(d["table"])
-    #     r.get(d["id"]).replace(d["data"]).run(self.connect)
-
-    # def ReQL_DELETE(self,d:dict):
-    #     # Rest Api DELETE
-    #     r = self.r.table(d["table"])
-    #     r.get(d["id"]).delete().run(self.connect)
+        self.client = gel.create_client()
+        return self.client
+    
+    def _edgeQL_SELECT(self,d:dict,conn=None) -> tuple:
+        raise NotImplementedError
 
     def set_service(self,enable:str=None):
+        raise NotImplementedError
 
-        ExecStart = " ".join(["rethinkdb",
-            *[f"--{k} {v}" for k,v in self.rconfig.items()] ])
 
-        self.set_systemd_service({
-            "Unit": {
-                "Description": "RethinkDB running for Sweetheart",
-                "After": "network.target" },
-            "Service": {
-                "ExecStart": ExecStart,
-                "Restart": "always",
-                "User": os.getuser(),#FIXME
-                "Group": os.getuser() },#FIXME
-                "WorkingDirectory": f"{self.root}/databases",#FIXME
-            "Install": {
-                "WantedBy": "multi-user.target" } })
+# --- --- --- legacy --- --- --- #
+
+# class RethinkDB(Systemd):
+
+#     def __init__(self, config:BaseConfig=None):
         
-        if enable is not None:
-            assert isinstance(enable,str)
-            self.enable_systemd_service(enable)
+#         if config is None:
+#             # inherit config from WebappServer
+#             config = WebappServer._config_
 
-    def __del__(self):
-        """ Close default connection when object is deleted. """
-        #NOTE: multiple connections must be managed explicitly
-        if hasattr(self,"conn"): self.conn.close()
+#         # set default config for single instance
+#         self.rconfig: dict = config["rethinkdb"] # cli options
+#         self.allow_databases: list = config["allow_databases"]
+
+#         self.restapi = {
+#             #NOTE: methods are uppercased
+#             "GET": self._rql_FILTER,
+#             "POST": self._rql_INSERT,
+#             "PATCH": self._rql_UPDATE,
+#             # "PUT": self.rql_REPLACE,
+#             # "DELETE": self.rql_DELETE
+#         }
+
+#     def connect(self, settings={}):
+#         """ Start new connection with RethinkDB server. """
+
+#         assert isinstance(settings,dict)
+
+#         # set default settings as kwargs
+#         kwargs = dict(
+#             db = "test",
+#             host = "localhost",
+#             port = self.rconfig["driver-port"] )
+
+#         kwargs.update(settings)
+#         assert kwargs["db"] in self.allow_databases # safer
+
+#         # connect to RethinkDB server
+#         if not hasattr(self,"r"): self.r = R()
+#         connect = self.r.connect(**kwargs)
+
+#         if not hasattr(self,"conn"):
+#             #NOTE: keep 1st connection as attribute
+#             self.conn = connect
+            
+#         return connect
+
+#     # def _rql_expr(self, query:str, conn=None) -> tuple:
+#     #     """ Run any given RethinkDB query. """
+
+#     #     # set default connection
+#     #     if not conn: conn = self.conn
+#     #     # return result as tuple (status, value)
+#     #     return "Ok", self.r.expr(query).run(conn) #FIXME
+
+#     def _rql_FILTER(self, d:dict, conn=None) -> tuple:
+
+#         if conn is None:
+#             conn = getattr(self,"conn",
+#                 # default: set conn establishing a first connection
+#                 # this assumes that rql_FILTER is used first for fetching data
+#                 # when 'db' is None, a default value is provided in self.connect()
+#                 self.connect({ "db": d.get("database",default=None) }) )
+
+#         if d.get("database"):
+#             assert d["database"] in self.allow_databases
+#             r = self.r.db(d["database"])
+#         else:
+#             r = self.r # means db is provided by conn
+                
+#         # apply Rest Api: GET
+#         r = r.table(d["table"])
+#         if d.get("filter"): r = r.filter(d["filter"])
+
+#         # return result as tuple (status, value)
+#         return "Ok", list(r.run(conn))
+
+#     def _rql_INSERT(self, d:dict, conn=None) -> tuple:
+
+#         # set default connection
+#         if conn is None:
+#             conn = self.conn
+
+#         if d.get("database"):
+#             assert d["database"] in self.allow_databases
+#             r = self.r.db(d["database"])
+#         else:
+#             r = self.r # means db provided by conn
+
+#         # apply Rest Api: POST
+#         query = r.table(d["table"]).insert(d["row"]).run(conn)
+
+#         # return result as tuple (status, value)
+#         if query["errors"]: return ("Err",query["errors"])
+#         elif query["inserted"]==1: return ("Ok",None)
+#         else: return ("Err","No data inserted")
+
+#     def _rql_UPDATE(self, d:dict, conn=None) -> tuple:
+
+#         # set default connection
+#         if conn is None:
+#             conn = self.conn
+
+#         if d.get("database"):
+#             assert d["database"] in self.allow_databases
+#             r = self.r.db(d["database"])
+#         else:
+#             r = self.r # means db provided by conn
+
+#         # Rest Api: PATCH
+#         query = r.table(d["table"]).get(d["id"]) \
+#             .update({ d["name"]: d["value"] }).run(conn)
+            
+#         # return result as tuple (status, value)
+#         if query["errors"]: return "Err",query["errors"]
+#         elif query["replaced"]==1: return "Ok",None
+#         else: return "Err","No data updated"
+
+#     # def def ReQL_REPLACE(self,d:dict):
+#     #     # Rest Api: PUT
+#     #     r = self.r.table(d["table"])
+#     #     r.get(d["id"]).replace(d["data"]).run(self.connect)
+
+#     # def ReQL_DELETE(self,d:dict):
+#     #     # Rest Api DELETE
+#     #     r = self.r.table(d["table"])
+#     #     r.get(d["id"]).delete().run(self.connect)
+
+#     def set_service(self,enable:str=None):
+
+#         ExecStart = " ".join(["rethinkdb",
+#             *[f"--{k} {v}" for k,v in self.rconfig.items()] ])
+
+#         self.set_systemd_service({
+#             "Unit": {
+#                 "Description": "RethinkDB running for Sweetheart",
+#                 "After": "network.target" },
+#             "Service": {
+#                 "ExecStart": ExecStart,
+#                 "Restart": "always",
+#                 "User": os.getuser(),#FIXME
+#                 "Group": os.getuser() },#FIXME
+#                 "WorkingDirectory": f"{self.root}/databases",#FIXME
+#             "Install": {
+#                 "WantedBy": "multi-user.target" } })
+        
+#         if enable is not None:
+#             assert isinstance(enable,str)
+#             self.enable_systemd_service(enable)
+
+#     def __del__(self):
+#         """ Close default connection when object is deleted. """
+#         #NOTE: multiple connections must be managed explicitly
+#         if hasattr(self,"conn"): self.conn.close()

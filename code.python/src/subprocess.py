@@ -27,7 +27,9 @@ class os:
     isdir = _os_.path.isdir
     isfile = _os_.path.isfile
     islink = _os_.path.islink
+    exists = _os_.path.exists
     expanduser = _os_.path.expanduser
+    HOME = _os_.path.expanduser("~")
 
     chdir = _os_.chdir
     mkdir = _os_.mkdir

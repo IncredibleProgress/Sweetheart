@@ -59,7 +59,7 @@ if __name__ == "__main__":
     cli.opt("-v","--verbose",action="count",default=0,
         help="get additional messages about ongoing process")
 
-    cli.opt("-p",dest="project",nargs=1,default=BaseConfig.master_module,
+    cli.opt("-p",dest="project",nargs=1,default=BaseConfig.master_project,
         help="set a project env different of the default one")
 
 
@@ -69,8 +69,8 @@ if __name__ == "__main__":
             raise NotImplementedError
         else: 
             # [LocalImport]
-            from sweetheart.transitional import init_sweetheart
-            init_sweetheart(system=False)
+            from sweetheart.transitional import ProjectSweetheart
+            ProjectSweetheart.initdev()
 
     # set init command
     cli.sub("init",help="launch init process for sweetheart resources")

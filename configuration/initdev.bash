@@ -102,17 +102,6 @@ if ! grep -q "SWS_PYTHON_ENV=" ~/.bashrc; then
   >> ~/.bashrc
 fi
 
-# set cache directory for master app
-# mkdir --parents ~/.cache/sweetheart-master
-
-# create development folders
-mkdir ~/My_code
-mkdir ~/My_code/python
-mkdir ~/My_code/typescript
-mkdir ~/My_code/dbschema
-mkdir ~/My_code/configuration
-mkdir ~/My_code/documentation
-
 #3. Report and Exit #
 
 # installation report for dev purposes

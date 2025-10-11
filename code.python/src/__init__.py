@@ -14,13 +14,12 @@ class BaseConfig(UserDict):
 
     debug = True
     verbosity = 1
-    master_module = "sweetheart"
-    basedir = "Sweetheart/applications"
+    master_project = "sweetheart"
+    basedir = f".cache/sweetheart-applications"
     
-    def __init__(self,project:str=master_module):
+    def __init__(self,project:str=master_project):
 
-        home = os.expanduser('~')
-        self.root = f"{home}/{BaseConfig.basedir}/{project}"
+        self.root = f"{os.HOME}/{BaseConfig.basedir}/{project}"
         self.conffile = f"{self.root}/configuration/config.json"
 
         self.data = {
@@ -30,24 +29,11 @@ class BaseConfig(UserDict):
 
         #2. Systemd Services Settings:
 
-            # editable rethinkdb settings
-            # these are options for rethinkdb bash command
-            "rethinkdb": {
-                "http-port": 8082,# for http admin interface
-                "driver-port": 28015,# for client connections
-                "directory": f"{self.root}/databases/rethinkdb-tests",
-                # "bind": "0.0.0.0",
-                # "cache-size": 1024,
-                # "log-file": "",
-                # "io-threads": 2,
-                # "user": os.getuser(),
-                # "password": "__undefined__",
-            },
             # editable python app settings
             # these are put into the Nginx Unit config
             "python_app": {
                 # "home": "__undefined__",
-                "path": f"{self.root}/my_code/python",
+                "path": f"{os.HOME}/My_code/python",
                 "module": "start",#! no .py extension here
                 "callable": "webapp",
                 "user": os.getuser(),#FIXME
@@ -62,6 +48,19 @@ class BaseConfig(UserDict):
                 #NOTE: fallback allows routing by startpage itself
                 "fallback": {"share": f"{self.root}/application/startpage.html"},
             },
+            #[Deprecated] editable rethinkdb settings
+            # these are options for rethinkdb bash command
+            # "rethinkdb": {
+            #     "http-port": 8082,# for http admin interface
+            #     "driver-port": 28015,# for client connections
+            #     "directory": f"{self.root}/databases/rethinkdb-tests",
+                # "bind": "0.0.0.0",
+                # "cache-size": 1024,
+                # "log-file": "",
+                # "io-threads": 2,
+                # "user": os.getuser(),
+                # "password": "__undefined__",
+            # },
         }
     
     def __getattr__(self,attr):
@@ -117,7 +116,7 @@ class ansi:
 
 def echo(*args,prefix="",**kwargs):
 
-    label = BaseConfig.master_module.upper()
+    label = BaseConfig.master_project.upper()
     init = prefix + f"[{label}]"
     print(init,*args,ansi.NULL,**kwargs)
 

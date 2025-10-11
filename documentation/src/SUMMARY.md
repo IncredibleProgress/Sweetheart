@@ -3,12 +3,12 @@
 [Installation](empty.md)
 [Getting started]()
 [Build documentations]()
-[Bibliography](biblio.md)
+[Bibliography](learning/biblio.md)
 
 # Fast learning
 
-- [Python](python.md)
-- [Html&Css]()
+- [Python](learning/python.md)
+- [Html & CSS]()
 - [Data processing]()
 - [Good practices]()
 
@@ -20,10 +20,10 @@
 
 # In deep
 
-- [Bash](bash.md)
+- [Bash](cheatsheets/bash.md)
 - [Rust]()
 
-# Developpement
+# Development
 
 - [History of versions]()
 - [Contribute]()

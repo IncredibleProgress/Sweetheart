@@ -5,14 +5,12 @@ from platform import python_version_tuple
 # ensure Sweetheart runs in a development purpose
 assert os.getenv("SWS_OPERATING_STATE") == "development"
 
-
 class bin:
-    # paths to local binaries
+    # provide paths to local binaries
     mdbook = f"{os.HOME}/.cargo/bin/mdbook"
 
 
 class ProjectInstaller:
-    #FIXME: this is a prototype, needs more work
 
     @classmethod
     def installer(cls,include=None,exclude=None):
@@ -38,9 +36,13 @@ class ProjectInstaller:
         #     #FIXME: install crates from dist packages
         #     libs = [f"librust-{l}-dev" for l in cls.libs["librust"]]
         #     os.run(["sudo","apt-get","install",*libs])
-        
-        # if rust_ok and cls.libs.get("cargo"):
-        #     os.run(["cargo","install",*cls.libs["cargo"]])
+
+        if enable("rust") and cls.libs.get("cargo"):
+
+            if not os.which("cargo") and enable("sys"):
+                os.run("sudo snap install rustup --classic")
+
+            os.run(["cargo","install",*cls.libs["cargo"]])
 
         if enable("node") and \
         (cls.libs.get("npm") or cls.libs.get("npm-dev")):
@@ -76,18 +78,20 @@ class ProjectInstaller:
             os.run(["poetry","-C",cwd,"--no-ansi","add",*cls.libs["pip"]])
 
         if enable("doc") and cls.path.get("doc"):
+            # provide an empty mdbook directory for documentation
             os.makedirs(cls.path["doc"],exist_ok=True)
-            os.run(f"{bin.mdbook} init",cwd=cls.path["doc"])
+            os.run(f"{bin.mdbook} init --force",cwd=cls.path["doc"])
 
         if enable("conf") and cls.path.get("conf"):
             os.makedirs(cls.path["conf"],exist_ok=True)
 
         if enable("data") and cls.path.get("data"):
+            # provide an empty gel data project directory
             os.makedirs(cls.path["data"],exist_ok=True)
+            os.run("gel init",cwd=cls.path["data"])
 
 
 class ProjectSweetheart(ProjectInstaller):
-    #FIXME: this is a prototype, needs more work
 
     libs = {
         "apt": 
@@ -101,6 +105,8 @@ class ProjectSweetheart(ProjectInstaller):
     }
 
     source = {
+        # Sweetheart github repository source paths
+        # this asssumes repo has been cloned in the home dir
         "doc": f"{os.HOME}/Sweetheart/documentation",
         "node": f"{os.HOME}/Sweetheart/code.node/solid",
         "conf": f"{os.HOME}/Sweetheart/configuration",
@@ -108,21 +114,22 @@ class ProjectSweetheart(ProjectInstaller):
     }
 
     path = {
-        "node": f"{os.HOME}/{BaseConfig.basedir}/user_interface",
-        "dist-dir": f"{os.HOME}/{BaseConfig.basedir}/application",
-        "dist-base": f"{os.HOME}/{BaseConfig.basedir}",# for convenience
+        # set running directories
+        "node": f"{os.HOME}/{BaseConfig.basedir}/user_interface",# jsx
+        "dist-dir": f"{os.HOME}/{BaseConfig.basedir}/application",# html
+        "doc-dev": f"{os.HOME}/{BaseConfig.basedir}/documentation",# html
 
+        # provide user working directories
         "conf": f"{os.HOME}/My_code/configuration",
         "doc": f"{os.HOME}/My_code/documentation",
-        "jsx": f"{os.HOME}/My_code/typescript",
+        "jsx": f"{os.HOME}/My_code/typescript",#! link
         "python": f"{os.HOME}/My_code/python",
         "data": f"{os.HOME}/My_code/database",
     }
 
     scripts = {
-        "poetry-init": f"poetry -C {source['python']} -n --no-ansi --no-root install {libs['pip']}",
-        "mdbook-build": f"{bin.mdbook} build --dest-dir {path['dist-base']}/documentation {source['doc']}",
-        "node-build": f"npx parcel build --cache-dir {cls.path['dist-dir']}/.parcel-cache --dist-dir {cls.path['dist-dir']}",
+        "mdbook-build": f"{bin.mdbook} build --dest-dir {path['doc-dev']} {source['doc']}",
+        "node-build": f"npx parcel build --cache-dir {path['dist-dir']}/.parcel-cache --dist-dir {path['dist-dir']}",
     }
 
     @classmethod
@@ -130,9 +137,18 @@ class ProjectSweetheart(ProjectInstaller):
         """ install required packages and setup project structure """
 
         cls.installer(exclude="node|python")
-        os.run(cls.scripts["poetry-init"],cwd=cls.source["python"])
+
+        # build sweetheart documentation from source
         os.run(cls.scripts["mdbook-build"],cwd=cls.source["doc"])
 
+        # install python dependencies into venv from source
+        os.run(["poetry","-n","--no-root","--no-ansi","install",
+            *cls.libs["pip"]],cwd=cls.source["python"])
+
+        # provide directory for user python code
+        os.makedirs(cls.path["python"],exist_ok=True)
+
+        # build the sweetheartuser interface from source
         os.makedirs(cls.path["dist-dir"],exist_ok=True)
         os.run("npm install",cwd=cls.source["node"])
         os.run(cls.scripts["node-build"],cwd=cls.source["node"])

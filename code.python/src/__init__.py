@@ -15,11 +15,14 @@ class BaseConfig(UserDict):
     debug = True
     verbosity = 1
     master_project = "sweetheart"
-    basedir = f".cache/sweetheart-applications"
-    
+    basedir = f".cache/sweetheart-master"
+
     def __init__(self,project:str=master_project):
 
-        self.root = f"{os.HOME}/{BaseConfig.basedir}/{project}"
+        if project != master_project:
+            self.basedir = str(BaseConfig.basedir).replace("master",project)
+        
+        self.root = f"{os.HOME}/{self.basedir}"
         self.conffile = f"{self.root}/configuration/config.json"
 
         self.data = {
@@ -48,7 +51,8 @@ class BaseConfig(UserDict):
                 #NOTE: fallback allows routing by startpage itself
                 "fallback": {"share": f"{self.root}/application/startpage.html"},
             },
-            #[Deprecated] editable rethinkdb settings
+            # [Deprecated]
+            # editable rethinkdb settings
             # these are options for rethinkdb bash command
             # "rethinkdb": {
             #     "http-port": 8082,# for http admin interface

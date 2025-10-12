@@ -28,7 +28,7 @@ class BaseConfig(UserDict):
         self.data = {
         #1. General Settings:
 
-            "allow_databases": ["test"],
+            "database_project": f"{os.HOME}/My_code/database",
 
         #2. Systemd Services Settings:
 
@@ -114,7 +114,7 @@ class ansi:
 
     RED = "\033[0;31m"
     GREEN = "\033[0;32m"
-    PINK = "\033[0;35m"
+    PINK = "\033[0;95m"
     NULL = "\033[0m"
 
 

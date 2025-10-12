@@ -1,6 +1,5 @@
 from sweetheart import *
 from typing import Self
-from pathlib import Path
 # from rethinkdb import RethinkDB as R
 from sweetheart.systemctl import Unit, Systemd
 
@@ -53,7 +52,7 @@ class WebappServer(Unit):
     def set_service(self, unit=False):
 
         pyconf = self.config["python_app"]
-        pyfile = Path(pyconf['path']) / f"{pyconf['module']}.py"
+        pyfile = f"{pyconf['path']}/{pyconf['module']}.py"
 
         pyfile.parent.mkdir(parents=True,exist_ok=True) #FIXME
         pyfile.write_text(self.generate_python_script(pyconf))
@@ -91,7 +90,7 @@ config = set_config({{
 
 {pyconf["callable"]} = WebappServer(config).app(
     # DataHub("/data", RethinkDB()) #! deprecated
-    DataHub("/geldata", PostgresUnchained())
+    DataHub("/geldata", PostgresUnchained()),
 )
 
 # --- end of script --- #"""
@@ -107,8 +106,8 @@ class PostgresUnchained(Systemd):
             config = WebappServer._config_
 
         # set default config for single instance
-        self.pconfig: dict = config["postgresql"] # cli options
-        self.allow_databases: list = config["allow_databases"]
+        self.pgconfig: dict = config["postgres"] # cli options
+        self.project: str = config["database_project"]
 
         self.restapi = {
             #NOTE: methods are uppercased
@@ -121,14 +120,67 @@ class PostgresUnchained(Systemd):
 
     def connect(self,settings={}):
         
-        # [LocalImport]
-        import gel
+        from gel import create_client # [LocalImport]
+        assert isinstance(settings,dict)
 
-        self.client = gel.create_client()
+        #FIXME: set default settings as kwargs
+        kwargs = dict()
+        kwargs.update(settings)
+
+        os.chdir(self.project)
+        self.client = create_client(**kwargs)
+        self.client.ensure_connected()
+
         return self.client
-    
-    def _edgeQL_SELECT(self,d:dict,conn=None) -> tuple:
-        raise NotImplementedError
+
+    def _edgeQL_SELECT(self,d:dict,client=None) -> tuple:
+        
+        if client is None:
+            client = self.client
+
+        query = client.query(f"""
+            select {d['table']};
+        """)
+
+        # return result as tuple (status, value)
+        return "Ok", query
+
+    def _edgeQL_INSERT(self,d:dict,client=None) -> tuple:
+
+        if client is None:
+            client = self.client
+
+        # convert dict to edgeQL object notation
+        data = ", ".join([
+            f"{k}: {v if isinstance(v,(int,float)) else f'\"{v}\"'}" \
+            for k,v in d["row"].items() ])
+
+        # ensure data is not empty
+        assert data != ""
+
+        query = client.query(f"""
+            insert {d['table']} {{ {data} }};
+        """)
+
+        # return result as tuple (status, value)
+        return "Ok", query
+
+    def _edgeQL_UPDATE(self,d:dict,client=None) -> tuple:
+
+        if client is None:
+            client = self.client
+
+        if isinstance(d["value"],str):
+            d["value"] = f'"{d["value"]}"' # add quotes
+
+        query = client.query(f"""
+            update {d['table']}
+            filter .id = {d['id']}
+            set {{ .{d['name']} := {d['value']} }};
+        """)
+
+        # return result as tuple (status, value)
+        return "Ok", query
 
     def set_service(self,enable:str=None):
         raise NotImplementedError

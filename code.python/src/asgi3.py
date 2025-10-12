@@ -437,7 +437,8 @@ class DataHub(Route,AsgiEndpoint):
                 "fetch.test": self._fetch_TEST,
                 "fetch.rest": self._fetch_REST },
             "websocket": {
-                "ws.reql": self._ws_ReQL,
+                # "ws.reql": self._ws_ReQL,
+                "ws.edgeql": self._ws_edgeQL,
                 "ws.rest.get": self._ws_REST,
                 "ws.rest.post": self._ws_REST,
                 "ws.rest.patch": self._ws_REST }}
@@ -494,13 +495,23 @@ class DataHub(Route,AsgiEndpoint):
 
         else: return JSONMessage({"Err":"Invalid websocket action."})
 
-    def _ws_ReQL(self,data:dict) -> JSONMessage:
-        """ Execute any RethinkDB query from WebSocket. """
+    # [Deprecated]
+    # def _ws_ReQL(self,data:dict) -> JSONMessage:
+    #     """ Execute any RethinkDB query from WebSocket. """
+
+    #     #NOTE: available for development only
+    #     assert os.getenv("SWS_OPERATING_STATE") == "development"
+
+    #     message: tuple = self.datasystem.rql_expr(data["query"])
+    #     return JSONMessage.safer(message,uuid=data.get("uuid"))
+
+    def _ws_edgeQL(self,data:dict) -> JSONMessage:
+        """ Execute any Gel/EdgeQL query from WebSocket. """
 
         #NOTE: available for development only
         assert os.getenv("SWS_OPERATING_STATE") == "development"
 
-        message: tuple = self.datasystem.rql_expr(data["query"])
+        message: tuple = self.datasystem.edb_expr(data["query"])
         return JSONMessage.safer(message,uuid=data.get("uuid"))
 
     def _ws_REST(self,data:dict) -> JSONMessage:

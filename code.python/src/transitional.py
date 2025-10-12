@@ -1,6 +1,6 @@
-from sweetheart import BaseConfig
 from sweetheart.subprocess import os
 from platform import python_version_tuple
+from sweetheart import BaseConfig, ansi, echo
 
 # ensure Sweetheart runs in a development purpose
 assert os.getenv("SWS_OPERATING_STATE") == "development"
@@ -8,6 +8,8 @@ assert os.getenv("SWS_OPERATING_STATE") == "development"
 class bin:
     # provide paths to local binaries
     mdbook = f"{os.HOME}/.cargo/bin/mdbook"
+    python = f"{os.getenv('SWS_PYTHON_ENV')}/bin/python3"
+    ipykernel = f"{python} -m ipykernel"
 
 
 class ProjectInstaller:
@@ -83,6 +85,7 @@ class ProjectInstaller:
             os.run(f"{bin.mdbook} init --force",cwd=cls.path["doc"])
 
         if enable("conf") and cls.path.get("conf"):
+            #FIXME: provide default configuration files
             os.makedirs(cls.path["conf"],exist_ok=True)
 
         if enable("data") and cls.path.get("data"):
@@ -122,7 +125,7 @@ class ProjectSweetheart(ProjectInstaller):
         # provide user working directories
         "conf": f"{os.HOME}/My_code/configuration",
         "doc": f"{os.HOME}/My_code/documentation",
-        "jsx": f"{os.HOME}/My_code/typescript",#! link
+        "jsx": f"{os.HOME}/My_code/typescript",# symlink
         "python": f"{os.HOME}/My_code/python",
         "data": f"{os.HOME}/My_code/database",
     }
@@ -136,19 +139,23 @@ class ProjectSweetheart(ProjectInstaller):
     def initdev(cls):
         """ install required packages and setup project structure """
 
+        echo(f"Development Environment Setup")
         cls.installer(exclude="node|python")
 
         # build sweetheart documentation from source
+        echo("Build Provided Documentation",prefix="\n")
         os.run(cls.scripts["mdbook-build"],cwd=cls.source["doc"])
 
-        # install python dependencies into venv from source
-        os.run(["poetry","-n","--no-root","--no-ansi","install",
-            *cls.libs["pip"]],cwd=cls.source["python"])
+        # install python env dependencies from source
+        echo("Install Python Dependencies",prefix="\n")
+        os.run(["poetry","-n","--no-root","--no-ansi",
+            "install"],cwd=cls.source["python"])
 
         # provide directory for user python code
         os.makedirs(cls.path["python"],exist_ok=True)
 
-        # build the sweetheartuser interface from source
+        # build sweetheart user interface from source
+        echo("Build User Interface",prefix="\n")
         os.makedirs(cls.path["dist-dir"],exist_ok=True)
         os.run("npm install",cwd=cls.source["node"])
         os.run(cls.scripts["node-build"],cwd=cls.source["node"])

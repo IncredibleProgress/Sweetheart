@@ -4,7 +4,7 @@ from typing import Self
 from sweetheart.systemctl import Unit, Systemd
 
 from sweetheart.asgi3 import (
-    AsgiLifespanRouter, DataHub, Route, 
+    AsgiLifespanRouter, RestApiEndpoints, Route, 
     Websocket, JSONResponse, JSONMessage )
 
 
@@ -89,11 +89,44 @@ config = set_config({{
 # NOTE: Sweetheart aims to serve statics directly via NginxUnit, not Asgi/3
 
 {pyconf["callable"]} = WebappServer(config).app(
-    # DataHub("/data", RethinkDB()) #! deprecated
+    # DataHub("/data", RethinkDB()) # deprecated
     DataHub("/geldata", PostgresUnchained()),
 )
 
 # --- end of script --- #"""
+
+
+class DataHub(RestApiEndpoints):
+
+    def __init__(self, urlpath: str, datasystem):
+        super().__init__(urlpath,datasystem)
+
+        self.endpoints["websocket"].update({
+            # "ws.reql": self._ws_ReQL,
+            "ws.edgeql": self._ws_EdgeQL
+        }) 
+
+    def _ws_EdgeQL(self,data:dict) -> JSONMessage:
+        """ Execute any Gel/EdgeQL query from WebSocket. """
+
+        #NOTE: available for development only
+        assert os.getenv("SWS_OPERATING_STATE") == "development"
+
+        # ensure datasystem is PostgresUnchained
+        assert isinstance(self.datasystem,PostgresUnchained)
+
+        message: tuple = self.datasystem.edgeql(data["query"])
+        return JSONMessage.safer(message,uuid=data.get("uuid"))
+
+    # [Deprecated]
+    # def _ws_ReQL(self,data:dict) -> JSONMessage:
+    #     """ Execute any RethinkDB query from WebSocket. """
+
+    #     #NOTE: available for development only
+    #     assert os.getenv("SWS_OPERATING_STATE") == "development"
+
+    #     message: tuple = self.datasystem.rql_expr(data["query"])
+    #     return JSONMessage.safer(message,uuid=data.get("uuid"))
 
 
 class PostgresUnchained(Systemd):
@@ -111,9 +144,9 @@ class PostgresUnchained(Systemd):
 
         self.restapi = {
             #NOTE: methods are uppercased
-            "GET": self._edgeQL_SELECT,
-            "POST": self._edgeQL_INSERT,
-            "PATCH": self._edgeQL_UPDATE,
+            "GET": self._edgeql_SELECT,
+            "POST": self._edgeql_INSERT,
+            "PATCH": self._edgeql_UPDATE,
             # "PUT": self.edgeQL_REPLACE,
             # "DELETE": self.edgeQL_DELETE
         }
@@ -132,8 +165,16 @@ class PostgresUnchained(Systemd):
         self.client.ensure_connected()
 
         return self.client
+    
+    def edgeql(self,query:str,client=None) -> tuple:
+    
+        if client is None:
+            client = self.client
 
-    def _edgeQL_SELECT(self,d:dict,client=None) -> tuple:
+        # return result as tuple (status, value)
+        return "Ok", client.query(query)
+
+    def _edgeql_SELECT(self,d:dict,client=None) -> tuple:
         
         if client is None:
             client = self.client
@@ -145,17 +186,17 @@ class PostgresUnchained(Systemd):
         # return result as tuple (status, value)
         return "Ok", query
 
-    def _edgeQL_INSERT(self,d:dict,client=None) -> tuple:
+    def _edgeql_INSERT(self,d:dict,client=None) -> tuple:
 
         if client is None:
             client = self.client
 
-        # convert dict to edgeQL object notation
-        data = ", ".join([
+        #FIXME: convert dict to edgeQL object notation
+        data: str = ", ".join([
             f"{k}: {v if isinstance(v,(int,float)) else f'\"{v}\"'}" \
-            for k,v in d["row"].items() ])
+            for k,v in d["row"].items() ]) 
 
-        # ensure data is not empty
+        #FIXME: ensure data is not empty
         assert data != ""
 
         query = client.query(f"""
@@ -165,12 +206,13 @@ class PostgresUnchained(Systemd):
         # return result as tuple (status, value)
         return "Ok", query
 
-    def _edgeQL_UPDATE(self,d:dict,client=None) -> tuple:
+    def _edgeql_UPDATE(self,d:dict,client=None) -> tuple:
 
         if client is None:
             client = self.client
 
-        if isinstance(d["value"],str):
+        #FIXME: convert value to edgeQL object notation
+        if not isinstance(d["value"],(int,float)):
             d["value"] = f'"{d["value"]}"' # add quotes
 
         query = client.query(f"""

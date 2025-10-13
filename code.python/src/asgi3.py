@@ -369,7 +369,7 @@ class AsgiLifespanRouter:
                     middleware = dict(self.middleware)
                     startup = middleware.pop("lifespan.startup",None)
                     shutdown = middleware.pop("lifespan.shutdown",None)
-                    # scope["status"] is used to keep current app status
+                    #NOTE: scope["status"] holds the current app status
                     scope["status"] = middleware # set the remaining entries
 
                     try:
@@ -404,12 +404,11 @@ class AsgiLifespanRouter:
             await route.endpoint(scope,receive,send)
 
 
-class DataHub(Route,AsgiEndpoint):
+class RestApiEndpoints(Route,AsgiEndpoint):
     """
-    Wrapper for ensuring data exchanges with given datasystem,
-    with both WebSocket and Http scope type interfaces.
-
-    DataHub instance can be used as Route and AsgiEndpoint.
+    Wrapper which ensures data exchanges with given datasystem
+    and through a RESTful API over Http and WebSocket scopes.
+    RestApiEndpoints instance is both a Route and a AsgiEndpoint.
     """
 
     def __init__(self, urlpath: str, datasystem):
@@ -431,14 +430,13 @@ class DataHub(Route,AsgiEndpoint):
         self.websocket = Websocket()
         self.websocket.on_receive = self.on_receive
 
-        # set Http and Websocket endpoints
+        # set Http and Websocket default endpoints
+        # only RESTful api is handled here 
         self.endpoints = {
             "http": {
                 "fetch.test": self._fetch_TEST,
                 "fetch.rest": self._fetch_REST },
             "websocket": {
-                # "ws.reql": self._ws_ReQL,
-                "ws.edgeql": self._ws_edgeQL,
                 "ws.rest.get": self._ws_REST,
                 "ws.rest.post": self._ws_REST,
                 "ws.rest.patch": self._ws_REST }}
@@ -494,25 +492,6 @@ class DataHub(Route,AsgiEndpoint):
             return self.endpoints["websocket"][action](data)
 
         else: return JSONMessage({"Err":"Invalid websocket action."})
-
-    # [Deprecated]
-    # def _ws_ReQL(self,data:dict) -> JSONMessage:
-    #     """ Execute any RethinkDB query from WebSocket. """
-
-    #     #NOTE: available for development only
-    #     assert os.getenv("SWS_OPERATING_STATE") == "development"
-
-    #     message: tuple = self.datasystem.rql_expr(data["query"])
-    #     return JSONMessage.safer(message,uuid=data.get("uuid"))
-
-    def _ws_edgeQL(self,data:dict) -> JSONMessage:
-        """ Execute any Gel/EdgeQL query from WebSocket. """
-
-        #NOTE: available for development only
-        assert os.getenv("SWS_OPERATING_STATE") == "development"
-
-        message: tuple = self.datasystem.edb_expr(data["query"])
-        return JSONMessage.safer(message,uuid=data.get("uuid"))
 
     def _ws_REST(self,data:dict) -> JSONMessage:
         """ Hook which handle RESTful API from WebSocket. """

@@ -87,6 +87,8 @@ class ProjectInstaller:
         if enable("conf") and cls.path.get("conf"):
             #FIXME: provide default configuration files
             os.makedirs(cls.path["conf"],exist_ok=True)
+            unitconf = f"{cls.source['conf']}/unit.json"
+            if os.isfile(unitconf): os.copy(unitconf,cls.path["conf"])
 
         if enable("data") and cls.path.get("data"):
             # provide an empty gel data project directory

@@ -1,6 +1,5 @@
 import os as _os_
 import shlex as _shlex_
-# from pathlib import Path
 import shutil as _shutil_
 import getpass as _getpass_
 import tempfile as _tempfile_
@@ -36,9 +35,13 @@ class os:
     makedirs = _os_.makedirs
     symlink = _os_.symlink
     remove = _os_.remove
-    rmtree = _shutil_.rmtree
     listdir = _os_.listdir
     # walk = _os_.walk
+
+    move = _shutil_.move
+    copy = _shutil_.copy
+    copytree = _shutil_.copytree
+    rmtree = _shutil_.rmtree
 
     # [Deprecated]
     # os_release = platform.freedesktop_os_release()

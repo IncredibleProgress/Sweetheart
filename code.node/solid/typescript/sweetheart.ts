@@ -141,7 +141,7 @@ export class WebSocket extends window.WebSocket {
 
   constructor(url?: string, db?: string) {
 
-    url= url || "ws://localhost:8080/data"
+    url= url || "ws://localhost:8080/geldata"
     super(url,"json") // set json sub-protocol
 
     this.connectDB = {

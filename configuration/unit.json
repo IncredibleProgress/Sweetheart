@@ -8,7 +8,7 @@
         "sweetheart": [
             {
                 "match": {
-                    "uri": "/data"
+                    "uri": ["/data","/geldata","/tsdata"]
                 },
                 "action": {
                     "pass": "applications/python_app"

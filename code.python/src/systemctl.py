@@ -1,5 +1,6 @@
 import json
 import configparser
+from pathlib import Path
 from datetime import datetime
 from sweetheart.subprocess import os
 from sweetheart import BaseConfig, echo, verbose, ansi
@@ -18,13 +19,15 @@ class Unit:
 
     def load_unit_config(self,source:str):
 
-        assert hasattr(self,"config")
-        assert isinstance(self.config,BaseConfig)
-
         if source == "json":
             # load unit config from json config file
-            #NOTE: induces reset of current unit config afterwards
-            with open(f"{self.config.root}/configuration/unit.json") as file_in:
+            #NOTE: resets any existing unit config
+
+            assert hasattr(self,"config")
+            assert isinstance(self.config,BaseConfig)
+            assert os.isfile(self.config.unitconf)
+
+            with open(self.config.unitconf) as file_in:
                 Unit.unitconf = json.load(file_in)
 
         elif source == "current":

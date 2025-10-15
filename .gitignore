@@ -10,3 +10,4 @@ code.node/**/.parcel-cache/
 code.node/**/package-lock.json
 
 code.node/**/dbschema/migrations/
+optimum/database/dbschema/migrations/

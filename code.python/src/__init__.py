@@ -19,11 +19,12 @@ class BaseConfig(UserDict):
 
     def __init__(self,project:str=master_project):
 
-        if project != master_project:
+        if project != BaseConfig.master_project:
             self.basedir = str(BaseConfig.basedir).replace("master",project)
         
         self.root = f"{os.HOME}/{self.basedir}"
-        self.conffile = f"{self.root}/configuration/config.json"
+        self.conffile = f"{os.HOME}/My_code/configuration/config.json"
+        self.unitconf = f"{os.HOME}/My_code/configuration/unit.json"
 
         self.data = {
         #1. General Settings:
@@ -77,9 +78,13 @@ class BaseConfig(UserDict):
 
             # autoset the python virtual env
             cwd = self["python_app"]["path"]
-            self.python_env= os.stdout(["poetry","env","info","--path","-C",cwd])
-            self.python_bin= f"{self.python_env}/bin/python3"
 
+            self.python_env=\
+                os.stdout(["poetry","env","info","--path","-C",cwd])\
+                or os.getenv("SWS_PYTHON_ENV")
+
+            assert self.python_env,"python virtual env not found"
+            self.python_bin= f"{self.python_env}/bin/python3"
             return self.__dict__.get(attr)
 
         else:

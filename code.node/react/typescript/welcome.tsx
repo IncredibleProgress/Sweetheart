@@ -197,7 +197,7 @@ export const WelcomePage = () => { return(
       <h1 className="text-5xl lg:text-8xl text-pink-500 text-center italic">
         Sweetheart </h1>
       <p className="text-2xl lg:text-3xl text-center text-pink-600 italic mt-4">
-        innovative foundations for enterprise-grade solutions </p>
+        innovative foundations for business-grade solutions </p>
     </div>
 
     <div className="md:flex border rounded-lg shadow-xl p-6 mb-20

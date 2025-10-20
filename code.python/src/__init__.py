@@ -1,6 +1,6 @@
 """
 Sweetheart
-innovative foundations for enterprise-grade solutions
+innovative foundations for business-grade solutions
 """
 
 __version__ = "0.1.3"

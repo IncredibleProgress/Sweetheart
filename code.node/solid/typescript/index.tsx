@@ -16,7 +16,7 @@ const Welcome = (): JSX.Element =>
     Sweetheart </h1>
 
   <h2 class={ twcss.variant.biggerSubtitle() }>
-    innovative foundations for enterprise-grade solutions </h2>
+    innovative foundations for business-grade solutions </h2>
 
 <br /> 
 

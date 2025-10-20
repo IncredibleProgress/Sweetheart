@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "sweetheart"
 version = "0.1.3"
-description = "innovative foundations for enterprise-grade solutions"
+description = "innovative foundations for business-grade solutions"
 authors = ["IncredibleProgress <champion.nicolas@gmail.com>"]
 license = "CeCILL-C FREE SOFTWARE LICENSE AGREEMENT"
 readme = "../README.md"

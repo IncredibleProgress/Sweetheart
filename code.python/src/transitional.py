@@ -1,5 +1,4 @@
 from sweetheart.subprocess import os
-from platform import python_version_tuple
 from sweetheart import BaseConfig, ansi, echo
 
 # ensure Sweetheart runs in a development purpose
@@ -53,7 +52,7 @@ class ProjectInstaller:
                 os.run("sudo snap install node --classic")
 
             cwd = cls.path['node']
-            os.makedirs(cwd,exist_ok=True)
+            os.makedirs(cwd,mode=0o755,exist_ok=True)
             os.run("npm init -y",cwd=cwd)
 
             if cls.libs.get("npm-dev"):
@@ -74,25 +73,25 @@ class ProjectInstaller:
                 os.run("sudo apt-get install python3-poetry")
 
             cwd = cls.path.get("python") 
-            os.makedirs(cwd,exist_ok=True)
+            os.makedirs(cwd,mode=0o755,exist_ok=True)
 
             os.run(f"poetry init -C {cwd} -n --no-ansi --name={BaseConfig.master_project}")
             os.run(["poetry","-C",cwd,"--no-ansi","add",*cls.libs["pip"]])
 
         if enable("doc") and cls.path.get("doc"):
             # provide an empty mdbook directory for documentation
-            os.makedirs(cls.path["doc"],exist_ok=True)
+            os.makedirs(cls.path["doc"],mode=0o755,exist_ok=True)
             os.run(f"{bin.mdbook} init --force",cwd=cls.path["doc"])
 
         if enable("conf") and cls.path.get("conf"):
             #FIXME: provide default configuration files
-            os.makedirs(cls.path["conf"],exist_ok=True)
+            os.makedirs(cls.path["conf"],mode=0o755,exist_ok=True)
             unitconf = f"{cls.source['conf']}/unit.json"
             if os.isfile(unitconf): os.copy(unitconf,cls.path["conf"])
 
         if enable("data") and cls.path.get("data"):
             # provide an empty gel data project directory
-            os.makedirs(cls.path["data"],exist_ok=True)
+            os.makedirs(cls.path["data"],mode=0o755,exist_ok=True)
             os.run("gel init",cwd=cls.path["data"])
 
 
@@ -142,7 +141,7 @@ class ProjectSweetheart(ProjectInstaller):
         """ install required packages and setup project structure """
 
         echo(f"Development Environment Setup")
-        cls.installer(exclude="node|python")
+        cls.installer(exclude="sys|node|python")
 
         # build sweetheart documentation from source
         echo("Build Provided Documentation",prefix="\n")
@@ -154,10 +153,10 @@ class ProjectSweetheart(ProjectInstaller):
             "install"],cwd=cls.source["python"])
 
         # provide directory for user python code
-        os.makedirs(cls.path["python"],exist_ok=True)
+        os.makedirs(cls.path["python"],mode=0o755,exist_ok=True)
 
         # build sweetheart user interface from source
         echo("Build User Interface",prefix="\n")
-        os.makedirs(cls.path["dist-dir"],exist_ok=True)
+        os.makedirs(cls.path["dist-dir"],mode=0o755,exist_ok=True)
         os.run("npm install",cwd=cls.source["node"])
         os.run(cls.scripts["node-build"],cwd=cls.source["node"])

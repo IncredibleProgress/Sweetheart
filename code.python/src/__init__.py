@@ -34,21 +34,21 @@ class BaseConfig(UserDict):
         #2. Systemd Services Settings:
 
             # editable python app settings
-            # these are put into the Nginx Unit config
+            # these are put into NginxUnit config
             "python_app": {
-                # "home": "__undefined__",
+                "home": "{{python_env}}",# auto set
                 "path": f"{os.HOME}/My_code/python",
-                "module": "start",#! no .py extension here
+                "module": "start",# no .py extension expected
                 "callable": "webapp",
                 "user": os.getuser(),#FIXME
                 "group": os.getuser(),#FIXME
             },
             # editable statics setting
-            # these are put into the Nginx Unit config
+            # these are put into NginxUnit config
             "shared_content": {
                 "index": "startpage.html",
                 "chroot": f"{self.root}/application",
-                "share": f"{self.root}/application",
+                "share": f"{self.root}/application$uri",
                 #NOTE: fallback allows routing by startpage itself
                 "fallback": {"share": f"{self.root}/application/startpage.html"},
             },
@@ -76,7 +76,7 @@ class BaseConfig(UserDict):
         if attr=="python_env" and not self.__dict__.get(attr)\
         or attr=="python_bin" and not self.__dict__.get(attr):
 
-            # autoset the python virtual env
+            #FIXME: autoset the python virtual env
             cwd = self["python_app"]["path"]
 
             self.python_env=\
@@ -109,6 +109,10 @@ def set_config(values={}) -> BaseConfig:
 
     config.update(values)
     return config
+
+
+# cleanup for using 'from sweetheart import *'
+del json, UserDict
 
 
   #############################################################################

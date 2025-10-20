@@ -1,8 +1,11 @@
-from sweetheart import *
+import json
 from typing import Self
 from pathlib import Path
-# from rethinkdb import RethinkDB as R
+
+from sweetheart import *
+from sweetheart.subprocess import os, stat
 from sweetheart.systemctl import Unit, Systemd
+# from rethinkdb import RethinkDB as R
 
 from sweetheart.asgi3 import (
     AsgiLifespanRouter, RestApiEndpoints, Route, 
@@ -162,11 +165,11 @@ class WebappServer(Unit):
         
         self.data = []
         self.config = config
+        self.application = "python_app"
         self.middleware = [] #FIXME
 
-        # allow testing python apps
+        # allow testing any python apps
         self.PythonAppType = AsgiLifespanRouter
-
         # keep current app config available 
         WebappServer._config_ = config
 
@@ -199,21 +202,43 @@ class WebappServer(Unit):
 
     def set_service(self, unit=False):
 
-        pyconf = self.config["python_app"]
-        pyfile = Path(pyconf['path'])/f"{pyconf['module']}.py"
+        # Expose webapp statics:
 
-        pyfile.parent.mkdir(parents=True,exist_ok=True) #FIXME
+        exposed_path = self.config["shared_content"]["chroot"]
+        exposed_parts = Path(exposed_path).parts
+
+        assert os.isdir(exposed_path),\
+            f"{exposed_path} must be a valid directory path"
+
+        #FIXME: ensure permissions
+        for i in range(1,len(exposed_parts)+1):
+            curpth = Path(*exposed_parts[:i])
+            st_mode = os.stat(curpth).st_mode
+            if st_mode & stat.S_IXOTH == 0 :
+                verbose(f"add execute permission to {curpth} directory")
+                os.chmod(curpth, st_mode|stat.S_IXOTH)
+
+        # Set python app from config:
+
+        pyconf = self.config[self.application]
+        pyfile = Path(pyconf['path'])/pyconf['module']
+
+        #FIXME: avoid extension matter in Unit with module name
+        module, extension = pyfile.stem, pyfile.suffix
+        if extension==".py": pyconf['module'] = module
+        else: pyfile = pyfile.with_suffix('.py')
+
+        pyfile.parent.mkdir(mode=0o755,parents=True,exist_ok=True)
         pyfile.write_text(self.generate_python_script(pyconf))
 
         if unit is True:
-            # force new NginxUnit config
-            self.load_unit_config(source="json")
+            # put NginxUnit config for python app
+            self.load_unit_config(source="conffile")
             self.set_unit_config(share_directory=True)
             Unit.put_unit_config()
 
     @staticmethod
     def generate_python_script(pyconf:dict):
-
         return f"""# --- start Python3 script --- #
 
 # Information:

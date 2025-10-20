@@ -7,7 +7,7 @@ What about security, big-data, real-time databases, responsive interfaces and AI
 
 Since Ubuntu operating system can be used in any cloud services and as usual software within Windows 10/11, it provides an incredible way for any organization to develop, deploy, and administrate powerful responsive apps including AI keeping high capabilities of integration with the already existing tools like databases, MS-Excel, or SAP.
 
-Sweetheart provides a Python|JSX centric approach leading you implementing best components and best practices. Due to the top-rated place of the Python language regarding to data processing, calculations and AI, this makes Sweetheart a fast and ideal toolkit for innovative ideas.
+Sweetheart provides a Python and JSX centric approach leading you implementing best components and best practices. Due to the top-rated place of the Python language regarding to data processing, calculations and AI, this makes Sweetheart a fast and ideal toolkit for innovative ideas.
 
 Sweetheart is shared under the [CeCILL-C FREE SOFTWARE LICENSE AGREEMENT](http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html).
 
@@ -38,7 +38,7 @@ Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. I
   - it allows you to operate without cloud services
 
 Dive into Sweetheart looking at
-[Zen of Sweetheart](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/src/Zen%20of%20Sweetheart.md)
+[Zen of Sweetheart](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/markdown/Zen%20of%20Sweetheart.md)
 and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/documentation/src/core%20concepts.md).
 
 ## Rely on rock-solid pillars keeping innovative capabilities
@@ -65,14 +65,14 @@ Maintenance and security topics are integrated within Sweetheart. You don't need
 Sweetheart manages dependencies and sourcing, making most relevant choices for firstly building the business apps you need, and secondly processing data without technical limitations, AI area included. Dependencies can be split in 3 separated categories of open-source solutions as follow. 
 
 ##### 1/ Rely on most valuable open-source technologies
-###### e.g. Ubuntu Server - Vault - Postgres - Rust - Python - Typescript
+###### e.g. Ubuntu Server - Vault - Postgres - Rust - Python - TypeScript
 
   - most adopted, observed, and studied technologies
   - major technologies, managed by top-rated organizations
   - clear objectives and strategy, advisable for long-term solutions
 
 ##### 2/ Use highly valuable open-source solutions
-###### e.g. Caddy - React - TailwindCss - Pydantic - Pandas ...
+###### e.g. Snapd - Caddy - React - TailwindCss - Pydantic - Pandas ...
 
   - widely adopted, observed, and studied libraries
   - recognized solutions, managed by established organizations

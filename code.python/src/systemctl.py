@@ -1,7 +1,7 @@
 import json
 import configparser
 from pathlib import Path
-from datetime import datetime
+
 from sweetheart.subprocess import os
 from sweetheart import BaseConfig, echo, verbose, ansi
 
@@ -19,7 +19,7 @@ class Unit:
 
     def load_unit_config(self,source:str):
 
-        if source == "json":
+        if source == "conffile":
             # load unit config from json config file
             #NOTE: resets any existing unit config
 
@@ -30,57 +30,69 @@ class Unit:
             with open(self.config.unitconf) as file_in:
                 Unit.unitconf = json.load(file_in)
 
-        elif source == "current":
-            # load unit current config through unit api
-            #NOTE: allows updating current unit config
-            raise NotImplementedError
+        elif source == "unitconf":
+            #FIXME: load unit current config through unit api
+
+            Unit.unitconf = json.loads( os.stdout([
+                "sudo", "--stdin", "curl", "--unix-socket", 
+                self.unitsocket, f"{self.unithost}/config/"
+            ], check=True, **os.sudopass() ))
         
         else: raise ValueError
 
-    def set_unit_config(
-            self,
-            settings = {},
-            share_directory = False ):
-
-        #NOTE: this currently manages only 1 python app
+    def set_unit_config(self, 
+            settings = {}, *,
+            share_directory = True ):
 
         assert hasattr(self,"config")
         assert isinstance(self.config,BaseConfig)
+
+        application = settings.pop("application",self.application)
+        type_app = Unit.unitconf["applications"][application]["type"] # e.g. "python 3"
+
+        assert isinstance(application,str),\
+            "application name must be given as string"
         
         for key in settings.keys():
-
             # update python app settings if given
-            if key in self.config["python_app"]:
-                self.config["python_app"][key] = settings[key]
+            if key in self.config[application]:
+                self.config[application][key] = settings[key]
 
             # update shared content settings if given
             elif key in self.config["shared_content"]:
                 self.config["shared_content"][key] = settings[key]
 
-            else: raise KeyError
+            else: raise KeyError(f"'{key}' not found in app's config")
 
-        #! set python env for setting Nginx Unit
-        self.config["python_app"]["home"] = self.config.python_env
+        #FIXME: Set python app from existing config:
+
+        if type_app.lower().strip().startswith("python")\
+        and self.config[application]["home"] == "{{python_env}}":
+            # auto set python home to current python env
+            self.config[application]["home"] = self.config.python_env
+
+        assert application in Unit.unitconf["applications"],\
+            f"application '{application}' not found in unit config"
+
+        Unit.unitconf["applications"][application].update(
+            self.config[application])
         
-        # set python app from existing config
-        Unit.unitconf["applications"]["python_app"].update(
-            self.config["python_app"])
-        
+        # Expose full content of given path:
+
         if share_directory \
         and self.config["shared_content"]["share"][-4:] != "$uri":
-            #! expose full content of given path
             self.config["shared_content"]["share"] += "$uri"
 
         # set a direct acces to shared content as statics
         Unit.unitconf["routes"]["sweetheart"][-1]["action"].update(
             self.config["shared_content"])
-        
+    
     @classmethod
     def put_unit_config(cls):
 
         assert cls.unitconf["listeners"]
-        assert cls.unitconf["applications"]["python_app"]
-        assert cls.unitconf["routes"]["sweetheart"][-1]["action"]
+        assert cls.unitconf["applications"]
+        assert cls.unitconf["routes"]["sweetheart"]
 
         echo("configuring Nginx Unit ...")
         verbose("set unit config:",cls.unitconf,level=2)
@@ -89,10 +101,10 @@ class Unit:
             json.dump(cls.unitconf,tempfile)
             tempname = tempfile.name
 
-        stdout = eval(os.stdout(["sudo", "--stdin",
-            "curl", "-X", "PUT", "-d", f"@{tempname}",
-            "--unix-socket", cls.unitsocket, f"{cls.unithost}/config/"],
-            check=True, **os.sudopass() ))
+        stdout = json.loads( os.stdout([
+            "sudo", "--stdin", "curl", "-X", "PUT", "-d", f"@{tempname}",
+            "--unix-socket", cls.unitsocket, f"{cls.unithost}/config/"
+        ], check=True, **os.sudopass() ))
 
         os.remove(tempname)
         assert isinstance(stdout,dict)

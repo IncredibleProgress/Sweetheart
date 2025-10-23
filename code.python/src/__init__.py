@@ -5,7 +5,7 @@ innovative foundations for business-grade solutions
 
 __version__ = "0.1.3"
 
-import json
+import json, logging
 from collections import UserDict
 from sweetheart.subprocess import os
 
@@ -111,10 +111,6 @@ def set_config(values={}) -> BaseConfig:
     return config
 
 
-# cleanup for using 'from sweetheart import *'
-del json, UserDict
-
-
   #############################################################################
  ## logging functions ########################################################
 #############################################################################
@@ -125,6 +121,14 @@ class ansi:
     GREEN = "\033[0;32m"
     PINK = "\033[0;95m"
     NULL = "\033[0m"
+    SWHT = f"{PINK}SWEETHEART{NULL}"
+
+
+logging.basicConfig(
+    # filename = f"{BaseConfig.basedir}/sweetheart.log",
+    format = f"$asctime - {ansi.SWHT} - $levelname - $message",
+    level = logging.INFO,
+    style = "$" )
 
 
 def echo(*args,prefix="",**kwargs):
@@ -142,3 +146,11 @@ def verbose(*args,level=1,prefix=""):
     if BaseConfig.verbosity >= level:
         init = prefix + f"{level}*" if level != 0 else " *"
         print(init,*args,ansi.NULL)
+
+
+  #############################################################################
+ ## cleanup ##################################################################
+#############################################################################
+
+#NOTE: for consistence using 'from sweetheart import *'
+del json, UserDict

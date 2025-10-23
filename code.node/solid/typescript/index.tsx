@@ -20,7 +20,7 @@ const Welcome = (): JSX.Element =>
 
 <br /> 
 
-  <h3 class={ twcss.preset.highlight()  }>
+  <h3 class={ twcss.preset.highlight() }>
     <span class="text-3xl">0</span>
       % distraction | waste of time </h3>
 

@@ -1,12 +1,9 @@
-<h1 style="font-size:2.5rem; font-style:italic; margin-bottom:0.5rem; color:#ec4899;">
-  Sweetheart 0.1.3 </h1>
-<p style="font-size:1.2rem; font-style:italic; margin-top:0; margin-bottom:2rem;">
-  innovative foundations for business-grade solutions </p>
-
+# [Sweetheart 0.1.3](https://incredibleprogress.github.io/Sweetheart/)
+*innovative foundations for business-grade solutions*
 
 ## A supercharged heart for the non-expert hands
 
-<section style="display:flex; padding:1rem;">
+<div style="display:flex; padding:1rem;">
   <svg width="70px" height="70px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" fill="#000000">
     <g stroke-width="0"/>
     <g stroke-linecap="round" stroke-linejoin="round"/>
@@ -20,14 +17,14 @@
     <circle fill="#ad7fa3" cx="37" cy="5" r="1"/> <circle fill="#B4CCB9" cx="32" cy="57" r="1"/> </g> </g>
   </svg>
   <p style="display:block; margin-left:2rem;">
-    <span style="font-size:1.5rem">
+    <span style="font-size:1.25rem">
       Just build Apps you need, in the brightest way.
     </span><br/>
-    <span style="font-size:1.1rem; margin-top:2rem;">
+    <span style="font-size:1rem; margin-top:2rem;">
       Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open-source code.
     </span>
   </p>
-</section>
+</div>
 
 What about security, big-data, real-time databases, responsive interfaces and AI? Sweetheart comes with the highest quality components widely used by the GAFAM and others, also the best coding practices, and makes the hard stuff for you. Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open source code for processing your data at full power!
 
@@ -81,10 +78,10 @@ Sweetheart is shared under the [CeCILL-C FREE SOFTWARE LICENSE AGREEMENT](http:/
     </g>
   </svg>
   <p style="display:block; margin-left:2rem;">
-    <span style="font-size:1.5rem">
+    <span style="font-size:1.25rem">
       Be master of your data structures and capabilities.
     </span><br/>
-    <span style="font-size:1.1rem; margin-top:2rem;">
+    <span style="font-size:1rem; margin-top:2rem;">
       The Python language becomes with Sweetheart an ideal toolkit in industry
           for data processing, the calculations and AI.
     </span>
@@ -149,10 +146,10 @@ It comes too with some pragmatic intentions at its heart :
     </g>
   </svg>
   <p style="display:block; margin-left:2rem;">
-    <span style="font-size:1.5rem">
+    <span style="font-size:1.25rem">
       Enjoy fast approaches that fits for newbies.
     </span><br/>
-    <span style="font-size:1.1rem; margin-top:2rem;">
+    <span style="font-size:1rem; margin-top:2rem;">
       No experience is needed to use good things in the right way,
           security and performances are ensured.
     </span>
@@ -209,10 +206,10 @@ and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/d
     </g>
   </svg>
   <p style="display:block; margin-left:2rem;">
-    <span style="font-size:1.5rem">
+    <span style="font-size:1.25rem">
       Rely for long time on a well maintained basement.
     </span><br/>
-    <span style="font-size:1.1rem; margin-top:2rem;">
+    <span style="font-size:1rem; margin-top:2rem;">
       Sweetheart is full stack featured and reduces drastically
           the volume of code and committed libraries in your projects.
     </span>

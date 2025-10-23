@@ -22,7 +22,7 @@
       Just build Apps you need, in the brightest way.
     </span><br/>
     <span style="font-size:1.1rem; margin-top:2rem;">
-      Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open-source code.
+      Create with ease and efficiency the apps you need embedding reliable open-source code.
     </span>
   </p>
 </div>
@@ -83,8 +83,7 @@ Sweetheart is shared under the [CeCILL-C FREE SOFTWARE LICENSE AGREEMENT](http:/
       Be master of your data structures and capabilities.
     </span><br/>
     <span style="font-size:1.1rem; margin-top:2rem;">
-      The Python language becomes with Sweetheart an ideal toolkit in industry
-          for data processing, the calculations and AI.
+      Take benefits of Python with Sweetheart for data processing, calculations and AI.
     </span>
   </p>
 </div>
@@ -151,8 +150,7 @@ It comes too with some pragmatic intentions at its heart :
       Enjoy fast approaches that fits for newbies.
     </span><br/>
     <span style="font-size:1.1rem; margin-top:2rem;">
-      No experience is needed to use good things in the right way,
-          security and performances are ensured.
+      No experience is needed, however security and performances are ensured.
     </span>
   </p>
 </div>
@@ -211,8 +209,7 @@ and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/d
       Rely for long time on a well maintained basement.
     </span><br/>
     <span style="font-size:1.1rem; margin-top:2rem;">
-      Sweetheart is full stack featured and reduces drastically
-          the volume of code and committed libraries in your projects.
+      Sweetheart makes you master of committed libraries in a secured approach.
     </span>
   </p>
 </div>

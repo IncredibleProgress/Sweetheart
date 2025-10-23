@@ -1,9 +1,8 @@
-# [Sweetheart 0.1.3](https://incredibleprogress.github.io/Sweetheart/)
 *innovative foundations for business-grade solutions*
 
 ## A supercharged heart for the non-expert hands
 
-<!-- <div style="display:flex; padding:1rem;">
+<div style="display:flex; padding:1rem;">
   <svg width="70px" height="70px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" fill="#000000">
     <g stroke-width="0"/>
     <g stroke-linecap="round" stroke-linejoin="round"/>
@@ -24,7 +23,7 @@
       Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open-source code.
     </span>
   </p>
-</div> -->
+</div>
 
 What about security, big-data, real-time databases, responsive interfaces and AI? Sweetheart comes with the highest quality components widely used by the GAFAM and others, also the best coding practices, and makes the hard stuff for you. Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open source code for processing your data at full power!
 
@@ -36,7 +35,7 @@ Sweetheart is shared under the [CeCILL-C FREE SOFTWARE LICENSE AGREEMENT](http:/
 
 ## Get at rocket speed full benefits of coding, including AI
 
-<!-- <div style="display:flex; padding:1rem;">
+<div style="display:flex; padding:1rem;">
   <svg width="70px" height="70px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" >
     <g>
       <g>
@@ -86,7 +85,7 @@ Sweetheart is shared under the [CeCILL-C FREE SOFTWARE LICENSE AGREEMENT](http:/
           for data processing, the calculations and AI.
     </span>
   </p>
-</div> -->
+</div>
 
 Sweetheart supports you getting coding full power from scratch :
 
@@ -104,7 +103,7 @@ It comes too with some pragmatic intentions at its heart :
 
 ## Stick to worldwide best practices without thinking about it
 
-<!-- <div style="display:flex; padding:1rem;">
+<div style="display:flex; padding:1rem;">
   <svg width="70px" height="70px" viewBox="0 0 64 64" enable-background="new 0 0 64 64">
     <g>
       <path fill="#F9EBB2" d="M2.294,2.294c0.391-0.392,1.022-0.392,1.414,0l17.664,17.665l0,0l-1.409,1.418L2.294,3.708
@@ -154,7 +153,7 @@ It comes too with some pragmatic intentions at its heart :
           security and performances are ensured.
     </span>
   </p>
-</div> -->
+</div>
 
 Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It intends to transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the provided documentation you will **learn to make great apps with Python and TypeScript/JSX** including up-to-date best practices and patterns. With Sweetheart, you will learn real coding-life like any other developer, but **skipping tedious considerations and being focused on business concerns**. That means you don't need any kind of experience to use good things in the right way. And keep quite, under the hood Sweetheart is made for low resources consumption, high security level, and best performances :
 
@@ -170,7 +169,7 @@ and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/d
 
 ## Rely on rock-solid pillars keeping innovative capabilities
 
-<!-- <div style="display:flex; padding:1rem;">
+<div style="display:flex; padding:1rem;">
   <svg width="70px" height="70px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" >
     <g>
       <g>
@@ -214,7 +213,7 @@ and [Core Concepts](https://github.com/IncredibleProgress/Sweetheart/blob/main/d
           the volume of code and committed libraries in your projects.
     </span>
   </p>
-</div> -->
+</div>
 
 Sweetheart offers hardenest coding approach for new development projects. Reason is: it integrates the well known causes of programs failures and dysfunctions. Many coding technologies are great, I sincerely encourage for using it, today you can innovate only making code, but I will discourage you to implement it into a company without fixing a fine-tuned frame and methods providing enough guaranties.
 
@@ -259,8 +258,3 @@ e.g. NginxUnit - Gel/EdgeQL - SolidJS
   - superlative design and code quality
   - adopted by recognized people and organizations
   - but needs to be followed and supported for long-term solutions
-
-<br/>
-
----
-*by Nicolas Champion, Sweetheart's maker*

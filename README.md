@@ -6,7 +6,7 @@
 
 ## A supercharged heart for the non-expert hands
 
-<div style="display:flex; padding:1rem;">
+<section style="display:flex; padding:1rem;">
   <svg width="70px" height="70px" viewBox="0 0 64 64" enable-background="new 0 0 64 64" fill="#000000">
     <g stroke-width="0"/>
     <g stroke-linecap="round" stroke-linejoin="round"/>
@@ -27,7 +27,7 @@
       Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open-source code.
     </span>
   </p>
-</div>
+</section>
 
 What about security, big-data, real-time databases, responsive interfaces and AI? Sweetheart comes with the highest quality components widely used by the GAFAM and others, also the best coding practices, and makes the hard stuff for you. Start from scratch, and create with ease and efficiency the apps you really need embedding reliable open source code for processing your data at full power!
 
@@ -159,7 +159,7 @@ It comes too with some pragmatic intentions at its heart :
   </p>
 </div>
 
-Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It intends to transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the provided documentation you will **learn to make great apps with Python and TypeScript|JSX** including up-to-date best practices and patterns. With Sweetheart, you will learn real coding-life like any other developer, but **skipping tedious considerations and being focused on business concerns**. That means you don't need any kind of experience to use good things in the right way. And keep quite, under the hood Sweetheart is made for low resources consumption, high security level, and best performances :
+Sweetheart is a thin-layer for going efficient and doesn't reinvent the wheel. It intends to transform you stepwise in a good driver and maybe in a pilot! Due to provided high quality components, a hardened configuration and the provided documentation you will **learn to make great apps with Python and TypeScript/JSX** including up-to-date best practices and patterns. With Sweetheart, you will learn real coding-life like any other developer, but **skipping tedious considerations and being focused on business concerns**. That means you don't need any kind of experience to use good things in the right way. And keep quite, under the hood Sweetheart is made for low resources consumption, high security level, and best performances :
 
   - it ensures code reliability and maintainability
   - it ensures an enterprise-grade security level

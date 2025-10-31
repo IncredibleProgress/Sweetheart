@@ -17,19 +17,25 @@ class BaseConfig(UserDict):
     master_project = "sweetheart"
     basedir = f".cache/sweetheart-master"
 
-    def __init__(self,project:str=master_project):
+    def __init__(self, *,
+            project: str = master_project,
+            homedir: str|None = None ) -> None:
 
-        if project != BaseConfig.master_project:
+        if project == BaseConfig.master_project:
+            # set default homedir for master project
+            homedir = homedir or "My_code"
+        else:
+            homedir = homedir or f"{os.HOME}/{project.capitalize()}"
             self.basedir = str(BaseConfig.basedir).replace("master",project)
-        
+            
         self.root = f"{os.HOME}/{self.basedir}"
-        self.conffile = f"{os.HOME}/My_code/configuration/config.json"
-        self.unitconf = f"{os.HOME}/My_code/configuration/unit.json"
+        self.conffile = f"{homedir}/configuration/config.json"
+        self.unitconf = f"{homedir}/configuration/unit.json"
 
         self.data = {
         #1. General Settings:
 
-            "database_project": f"{os.HOME}/My_code/database",
+            "database_project": f"{homedir}/database",
 
         #2. Systemd Services Settings:
 
@@ -37,7 +43,7 @@ class BaseConfig(UserDict):
             # these are put into NginxUnit config
             "python_app": {
                 "home": "{{python_env}}",# auto set
-                "path": f"{os.HOME}/My_code/python",
+                "path": f"{homedir}/python",
                 "module": "start",# no .py extension expected
                 "callable": "webapp",
                 "user": os.getuser(),#FIXME
@@ -121,7 +127,7 @@ class ansi:
     GREEN = "\033[0;32m"
     PINK = "\033[0;95m"
     NULL = "\033[0m"
-    SWHT = f"{PINK}SWEETHEART{NULL}"
+    SWHT = f"{PINK}Sweetheart{NULL}"
 
 
 logging.basicConfig(
@@ -148,9 +154,19 @@ def verbose(*args,level=1,prefix=""):
         print(init,*args,ansi.NULL)
 
 
+class LoggedException(Exception):
+
+    def __init__(self,message):
+        
+        level = int(BaseConfig.debug)
+        verbose(f"logged:{ansi.RED}",message,level=level)
+        logging.error(message)
+        super().__init__(message)
+
+
   #############################################################################
  ## cleanup ##################################################################
 #############################################################################
 
 #NOTE: for consistence using 'from sweetheart import *'
-del json, UserDict
+del os, json, UserDict

@@ -1,4 +1,4 @@
-<span style="font-size:1.2rem; font-style:italic;">
+<span style="font-size:1.1rem; font-style:italic;">
   innovative foundations for business-grade solutions
 </span>
 

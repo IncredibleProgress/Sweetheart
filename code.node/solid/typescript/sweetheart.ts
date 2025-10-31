@@ -16,7 +16,7 @@
 //  TailwindCss Style Classes  /////////////
 ///////////////////////////////////////////
 
-type TwClasses = Record<string, string>
+export type TwClasses = Record<string, string>
 type TwVariant = { preset?: TwClasses, chain?: string, omit?: string }
 
 export class Style {

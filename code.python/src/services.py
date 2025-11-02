@@ -27,9 +27,9 @@ class PostgresUnchained():
 
         self.restapi = {
             #NOTE: methods are uppercased
-            "GET": self._edgeql_SELECT,
-            "POST": self._edgeql_INSERT,
-            "PATCH": self._edgeql_UPDATE,
+            "GET": self._SELECT_,
+            "POST": self._INSERT_,
+            "PATCH": self._UPDATE_,
             # "PUT": self.edgeQL_REPLACE,
             # "DELETE": self.edgeQL_DELETE
         }
@@ -57,7 +57,7 @@ class PostgresUnchained():
         # return result as tuple (status, value)
         return "Ok", client.query(query)
 
-    def _edgeql_SELECT(self,d:dict,client=None) -> tuple:
+    def _SELECT_(self,d:dict,client=None) -> tuple:
         
         if client is None:
             client = self.client
@@ -69,7 +69,7 @@ class PostgresUnchained():
         # return result as tuple (status, value)
         return "Ok", query
 
-    def _edgeql_INSERT(self,d:dict,client=None) -> tuple:
+    def _INSERT_(self,d:dict,client=None) -> tuple:
 
         if client is None:
             client = self.client
@@ -89,7 +89,7 @@ class PostgresUnchained():
         # return result as tuple (status, value)
         return "Ok", query
 
-    def _edgeql_UPDATE(self,d:dict,client=None) -> tuple:
+    def _UPDATE_(self,d:dict,client=None) -> tuple:
 
         if client is None:
             client = self.client
@@ -182,7 +182,7 @@ class WebappServer(Unit):
         self.data.extend(args)
         return self
 
-    def app(self, *args: Route|DataHub ) -> AsgiLifespanRouter:
+    def app(self, *args: Route|DataHub ) -> Self.PythonAppType:
 
         """ Return ASGI app built from given args, callable by NginxUnit. 
             Intends to keep some consistency with https://www.starlette.io."""

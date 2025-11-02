@@ -175,7 +175,7 @@ export class WebSocket extends window.WebSocket {
     return new Promise((resolve, reject) => {
 
       const timeoutId = setTimeout(() => { reject(
-        "Timeout exceeded in WebSocket.fetch_table()") }, 1000)
+        "Timeout exceeded in WebSocket.fetchTable()") }, 1000)
 
       const request_uuid = crypto.randomUUID()
       const messageHandler = (evt: MessageEvent) => {

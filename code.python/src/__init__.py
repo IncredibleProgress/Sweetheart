@@ -23,7 +23,7 @@ class BaseConfig(UserDict):
 
         if project == BaseConfig.master_project:
             # set default homedir for master project
-            homedir = homedir or "My_code"
+            homedir = homedir or f"{os.HOME}/My_code"
         else:
             homedir = homedir or f"{os.HOME}/{project.capitalize()}"
             self.basedir = str(BaseConfig.basedir).replace("master",project)
@@ -162,11 +162,3 @@ class LoggedException(Exception):
         verbose(f"logged:{ansi.RED}",message,level=level)
         logging.error(message)
         super().__init__(message)
-
-
-  #############################################################################
- ## cleanup ##################################################################
-#############################################################################
-
-#NOTE: for consistence using 'from sweetheart import *'
-del os, json, UserDict

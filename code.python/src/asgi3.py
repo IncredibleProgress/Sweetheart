@@ -61,7 +61,7 @@ class HttpResponse(AsgiEndpoint):
         self.encoded_content = content
         
         # default CORS attributes
-        self.allow_origin: str = "*" # unsafe
+        self.allow_origin: str = "*" #! unsafe
         self.allow_methods: str = "GET"
 
     def _apply_CORS_policy_(self,
@@ -408,7 +408,7 @@ class RestApiEndpoints(Route,AsgiEndpoint):
     """
     Wrapper which ensures data exchanges with given datasystem
     and through a RESTful API over Http and WebSocket scopes.
-    RestApiEndpoints instance is both a Route and a AsgiEndpoint.
+    RestApiEndpoints instance is both Route and AsgiEndpoint.
     """
 
     def __init__(self, urlpath: str, datasystem):
@@ -471,6 +471,9 @@ class RestApiEndpoints(Route,AsgiEndpoint):
 
                 if json_response is not None:
                     await json_response(scope,receive,send)
+
+            else: raise AsgiRuntimeError(
+                "Missing 'sweetheart-action' http header.")
 
     # --- --- Websocket processing --- --- #
 

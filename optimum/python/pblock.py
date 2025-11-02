@@ -1,9 +1,9 @@
 
-from sweetheart.measures import \
+from sweetheart.measurement import \
     TypeMeasure,Measure,Compute,BaseBlock,FlowSheeting
 
 
-# --- --- Measure Types --- --- #
+# --- --- Measurement Types --- --- #
 
 class GrossWeight(TypeMeasure):
     name = "Poids Brut"
@@ -16,21 +16,20 @@ class Brix(TypeMeasure):
     type = float
 
 
-# --- --- Flowsheetings --- --- #
+# --- --- Flow Sheetings --- --- #
 
 class ProcessUnit(FlowSheeting):
     # routable with DataHub("/data",ProcessUnit())
-    name = "Generic Process Unit"
+    name = "Single Process Unit"
     
 
 # --- --- Process Blocks --- --- #
 
 class ExchangerBlock(BaseBlock):
 
-    # Block Definition
+    # Set Block Definition
 
     flowunit : FlowSheeting = ProcessUnit
-    flowunit.append("ExchangerBlock")
 
     measures : list[TypeMeasure] = [
         GrossWeight, Brix ]
@@ -38,7 +37,7 @@ class ExchangerBlock(BaseBlock):
     computes : list[TypeMeasure] = [
         GrossWeight, Brix ]
 
-    # Inlet / Outlet Definitions
+    # Set Inlet / Outlet Definitions
 
     In1 = Measure.collection(
         [

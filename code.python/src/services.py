@@ -168,8 +168,6 @@ class WebappServer(Unit):
         self.application = "python_app"
         self.middleware = [] #FIXME
 
-        # allow testing any python apps
-        self.PythonAppType = AsgiLifespanRouter
         # keep current app config available 
         WebappServer._config_ = config
 
@@ -182,7 +180,7 @@ class WebappServer(Unit):
         self.data.extend(args)
         return self
 
-    def app(self, *args: Route|DataHub ) -> Self.PythonAppType:
+    def app(self, *args: Route|DataHub ) -> AsgiLifespanRouter:
 
         """ Return ASGI app built from given args, callable by NginxUnit. 
             Intends to keep some consistency with https://www.starlette.io."""
@@ -195,7 +193,7 @@ class WebappServer(Unit):
         routes = self.data
         del self.data #! new mount forbidden
 
-        return self.PythonAppType(
+        return AsgiLifespanRouter(
             routes = routes,
             debug = BaseConfig.debug,
             middleware = self.middleware )

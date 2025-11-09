@@ -1,10 +1,7 @@
 {
-  "name": "solid",
+  "name": "sweetheart-solidjs",
   "source": "resources/startpage.html",
   "scripts": {
-    "update": "ncu -u && npm install",
-    "build": "parcel build --cache-dir ~/Sweetheart/applications/sweetheart/.parcel-cache --dist-dir ~/Sweetheart/applications/sweetheart/application",
-    "serve": "parcel serve --open --cache-dir ~/Sweetheart/applications/sweetheart/.parcel-cache --dist-dir ~/Sweetheart/applications/sweetheart/application"
   },
   "dependencies": {
     "gel": "^2.1.1"
@@ -13,12 +10,12 @@
     "@babel/core": "^7.28.4",
     "@tailwindcss/postcss": "^4.1.13",
     "babel-preset-solid": "^1.9.9",
-    "npm-check-updates": "^18.3.0",
     "parcel": "^2.16.0",
     "postcss": "^8.5.6",
     "solid-js": "^1.9.9",
     "solid-refresh": "0.7.5",
-    "tailwindcss": "^4.1.13"
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.3"
   },
   "@parcel/resolver-default": {
     "packageExports": true

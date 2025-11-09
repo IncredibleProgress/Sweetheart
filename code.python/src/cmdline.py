@@ -3,7 +3,8 @@ Command Line Interface for Sweetheart
 """
 
 import argparse
-from sweetheart import __version__, BaseConfig, ansi
+from sweetheart import *
+from sweetheart import __version__
 
 
 class CommandLineInterface:
@@ -60,7 +61,7 @@ if __name__ == "__main__":
         help="get additional messages about ongoing process")
 
     cli.opt("-p",dest="project",nargs=1,default=BaseConfig.master_project,
-        help="set a project env different of the default one")
+        help="set a project name different from the default one")
 
 
     def _command_init(args):
@@ -73,9 +74,31 @@ if __name__ == "__main__":
             ProjectSweetheart.initdev()
 
     # set init command
-    cli.sub("init",help="launch init process for sweetheart resources")
+    cli.sub("init",help="launch init process setting up new project")
     cli.opt("package",nargs=cli.REMAINDER,help="additional resources to install")
     cli.set_function(_command_init)
+
+
+    def _command_build(args):
+
+        # set project config
+        project = args.project or BaseConfig.master_project
+        config = set_config(project=project)
+
+        #set directories
+        cache = f"{config.root}/.build-cache"
+        chroot = config["shared_content"]["chroot"]
+
+        assert os.isfile(f"package.json"),\
+            "missing package.json file in current directory"
+
+        # build app with parceljs
+        echo("build webapp from current dir:",chroot)
+        os.run(["npx","parcel","build","--cache-dir",cache,"--dist-dir",chroot])
+
+    # set build command
+    cli.sub("build",help="build your project webapp using parceljs")
+    cli.set_function(_command_build)
 
 
     # --- Execute Sweetheart Command Line Arguments ---
@@ -83,5 +106,4 @@ if __name__ == "__main__":
 
     argv = cli.set_parser()
     BaseConfig.verbosity = getattr(argv,"verbose",BaseConfig.verbosity)
-
     cli.apply_function()

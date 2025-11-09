@@ -171,7 +171,7 @@ export class WebSocket extends window.WebSocket {
         this.addEventListener("error",()=> reject(false), {once:true})
       } })
   }
-  fetchTable(table: string) {
+  fetch(table: string) {
     return new Promise((resolve, reject) => {
 
       const timeoutId = setTimeout(() => { reject(

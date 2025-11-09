@@ -4,12 +4,12 @@ import { Style } from "./sweetheart"
 import { render } from "solid-js/web"
 import { JSX } from "solid-js/jsx-runtime"
 
+import { ProcessBlock } from "./pblock"
 
 // ---- ---- Tailwind CSS Setup ---- ---- //
 
 const tw = new Style()
 document.body.className = tw.preset.body()
-
 
 // ---- ---- Default Component ---- ---- //
 
@@ -48,14 +48,13 @@ const Welcome = (): JSX.Element =>
 
   </div>
 
-
 // ---- ---- Main component rendering ---- ---- //
 
 const WebApp = (): JSX.Element =>  {
   switch(window.location.pathname) {
 
-    // case "/welcome": 
-    //   return(<WelcomePage/>)
+    case "/flow": 
+      return <ProcessBlock />
 
     default:
       return <Welcome />

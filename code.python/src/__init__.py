@@ -6,11 +6,11 @@ innovative foundations for business-grade solutions
 __version__ = "0.1.3"
 
 import json, logging
-from collections import UserDict
 from sweetheart.subprocess import os
+from collections import UserDict as _UserDict_
 
 
-class BaseConfig(UserDict):
+class BaseConfig(_UserDict_):
 
     debug = True
     verbosity = 1
@@ -37,7 +37,7 @@ class BaseConfig(UserDict):
 
             "database_project": f"{homedir}/database",
 
-        #2. Systemd Services Settings:
+        #2. System Services Settings:
 
             # editable python app settings
             # these are put into NginxUnit config
@@ -58,20 +58,6 @@ class BaseConfig(UserDict):
                 #NOTE: fallback allows routing by startpage itself
                 "fallback": {"share": f"{self.root}/application/startpage.html"},
             },
-            # [Deprecated]
-            # editable rethinkdb settings
-            # these are options for rethinkdb bash command
-            # "rethinkdb": {
-            #     "http-port": 8082,# for http admin interface
-            #     "driver-port": 28015,# for client connections
-            #     "directory": f"{self.root}/databases/rethinkdb-tests",
-                # "bind": "0.0.0.0",
-                # "cache-size": 1024,
-                # "log-file": "",
-                # "io-threads": 2,
-                # "user": os.getuser(),
-                # "password": "__undefined__",
-            # },
         }
     
     def __getattr__(self,attr):
@@ -105,9 +91,9 @@ class BaseConfig(UserDict):
             self.update(json.load(file_in))
 
 
-def set_config(values={}) -> BaseConfig:
+def set_config(values={},**kwargs) -> BaseConfig:
 
-    config = BaseConfig()
+    config = BaseConfig(**kwargs)
 
     if os.isfile(config.conffile):
         config.load_json()

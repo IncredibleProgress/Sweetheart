@@ -1,16 +1,16 @@
 
 from sweetheart.measurement import \
-    TypeMeasure,Measure,Compute,BaseBlock,FlowSheeting
+    TypedMeasure,Measure,Compute,BaseBlock,FlowSheeting
 
 
 # --- --- Measurement Types --- --- #
 
-class GrossWeight(TypeMeasure):
+class GrossWeight(TypedMeasure):
     name = "Poids Brut"
     unit = "kg"
     type = float
 
-class Brix(TypeMeasure):
+class Brix(TypedMeasure):
     name = "BRIX"
     unit = "°Bx"
     type = float
@@ -31,18 +31,18 @@ class ExchangerBlock(BaseBlock):
 
     flowunit : FlowSheeting = ProcessUnit
 
-    measures : list[TypeMeasure] = [
+    measures : list[TypedMeasure] = [
         GrossWeight, Brix ]
 
-    computes : list[TypeMeasure] = [
+    computes : list[TypedMeasure] = [
         GrossWeight, Brix ]
 
     # Set Inlet / Outlet Definitions
 
     In1 = Measure.collection(
         [
-            Measure(GrossWeight,"constant"),
-            Measure(Brix,"unknown"),
+            Measure(GrossWeight,"constant",1000.0),
+            Measure(Brix,"unknown",12.0),
 
             Compute(GrossWeight,"once"),
             Compute(Brix,"fuzzy")

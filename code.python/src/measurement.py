@@ -25,6 +25,7 @@ class Measure:
         self.key: str = f"M.{typed_measure.__name__}" #FIXME
         self.tmeasure: TypedMeasure = typed_measure
         self.valuation: str = valuation
+        self.init: Optional[int|float] = default
         self.value: Optional[int|float] = default
 
     @staticmethod
@@ -95,11 +96,14 @@ class BaseBlock:
         values = []
         for index in range(cls.max_index):
             In, Out = f"In{index+1}", f"Out{index+1}"
-            if hasattr(cls, In):
-                values.insert(index,{ In: cls.__dict__[In] })
-            if hasattr(cls, Out):
-                values.append({ Out: cls.__dict__[Out] })
-
+            if hasattr(cls, In): values.insert(index, {
+                "id": In,
+                "values": [(m["key"],m["value"]) for m in cls.__dict__[In]]
+            })
+            if hasattr(cls, Out): values.append({
+                "id": Out,
+                "values": [(m["key"],m["value"]) for m in cls.__dict__[Out]]
+            })
         return values
         
 

@@ -19,15 +19,12 @@ class Brix(TypedMeasure):
 # --- --- Flow Sheetings --- --- #
 
 class ProcessUnit(FlowSheeting):
-    # routable with DataHub("/data",ProcessUnit())
-    name = "Single Process Unit"
-    
+    """ List blocks composing a process unit. """
 
-# --- --- Process Blocks --- --- #
+    name = "Process Unit"
 
-class ExchangerBlock(BaseBlock):
-
-    # Set Block Definition
+class ProcessBlocks(BaseBlock):
+    """ Blocks group sharing same flowunit, measures, computes. """
 
     flowunit : FlowSheeting = ProcessUnit
 
@@ -36,14 +33,16 @@ class ExchangerBlock(BaseBlock):
 
     computes : list[TypedMeasure] = [
         GrossWeight, Brix ]
+    
 
-    # Set Inlet / Outlet Definitions
+# --- --- Process Blocks --- --- #
+
+class ExchangerBlock(ProcessBlocks):
 
     In1 = Measure.collection(
         [
             Measure(GrossWeight,"constant",1000.0),
             Measure(Brix,"unknown",12.0),
-
             Compute(GrossWeight,"once"),
             Compute(Brix,"fuzzy")
         ])
@@ -52,7 +51,22 @@ class ExchangerBlock(BaseBlock):
         [
             Measure(GrossWeight,"variable"),
             Measure(Brix,"target"),
+            Compute(GrossWeight,"recursive"),
+            Compute(Brix,"once")
+        ])
 
+    In2 = Measure.collection(
+        [
+            Measure(GrossWeight,"constant",1000.0),
+            Measure(Brix,"unknown",12.0),
+            Compute(GrossWeight,"once"),
+            Compute(Brix,"fuzzy")
+        ])
+
+    Out2 = Measure.collection(
+        [
+            Measure(GrossWeight,"variable"),
+            Measure(Brix,"target"),
             Compute(GrossWeight,"recursive"),
             Compute(Brix,"once")
         ])

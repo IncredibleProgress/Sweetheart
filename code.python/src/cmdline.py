@@ -93,11 +93,28 @@ if __name__ == "__main__":
             "missing package.json file in current directory"
 
         # build app with parceljs
-        echo("build webapp from current dir:",chroot)
+        echo("build webapp in:",chroot)
         os.run(["npx","parcel","build","--cache-dir",cache,"--dist-dir",chroot])
+
+        if args.restart_unit:
+            # restart Unit reloading python app script
+            echo("restarting Nginx Unit ...")
+            os.run("sudo systemctl reload-or-restart unit")
+
+            if BaseConfig.debug:
+
+                # [LocalImport]
+                from sweetheart.systemctl import Unit
+
+                verbose("last unit log messages:",level=0)
+                os.run(["sudo","tail",Unit.unitlog])
 
     # set build command
     cli.sub("build",help="build your project webapp using parceljs")
+
+    cli.opt("-r","--restart-unit",action="store_true",
+        help="restart Unit reloading python app after build")
+
     cli.set_function(_command_build)
 
 

@@ -23,47 +23,47 @@ export class Style {
 
   // Define base style classes.
   // see https://play.tailwindcss.com
-  presetValues: Record<string, TwClasses> = 
-  {
-    body: {
-      color: "bg-gray-50",
-      spacing: "max-w-screen-lg mx-auto"
-    },
-    header:  {
-      font: "text-5xl italic",
-      color: "text-pink-500",
-      spacing: "mt-4 mb-2"
-    },
-    subtitle: {
-      font: "text-xl italic",
-      color: "text-gray-500",
-      spacing: "my-2"
-    },
-    highlight: {
-      font: "text-lg",
-      color: "text-pink-500",
-      spacing: "my-2"
-    },
-    button: {
-      font: "text-lg",
-      color: "text-white bg-pink-500 hover:bg-pink-600",
-      spacing: "m-4 px-4 py-2",
-      shape: "rounded-sm"
-    },
-  }
+  public presetValues: Record<string, TwClasses> = 
+    {
+      body: {
+        color: "bg-gray-50",
+        spacing: "max-w-screen-lg mx-auto"
+      },
+      header:  {
+        font: "text-5xl italic",
+        color: "text-pink-500",
+        spacing: "mt-4 mb-2"
+      },
+      subtitle: {
+        font: "text-xl italic",
+        color: "text-gray-500",
+        spacing: "my-2"
+      },
+      highlight: {
+        font: "text-lg",
+        color: "text-pink-500",
+        spacing: "my-2"
+      },
+      button: {
+        font: "text-lg",
+        color: "text-white bg-pink-500 hover:bg-pink-600",
+        spacing: "m-4 px-4 py-2",
+        shape: "rounded-sm"
+      },
+    }
 
   // Define customized style classes.
-  variantValues: Record<string, TwVariant> = 
-  {
-    biggerHeader: { 
-      preset: this.presetValues.header,
-      chain: "lg:text-8xl"
-    },
-    biggerSubtitle: {
-      preset: this.presetValues.subtitle,
-      chain: "lg:text-2xl",
+  public variantValues: Record<string, TwVariant> = 
+    {
+      biggerHeader: { 
+        preset: this.presetValues.header,
+        chain: "lg:text-8xl"
+      },
+      biggerSubtitle: {
+        preset: this.presetValues.subtitle,
+        chain: "lg:text-2xl",
+      }
     }
-  }
   
   // Set namespaces for style classes.
   preset: Record<string, () => string> = {};

@@ -23,6 +23,7 @@ class ProcessUnit(FlowSheeting):
 
     name = "Process Unit"
 
+
 class ProcessBlocks(BaseBlock):
     """ Blocks group sharing same flowunit, measures, computes. """
 
@@ -39,34 +40,34 @@ class ProcessBlocks(BaseBlock):
 
 class ExchangerBlock(ProcessBlocks):
 
-    In1 = Measure.collection(
-        [
-            Measure(GrossWeight,"constant",1000.0),
-            Measure(Brix,"unknown",12.0),
-            Compute(GrossWeight,"once"),
-            Compute(Brix,"fuzzy")
-        ])
+    In1 =\
+    [
+        Measure(GrossWeight,"constant",1000.0),
+        Measure(Brix,"unknown",12.0),
+        Compute(GrossWeight,"once"),
+        Compute(Brix,"fuzzy")
+    ]
 
-    Out1 = Measure.collection(
-        [
-            Measure(GrossWeight,"variable"),
-            Measure(Brix,"target"),
-            Compute(GrossWeight,"recursive"),
-            Compute(Brix,"once")
-        ])
+    Out1 =\
+    [
+        Measure(GrossWeight,"variable"),
+        Measure(Brix,"target"),
+        Compute(GrossWeight,"recursive"),
+        Compute(Brix,"once")
+    ]
 
-    In2 = Measure.collection(
-        [
-            Measure(GrossWeight,"constant",1000.0),
-            Measure(Brix,"unknown",12.0),
-            Compute(GrossWeight,"once"),
-            Compute(Brix,"fuzzy")
-        ])
+    In2 =\
+    [
+        Measure(GrossWeight,"constant",1000.0),
+        Measure(Brix,"unknown",12.0),
+        Compute(GrossWeight,"once"),
+        Compute(Brix,"fuzzy")
+    ]
 
-    Out2 = Measure.collection(
-        [
-            Measure(GrossWeight,"variable"),
-            Measure(Brix,"target"),
-            Compute(GrossWeight,"recursive"),
-            Compute(Brix,"once")
-        ])
+    Out2 =\
+    [
+        Measure(GrossWeight,"variable"),
+        Measure(Brix,"target"),
+        Compute(GrossWeight,"recursive"),
+        Compute(Brix,"once")
+    ]

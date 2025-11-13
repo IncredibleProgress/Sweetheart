@@ -1,6 +1,7 @@
 """ Sweetheart's Measurement Library """
 
 from sweetheart import verbose
+from collections import UserDict
 from typing import Type,TypedDict,Literal,Optional,Self
 
 
@@ -11,7 +12,7 @@ class TypedMeasure(TypedDict):
     type: Type[int|float]
 
 
-class Measure:
+class Measure(UserDict):
     """ Input Measurement. """
 
     type Valuation = Literal[
@@ -22,21 +23,14 @@ class Measure:
             valuation: Valuation,
             default: Optional[int|float] = None ):
 
-        self.key: str = f"M.{typed_measure.__name__}" #FIXME
-        self.tmeasure: TypedMeasure = typed_measure
-        self.valuation: str = valuation
-        self.init: Optional[int|float] = default
-        self.value: Optional[int|float] = default
-
-    @staticmethod
-    def collection(measures: list[Self] )-> list[dict]:
-        return [{
-            "key": m.key,
-            "name": m.tmeasure.name,
-            "unit": m.tmeasure.unit,
-            "type": m.tmeasure.type.__name__,
-            "value": m.value,
-            "valuation": m.valuation } for m in measures ]
+        self.data = {
+            "key": f"M.{typed_measure.__name__}",
+            "name": typed_measure["name"],
+            "unit": typed_measure["unit"],
+            "type": typed_measure["type"].__name__,
+            "init": default,
+            "value": default,
+            "valuation": valuation }
 
 class Compute(Measure):
     """ Computed Measurement. """
@@ -49,7 +43,7 @@ class Compute(Measure):
             valuation: Valuation ):
 
         super().__init__(typed_measure,valuation)
-        self.key = f"C.{self.tmeasure.__name__}" #FIXME
+        self["key"] = f"C.{typed_measure.__name__}"
         
 
 class BaseBlock:
@@ -114,7 +108,9 @@ class FlowSheeting:
 
     def __init__(self, config=None):
         # provide RestAPI methods to instances
-        self.restapi = {"GET": FlowSheeting._GET_}
+        self.restapi = {
+            "GET": FlowSheeting._GET_,
+            "PATCH": FlowSheeting._PATCH_ }
 
     @classmethod
     def _GET_(cls,d:dict)-> tuple[str,dict]:
@@ -124,10 +120,25 @@ class FlowSheeting:
             b for b in cls.blocks if b.__name__==d["table"] )
 
         return "Ok",{
-            "block": block.__name__,
+            "flowsheet": cls.__name__,
             "measures": block.get_measures(),
             "computes": block.get_computes(),
             "values": block.get_values() }
+
+    @classmethod
+    def _PATCH_(cls,d:dict)-> tuple[str,None]:
+        """ Respond to the RestAPI PATCH method. """
+
+        block: BaseBlock = next(
+            b for b in cls.blocks
+            if b.__name__ == d["table"] )
+
+        measure: dict = next(
+            m for m in getattr(block,d["id"])
+            if m["key"] == d["name"] )
+
+        measure["value"] = d["value"]
+        return "Ok", None
 
     @classmethod
     def append(cls,block:BaseBlock):

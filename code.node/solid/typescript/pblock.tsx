@@ -2,7 +2,6 @@ import "../resources/tailwind.css"
 import { JSX } from "solid-js/jsx-runtime"
 import * as sweetheart from "../resources/sweetheart"
 import { For, Suspense, createResource } from 'solid-js'
-import { className } from "solid-js/web"
 
 
 // Set Data types
@@ -19,7 +18,7 @@ type TypeValues = {
 }
 
 type TypeBlock = {
-  block: string;
+  flowsheet: string;
   measures: TypeMeasure[]
   computes: TypeMeasure[]
   values: TypeValues[]
@@ -40,7 +39,7 @@ export const ProcessBlock = (): JSX.Element => {
     () => ws.fetch("ExchangerBlock") as Promise<TypeBlock> )
 
   return <Suspense fallback={<div> Sweetheart is loading data ... </div>}>
-    <h1 class="text-xl"> Single Process Unit </h1>
+    <h1 class="text-xl">{ data()?.flowsheet }</h1>
     <hr />
 
     <table class="text-xs mt-2">
@@ -76,7 +75,7 @@ export const ProcessBlock = (): JSX.Element => {
                     data-rowid={ InOut.id }
                     data-fieldname={ measure.key }
                     onclick={(evt) => ws.editValue(evt.currentTarget,
-                      "w-auto p-0.5 text-center focus:outline-2 focus:outline-pink-400")}
+                      "scale-120 pl-1 w-16 focus:outline focus:outline-pink-400 rounded-xs")}
                   >{ new Map(InOut.values).get(measure.key) ?? "—" }</td>
                 )}
               </For> 

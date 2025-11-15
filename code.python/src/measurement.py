@@ -8,7 +8,7 @@ from typing import Type,TypedDict,Literal,Optional,Self
 class TypedMeasure(TypedDict):
     """Base class for defining measurement types."""
     name: str
-    unit: Literal["kg","°Bx"]
+    unit: Literal["kg","°Bx","%","ICUMSA","bar","°C","kJ"]
     type: Type[int|float]
 
 

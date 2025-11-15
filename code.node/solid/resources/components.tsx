@@ -4,14 +4,10 @@ import { JSX } from "solid-js/jsx-runtime"
 // import { For, Suspense, createResource } from 'solid-js'
 
 
-// ---- ---- Tailwind CSS Setup ---- ---- //
-const tw = new Style()
-document.body.className = tw.preset.body()
-
 
 // ---- ---- Welcome Component ---- ---- //
 
-export const Welcome = (): JSX.Element => 
+export const Welcome = (tw: Style): JSX.Element => 
   <div class="flex flex-col items-center h-screen justify-center text-center">
 
     <h1 class={ tw.variant.biggerHeader() }>

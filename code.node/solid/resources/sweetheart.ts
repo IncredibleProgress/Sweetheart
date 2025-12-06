@@ -1,16 +1,4 @@
-// This file is a part of Sweetheart project.
-
-/* Syntaxic Tricks:
-
-  //FIXME
-  // this is a comment
-  // Title of new subsection.
-  // NOTE: this is a highlight.
-
-  ; at end of instructions returning results
-  /* This is a multi-line comment or explanation.
-   */
-
+/** This file is a part of Sweetheart project. */
 
 /////////////////////////////////////////////
 //  TailwindCss Style Classes  /////////////
@@ -53,6 +41,7 @@ export class Style {
     }
 
   // Define customized style classes.
+  // see https://play.tailwindcss.com
   public variantValues: Record<string, TwVariant> = 
     {
       biggerHeader: { 
@@ -127,42 +116,80 @@ export class Style {
 //  Sweetheart Data System API  ////////////
 ///////////////////////////////////////////
 
-/* This section defines WebSocket class for connecting to data system.
-Please study and test the code carefully making changes here. */
+// Default JSON type used for data exchange.
+type json = Record<string,any>
 
+// Http GET function for fetching data.
+export function GET(urlquery: string): Promise<json> {
+  return fetch(urlquery, { method: "GET",
+    headers: {
+      "accept": "application/json",
+      "sweetheart-action": "fetch.rest"
+    }
+  })
+  .then(response => {
+    if (!response.ok) { throw new Error(
+      `HTTP Error ${response.status}: ${response.statusText}`
+    )}
+    return response.json();
+  })
+  .then(json => { 
+    if (json.Err) { throw new Error(
+      `Error running ASGI Python app: ${json.Err}`
+    )} 
+    return json.Ok;
+  })
+  .catch(err => { throw new Error(
+    `Error fetching data: ${err.message}`
+  )})
+}
+
+// WebSocket class for real-time data connection.
 export class WebSocket extends window.WebSocket {
 
-  connectDB: { 
-    database?: string,
-    table: string | undefined,
-    user?: string, //FIXME
-    password?: string, //FIXME
+  endpoint: {
+    // data connection settings
+    // info: string | undefined
+    url: string
+    origin: string | undefined // e.g. default database name
+    dataset: string | undefined // e.g. default table name
+    //FIXME login: string | undefined
+    //FIXME getpass: string | undefined
   }
 
-  constructor(url?: string, db?: string) {
+  constructor(
+      url: string,
+      origin?: string,
+      dataset?: string ) {
 
-    url= url || "ws://localhost:8080/geldata"
-    super(url,"json") // set json sub-protocol
+    // set json sub-protocol
+    super(url,"json")
 
-    this.connectDB = {
-      database: db || "test", // default
-      table: undefined, }
+    // set data connection settings
+    this.endpoint = {
+      url: url,
+      origin: origin || "test",// e.g. database name
+      dataset: dataset || undefined,// e.g. table name
+    }
 
-    // NOTE: this.onmessage must be implemented by the user
+    //NOTE: this.onmessage must be implemented by the user
     this.onopen = () => console.log("WebSocket connection open.");
-    this.onerror = () => console.log("WebSocket connection error.");
+    this.onerror = () => {throw new Error("WebSocket connection error.")};
     this.onclose = () => console.log("WebSocket connection closed.");
   }
+
   send_json(data: object) {
     // given for convenience
     super.send(JSON.stringify(data))
   }
+
   send_bjson(data: object) {
     // given for convenience
     const json = JSON.stringify(data)
     const bytes = new TextEncoder().encode(json)
     super.send(bytes)
   }
+
   waitForConnection() {
     return new Promise((resolve, reject) => {
       if (this.readyState === this.OPEN) resolve(true);
@@ -171,13 +198,14 @@ export class WebSocket extends window.WebSocket {
         this.addEventListener("error",()=> reject(false), {once:true})
       } })
   }
-  fetch(table: string) {
-    return new Promise((resolve, reject) => {
 
+  fetch(dataset?: string, origin?: string) {
+    return new Promise((resolve, reject) => {
+      
+      const request_uuid = crypto.randomUUID()
       const timeoutId = setTimeout(() => { reject(
         "Timeout exceeded in WebSocket.fetchTable()") }, 1000)
 
-      const request_uuid = crypto.randomUUID()
       const messageHandler = (evt: MessageEvent) => {
         const data = JSON.parse(evt.data)
         if (data.uuid === request_uuid) {
@@ -187,47 +215,64 @@ export class WebSocket extends window.WebSocket {
           else reject(data.Err);
         }
       }
-
-      this.waitForConnection()
-        .then(() => {
-          this.connectDB.table = table
-          this.addEventListener("message",messageHandler)
-          this.send_json({
-            uuid: request_uuid,
-            action: "ws.rest.get",
-            table: this.connectDB.table,
-            database: this.connectDB.database }) })
-        .catch((err) => { 
-          clearTimeout(timeoutId)
-          reject(err) })
+      
+      this.waitForConnection().then(() => {
+        this.addEventListener("message",messageHandler)
+        
+        origin = origin || this.endpoint.origin
+        dataset = dataset || this.endpoint.dataset
+        
+        this.send_json({
+        // API: sweetheart.asgi3.RestApiEndpoints
+          uuid: request_uuid,
+          action: "ws.rest.get",
+          dataset: dataset, //e.g. table name
+          origin: origin //e.g. database name
+        })
+      })
+      .catch((err) => { 
+        clearTimeout(timeoutId)
+        reject(err) 
+      })
     })
   }
+
   editValue(elt: HTMLTableCellElement, className?: string) {
     if (elt.querySelector("input")) {
       // <input /> element already exists, do nothing.
       return }
     else {
+
+      // Reset dataset when given.
+      const eltDataset = elt.dataset.set || this.endpoint.dataset
+
       // Create an <input /> element, for editing.
       const input = document.createElement("input")
-      // 
+      
       input.value = elt.innerText
       input.type = elt.dataset.input!
       input.className = className || ""
-      // 
+      
       input.oninput = () => {
         // update or insert data in real-time
         if (input.dataset.rowid == "NEW_DATA") {
+
           this.send_json({
+            // API: sweetheart.asgi3.RestApiEndpoints
             action: "ws.rest.post",// insert
-            table: this.connectDB.table,
-            row: {[elt.dataset.fieldname!]:input.value} }) }
-        else {
+            dataset: eltDataset,
+            payload: {[elt.dataset.fieldname!]: input.value} 
+          }) 
+        } else {
+
           this.send_json({
+            // API: sweetheart.asgi3.RestApiEndpoints
             action: "ws.rest.patch",// update
-            table: this.connectDB.table,
+            dataset: eltDataset,
             id: elt.dataset.rowid,
-            name: elt.dataset.fieldname,
-            value: input.value }) }
+            payload: {[elt.dataset.fieldname!]: input.value}
+          }) 
+        }
       }
       input.onblur = () => {
         elt.innerText = input.value
@@ -240,12 +285,3 @@ export class WebSocket extends window.WebSocket {
     }
   }
 }
-
-
-// ---- ---- ---- Legacy code ---- ---- ---- //
-
-// fetch("http://localhost:8080/data?table=testtable&database=test", {
-// headers: { 
-//     "Accept": "application/json",
-//     "Sweetheart-Action": "fetch.test" }
-// }).then(response => response.json())

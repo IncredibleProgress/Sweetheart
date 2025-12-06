@@ -3,7 +3,7 @@ import { render } from "solid-js/web"
 import { JSX } from "solid-js/jsx-runtime"
 
 // Import routed components and styles
-import { ProcessBlock } from "./pblock"
+import { FlowSheet } from "./pblock"
 import { Welcome } from "../resources/components"
 import { Style } from "../resources/sweetheart"
 
@@ -16,10 +16,12 @@ const Router = (): JSX.Element =>  {
   switch(window.location.pathname) {
 
     case "/flow": 
-      return <ProcessBlock />
+      return <FlowSheet 
+        http="http://localhost:8080/flowdata" 
+        ws="ws://localhost:8080/flowdata" />
 
     default:
-      return <Welcome tw={tailwind} />
+      return <Welcome style={tailwind} />
   }
 }
 render(() => <Router />, document.getElementById("app")!)

@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
         if args.restart_unit:
             # restart Unit reloading python app script
-            echo("restarting Nginx Unit ...")
+            echo("restarting Nginx Unit ...",prefix="\n")
             os.run("sudo systemctl reload-or-restart unit")
 
             if BaseConfig.debug:

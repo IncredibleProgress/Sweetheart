@@ -7,31 +7,31 @@ import { JSX } from "solid-js/jsx-runtime"
 
 // ---- ---- Welcome Component ---- ---- //
 
-export const Welcome = (tw: Style): JSX.Element => 
+export const Welcome = ({style}: {style: Style}): JSX.Element => 
   <div class="flex flex-col items-center h-screen justify-center text-center">
 
-    <h1 class={ tw.variant.biggerHeader() }>
+    <h1 class={ style.variant.biggerHeader() }>
       Sweetheart </h1>
 
-    <h2 class={ tw.variant.biggerSubtitle() }>
+    <h2 class={ style.variant.biggerSubtitle() }>
       innovative foundations for business-grade solutions </h2>
 
   <br /> 
 
-    <h3 class={ tw.preset.highlight() }>
+    <h3 class={ style.preset.highlight() }>
       <span class="text-3xl">0</span>
         % distraction | waste of time </h3>
 
-    <h3 class={ tw.preset.highlight() } >
+    <h3 class={ style.preset.highlight() } >
       <span class="text-3xl">100</span>
         % focus on business results </h3>
     
   <br />
 
-    <p class={ tw.preset.subtitle() }>
+    <p class={ style.preset.subtitle() }>
       feel you ready ? </p>
 
-    <button class={ tw.preset.button() }>
+    <button class={ style.preset.button() }>
       start now </button>
 
   <br />

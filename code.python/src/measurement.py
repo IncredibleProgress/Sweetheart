@@ -64,7 +64,7 @@ class BaseBlock:
             "duplicated Measures in block definition forbidden"
 
         return [{
-            "key": f"M.{measure.__name__}", #FIXME
+            "key": f"M.{measure.__name__}",
             "name": measure.name,
             "unit": measure.unit,
             "type": measure.type.__name__
@@ -77,7 +77,7 @@ class BaseBlock:
             "duplicated Computes in block definition forbidden"
 
         return [{
-            "key": f"C.{compute.__name__}", #FIXME
+            "key": f"C.{compute.__name__}",
             "name": compute.name,
             "unit": compute.unit,
             "type": compute.type.__name__
@@ -88,15 +88,21 @@ class BaseBlock:
         """ Return current In/Out measurement values. """
         
         values = []
+        measures = lambda io: cls.__dict__[io][1]
+
         for index in range(cls.max_index):
             In, Out = f"In{index+1}", f"Out{index+1}"
             if hasattr(cls, In): values.insert(index, {
                 "id": In,
-                "values": [(m["key"],m["value"]) for m in cls.__dict__[In]]
+                "name": cls.__dict__[In][0],
+                "values": [(m["key"],m["value"]) for m in measures(In)],
+                # "valuation": [(m["key"],m["valuation"][0]) for m in measures(In)]
             })
             if hasattr(cls, Out): values.append({
                 "id": Out,
-                "values": [(m["key"],m["value"]) for m in cls.__dict__[Out]]
+                "name": cls.__dict__[Out][0],
+                "values": [(m["key"],m["value"]) for m in measures(Out)],
+                # "valuation": [(m["key"],m["valuation"][0]) for m in measures(Out)]
             })
         return values
         
@@ -104,41 +110,8 @@ class BaseBlock:
 class FlowSheeting:
 
     name : str
+    flowenv : dict
     blocks : list[BaseBlock] = []
-
-    def __init__(self, config=None):
-        # provide RestAPI methods to instances
-        self.restapi = {
-            "GET": FlowSheeting._GET_,
-            "PATCH": FlowSheeting._PATCH_ }
-
-    @classmethod
-    def _GET_(cls,d:dict)-> tuple[str,dict]:
-        """ Respond to the RestAPI GET method. """
-
-        block = next(
-            b for b in cls.blocks if b.__name__==d["table"] )
-
-        return "Ok",{
-            "flowsheet": cls.__name__,
-            "measures": block.get_measures(),
-            "computes": block.get_computes(),
-            "values": block.get_values() }
-
-    @classmethod
-    def _PATCH_(cls,d:dict)-> tuple[str,None]:
-        """ Respond to the RestAPI PATCH method. """
-
-        block: BaseBlock = next(
-            b for b in cls.blocks
-            if b.__name__ == d["table"] )
-
-        measure: dict = next(
-            m for m in getattr(block,d["id"])
-            if m["key"] == d["name"] )
-
-        measure["value"] = d["value"]
-        return "Ok", None
 
     @classmethod
     def append(cls,block:BaseBlock):
@@ -148,3 +121,50 @@ class FlowSheeting:
 
         assert len(cls.blocks)==len(set(cls.blocks)),\
             "duplicated Blocks in FlowSheeting forbidden"
+
+    def __init__(self, config=None):
+        # provide RestAPI methods to instances
+        self.restapi = {
+            "GET": FlowSheeting._GET_,
+            "PATCH": FlowSheeting._PATCH_ }
+
+    @classmethod
+    def _GET_(cls,d:dict) -> tuple[str,dict]:
+        """ Respond to the RestAPI GET method. """
+
+        if d.get("origin") == "__flowsheet__":
+
+            return "Ok",{
+                "name": cls.__dict__.get("name","Unnamed FlowSheet"),#FIXME
+                "blocks": [b.__name__ for b in cls.blocks] }
+
+        elif d.get("origin") == "__block__":
+
+            block = next(
+                b for b in cls.blocks if b.__name__==d["dataset"] )
+
+            return "Ok",{
+                "block": block.__name__,
+                "measures": block.get_measures(),
+                "computes": block.get_computes(),
+                "payload": block.get_values() }
+
+    @classmethod
+    def _PATCH_(cls,d:dict) -> tuple[str,None]:
+        """ Respond to the RestAPI PATCH method. """
+
+        assert len(d["payload"])==1,\
+            "PATCH request must contain exactly one value."
+
+        key,value = d["payload"].popitem()
+
+        block: BaseBlock = next(
+            b for b in cls.blocks
+            if b.__name__ == d["dataset"] )
+
+        measure: dict = next(
+            i for i in getattr(block,d["id"])[1]
+            if i["key"] == key )
+
+        measure["value"] = value
+        return "Ok", None

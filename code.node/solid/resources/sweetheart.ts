@@ -237,11 +237,15 @@ export class WebSocket extends window.WebSocket {
     })
   }
 
-  editValue(elt: HTMLTableCellElement, className?: string) {
-    if (elt.querySelector("input")) {
-      // <input /> element already exists, do nothing.
-      return }
-    else {
+  editValue(
+      elt: HTMLTableCellElement, 
+      className?: string) {
+
+    if (elt.querySelector("input") || elt.textContent == "—") {
+      // when <input /> element already exists
+      // or elt is non-editable, do nothing.
+      return;
+    } else {
 
       // Reset dataset when given.
       const eltDataset = elt.dataset.set || this.endpoint.dataset
@@ -252,16 +256,22 @@ export class WebSocket extends window.WebSocket {
       input.value = elt.innerText
       input.type = elt.dataset.input!
       input.className = className || ""
+      input.required = true
+
+      // Set html input element.
+      elt.innerText = ""
+      elt.appendChild(input)
+      input.focus()
       
       input.oninput = () => {
         // update or insert data in real-time
-        if (input.dataset.rowid == "NEW_DATA") {
+        if (input.dataset.id == "NEW_DATA") {
 
           this.send_json({
             // API: sweetheart.asgi3.RestApiEndpoints
             action: "ws.rest.post",// insert
             dataset: eltDataset,
-            payload: {[elt.dataset.fieldname!]: input.value} 
+            payload: {[elt.dataset.key!]: input.value} 
           }) 
         } else {
 
@@ -269,19 +279,18 @@ export class WebSocket extends window.WebSocket {
             // API: sweetheart.asgi3.RestApiEndpoints
             action: "ws.rest.patch",// update
             dataset: eltDataset,
-            id: elt.dataset.rowid,
-            payload: {[elt.dataset.fieldname!]: input.value}
+            id: elt.dataset.id,
+            payload: {[elt.dataset.key!]: input.value}
           }) 
         }
       }
+
       input.onblur = () => {
         elt.innerText = input.value
         input.remove()
       }
-      // set html input element
-      elt.innerText = ""
-      elt.appendChild(input)
-      input.focus()
+
     }
   }
+  
 }

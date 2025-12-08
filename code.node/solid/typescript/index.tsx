@@ -16,9 +16,7 @@ const Router = (): JSX.Element =>  {
   switch(window.location.pathname) {
 
     case "/flow": 
-      return <FlowSheet 
-        http="http://localhost:8080/flowdata" 
-        ws="ws://localhost:8080/flowdata" />
+      return <FlowSheet http="http://localhost:8080/flowdata" ws="ws://localhost:8080/flowdata" />
 
     default:
       return <Welcome style={tailwind} />

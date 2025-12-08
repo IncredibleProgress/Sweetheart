@@ -84,26 +84,34 @@ class BaseBlock:
         } for compute in cls.computes ]
 
     @classmethod
+    def get_InOuts(cls)-> list[str]:
+        """ Return current In/Out measurement points. """
+
+        InOuts = []
+        for index in range(cls.max_index):
+
+            In, Out = f"In{index+1}", f"Out{index+1}"
+
+            if hasattr(cls,In): InOuts.insert(index,{
+                "key": In,
+                "name": getattr(cls,In)[0] })
+
+            if hasattr(cls,Out): InOuts.append({
+                "key": Out,
+                "name": getattr(cls,Out)[0] })
+
+        return InOuts
+
+    @classmethod
     def get_values(cls)-> list[dict]:
         """ Return current In/Out measurement values. """
         
         values = []
-        measures = lambda io: cls.__dict__[io][1]
+        for inout in [ io["key"] for io in cls.get_InOuts() ]:
+            for m in getattr(cls,inout)[1]:
+                _id = f"{inout}::{m['key']}"
+                values.append((_id, m["value"]))
 
-        for index in range(cls.max_index):
-            In, Out = f"In{index+1}", f"Out{index+1}"
-            if hasattr(cls, In): values.insert(index, {
-                "id": In,
-                "name": cls.__dict__[In][0],
-                "values": [(m["key"],m["value"]) for m in measures(In)],
-                # "valuation": [(m["key"],m["valuation"][0]) for m in measures(In)]
-            })
-            if hasattr(cls, Out): values.append({
-                "id": Out,
-                "name": cls.__dict__[Out][0],
-                "values": [(m["key"],m["value"]) for m in measures(Out)],
-                # "valuation": [(m["key"],m["valuation"][0]) for m in measures(Out)]
-            })
         return values
         
 
@@ -135,7 +143,7 @@ class FlowSheeting:
         if d.get("origin") == "__flowsheet__":
 
             return "Ok",{
-                "name": cls.__dict__.get("name","Unnamed FlowSheet"),#FIXME
+                "flowname": cls.__name__, #FIXME
                 "blocks": [b.__name__ for b in cls.blocks] }
 
         elif d.get("origin") == "__block__":
@@ -144,9 +152,10 @@ class FlowSheeting:
                 b for b in cls.blocks if b.__name__==d["dataset"] )
 
             return "Ok",{
-                "block": block.__name__,
+                "blockname": block.__name__,
                 "measures": block.get_measures(),
                 "computes": block.get_computes(),
+                "inouts": block.get_InOuts(),
                 "payload": block.get_values() }
 
     @classmethod

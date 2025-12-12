@@ -118,7 +118,7 @@ class FlowSheeting:
             "Duplicated Blocks in FlowSheeting forbidden."
 
     @classmethod
-    def calculate(cls, iterations:int=1):
+    def calculate(cls, iterations:int=1000):
         """ Execute computations in registered Blocks. """
 
         for _count_ in range(1, iterations+1):
@@ -131,7 +131,7 @@ class FlowSheeting:
                     for measure in flow:
                         if measure.get("unresolved",True) and measure.formula is not None:
                             try: 
-                                match measure.__name__, measure.valuation:
+                                match type(measure).__name__, measure["valuation"]:
 
                                     case "Measure", "measurement":
                                         measure["value"] = measure.formula()
@@ -166,7 +166,7 @@ class FlowSheeting:
 
                             except:
                                 measure["unresolved"] = True
-                                
+
                             finally:
                                 if measure.get("unresolved") and _count_ == iterations:
                                     raise ValueError("Unresolved measure after maximum iterations.")

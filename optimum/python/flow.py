@@ -67,8 +67,6 @@ class SaturationTemp(TypedMeasure):
 class ProcessUnit(FlowSheeting):
     "Test Unit Flowsheeting"
 
-    #FIXME: set constants here 
-
 
 class ProcessBlock(BaseBlock):
 
@@ -96,7 +94,7 @@ class ExchangerBlock(ProcessBlock):
         Measure(Pressure,"unknown"),
         Measure(Temperature,"unknown"),
 
-        Compute(Rate,"once",lambda: Ex.In1.Brix / 100.0),
+        Compute(Rate,"once",lambda: Ex.In1.GrossWeight() / 100.0),
         # Compute(DryMatter,"fuzzy"),
         # Compute(Energy,"once"),
         # Compute(Enthalpy,"once"),
@@ -154,3 +152,4 @@ class ExchangerBlock(ProcessBlock):
 # --- --- Formula Lexicon --- --- #
 
 Ex = ExchangerBlock
+ProcessUnit.calculate()

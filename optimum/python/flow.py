@@ -1,6 +1,7 @@
 
-from sweetheart.measurement import \
-    TypedMeasure,Measure,Compute,BaseBlock,FlowSheeting
+from sweetheart.measurement import (
+    TypedMeasure, Measure, Compute, 
+    FlowSheeting, BaseBlock, Flow, Inlet, Outlet)
 
 
 # --- --- Measurement Types --- --- #
@@ -61,21 +62,15 @@ class SaturationTemp(TypedMeasure):
     type = float
 
 
-# --- --- Flow Sheetings --- --- #
+# --- --- Flow Sheeting --- --- #
 
 class ProcessUnit(FlowSheeting):
-    """ Blocks list composing a process unit. """
+    "Test Unit Flowsheeting"
 
-    name = "Test Unit"
-
-    flowenv = {
-        # "ambient_temp": 25.0,
-        # "ambient_pressure": 1.0
-    }
+    #FIXME: set constants here 
 
 
-class ProcessBlocks:
-    """ Blocks group sharing same flowunit, measures, computes. """
+class ProcessBlock(BaseBlock):
 
     flowunit : FlowSheeting = ProcessUnit
 
@@ -88,66 +83,74 @@ class ProcessBlocks:
 
 # --- --- Process Blocks --- --- #
 
-class ExchangerBlock(BaseBlock,ProcessBlocks):
-    name,key = "Échangeur thermique","ExB"
+# @register("Ex",globals)
+class ExchangerBlock(ProcessBlock):
+    "Échangeur thermique"
 
-    In1 = "Entrée jus cru",\
-    [
-        Measure(GrossWeight,"constant",10.0),
-        Measure(Brix,"unknown",10.0),
-        Measure(Purity,"unknown",85.0),
-        Measure(Pressure,"unknown",2.0),
-        Measure(Temperature,"unknown",25.0),
+    In1 = Inlet([
+        "Entrée jus froid",
 
-        Compute(Rate,"once"),
-        Compute(DryMatter,"fuzzy"),
-        Compute(Energy,"once"),
-        Compute(Enthalpy,"once"),
-        Compute(SaturationTemp,"once")
-    ]
+        Measure(GrossWeight,"constant").set(1000.0),
+        Measure(Brix,"unknown"),
+        Measure(Purity,"unknown"),
+        Measure(Pressure,"unknown"),
+        Measure(Temperature,"unknown"),
 
-    Out1 = "Sortie jus réchauffé",\
-    [
-        Measure(GrossWeight,"variable"),
-        Measure(Brix,"target"),
-        Measure(Pressure,"unknown",2.0),
-        Measure(Temperature,"unknown",25.0),
+        Compute(Rate,"once",lambda: Ex.In1.Brix / 100.0),
+        # Compute(DryMatter,"fuzzy"),
+        # Compute(Energy,"once"),
+        # Compute(Enthalpy,"once"),
+        # Compute(SaturationTemp,"once")
+    ])
+
+    # Out1 = "Sortie jus réchauffé",\
+    # [
+    #     Measure(GrossWeight,"variable"),
+    #     Measure(Brix,"target"),
+    #     Measure(Pressure,"unknown",2.0),
+    #     Measure(Temperature,"unknown",25.0),
         
-        Compute(Rate,"once"),
-        Compute(DryMatter,"fuzzy"),
-        Compute(Energy,"once"),
-        Compute(Enthalpy,"once"),
-        Compute(SaturationTemp,"once")
-    ]
+    #     Compute(Rate,"once"),
+    #     Compute(DryMatter,"fuzzy"),
+    #     Compute(Energy,"once"),
+    #     Compute(Enthalpy,"once"),
+    #     Compute(SaturationTemp,"once")
+    # ]
 
-    In2 = "Entrée eau chaude",[
-        Measure(GrossWeight,"constant",1000.0),
-        Measure(Brix,"unknown",12.0),
-        Compute(GrossWeight,"once"),
-        Compute(Brix,"fuzzy")]
+    # In2 = "Entrée eau chaude",[
+    #     Measure(GrossWeight,"constant",1000.0),
+    #     Measure(Brix,"unknown",12.0),
+    #     Compute(GrossWeight,"once"),
+    #     Compute(Brix,"fuzzy")]
 
-    Out2 = "Sortie eau refroidie",[
-        Measure(GrossWeight,"variable"),
-        Measure(Brix,"target"),
-        Compute(GrossWeight,"recursive"),
-        Compute(Brix,"once")]
+    # Out2 = "Sortie eau refroidie",[
+    #     Measure(GrossWeight,"variable"),
+    #     Measure(Brix,"target"),
+    #     Compute(GrossWeight,"recursive"),
+    #     Compute(Brix,"once")]
 
-class MixerBlock(BaseBlock,ProcessBlocks):
 
-    In1 = "Entrée sirop",[
-        Measure(GrossWeight,"constant",500.0),
-        Measure(Brix,"unknown",65.0),
-        Compute(GrossWeight,"once"),
-        Compute(Brix,"fuzzy")]
+# class MixerBlock(BaseBlock,ProcessBlocks):
 
-    In2 = "Entrée eau",[
-        Measure(GrossWeight,"constant",2000.0),
-        Measure(Brix,"unknown",5.0),
-        Compute(GrossWeight,"once"),
-        Compute(Brix,"fuzzy")]
+#     In1 = "Entrée sirop",[
+#         Measure(GrossWeight,"constant",500.0),
+#         Measure(Brix,"unknown",65.0),
+#         Compute(GrossWeight,"once"),
+#         Compute(Brix,"fuzzy")]
 
-    Out1 = "Sortie mélange",[
-        Measure(GrossWeight,"variable"),
-        Measure(Brix,"target"),
-        Compute(GrossWeight,"once"),
-        Compute(Brix,"fuzzy")]
+#     In2 = "Entrée eau",[
+#         Measure(GrossWeight,"constant",2000.0),
+#         Measure(Brix,"unknown",5.0),
+#         Compute(GrossWeight,"once"),
+#         Compute(Brix,"fuzzy")]
+
+#     Out1 = "Sortie mélange",[
+#         Measure(GrossWeight,"variable"),
+#         Measure(Brix,"target"),
+#         Compute(GrossWeight,"once"),
+#         Compute(Brix,"fuzzy")]
+
+
+# --- --- Formula Lexicon --- --- #
+
+Ex = ExchangerBlock

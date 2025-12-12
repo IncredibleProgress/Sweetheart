@@ -256,7 +256,6 @@ export class WebSocket extends window.WebSocket {
       input.value = elt.innerText
       input.type = elt.dataset.input!
       input.className = className || ""
-      input.required = true
 
       // Set html input element.
       elt.innerText = ""
@@ -265,7 +264,7 @@ export class WebSocket extends window.WebSocket {
       
       input.oninput = () => {
         // update or insert data in real-time
-        if (input.dataset.id == "NEW_DATA") {
+        if (input.dataset.id == "NEW") {
 
           this.send_json({
             // API: sweetheart.asgi3.RestApiEndpoints

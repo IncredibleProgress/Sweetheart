@@ -85,6 +85,13 @@ class Outlet(Flow):
     """ Build Flow instances defined as outlet. """
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
+   
+
+class Energy():
+    pass
+
+class Balance():
+    pass
 
 
 class BaseBlock:

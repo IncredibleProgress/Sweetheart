@@ -5,7 +5,7 @@ description = "innovative foundations for business-grade solutions"
 authors = ["IncredibleProgress <champion.nicolas@gmail.com>"]
 license = "CeCILL-C FREE SOFTWARE LICENSE AGREEMENT"
 readme = "../README.md"
-packages = [{include = "src"}]
+packages = [{include = "package"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

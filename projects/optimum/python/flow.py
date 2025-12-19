@@ -101,6 +101,17 @@ class ExchangerBlock(ProcessBlock):
         # Compute(SaturationTemp,"once")
     ])
 
+    #* prototype for Balance implementation:
+    # Bn1 = Balance([
+    #     "Bilan jus réchauffé",
+
+    #     Compute(GrossWeight,"once",lambda:\
+    #         ExchangerBlock.In1.GrossWeight() - ExchangerBlock.Out1.GrossWeight()    ),
+
+    #     Alert("GrossWeight negative",lambda:\
+    #         Ex.Bn1.GrossWeight() < 0.0  )
+    # ])
+
     # Out1 = "Sortie jus réchauffé",\
     # [
     #     Measure(GrossWeight,"variable"),

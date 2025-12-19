@@ -1,7 +1,7 @@
 .vscode/
 
 code.python/poetry.lock
-code.python/src/__pycache__/
+code.python/**/__pycache__/
 
 code.node/**/dist/
 code.node/**/node_modules/

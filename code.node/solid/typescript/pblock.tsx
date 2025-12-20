@@ -107,7 +107,7 @@ const ProcessBlock: Component<ProcessBlockProps> = (
 // Build Flow Sheet Component
 
 type TypeFlowSheet = {
-  flowname?: string
+  flowsheet?: string
   blocks: string[]
 }
 
@@ -120,7 +120,7 @@ export const FlowSheet = (
   const websocket = new sweetheart.WebSocket(ws,"__block__")
   return <Suspense fallback={<div> loading ... </div>}>
 
-    <h1 class="text-xl">{ flow()?.flowname || "" }</h1>
+    <h1 class="text-xl">{ flow()?.flowsheet || "" }</h1>
     <hr />
 
     <For each={ flow()?.blocks ?? [] }>

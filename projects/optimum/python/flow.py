@@ -67,6 +67,8 @@ class SaturationTemp(TypedMeasure):
 class ProcessUnit(FlowSheeting):
     "Test Unit Flowsheeting"
 
+    iterations = 1000
+
 
 class ProcessBlock(BaseBlock):
 

@@ -90,7 +90,7 @@ if __name__ == "__main__":
         chroot = config["shared_content"]["chroot"]
 
         assert os.isfile(f"package.json"),\
-            "missing package.json file in current directory"
+            "Missing package.json file in current directory."
 
         # build app with parceljs
         echo("build webapp in:",chroot)

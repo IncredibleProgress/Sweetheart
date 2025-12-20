@@ -1,6 +1,6 @@
 """
 Sweetheart
-innovative foundations for business-grade solutions
+*innovative foundations for business-grade solutions*
 """
 
 __version__ = "0.1.3"
@@ -75,7 +75,9 @@ class BaseConfig(_UserDict_):
                 os.stdout(["poetry","env","info","--path","-C",cwd])\
                 or os.getenv("SWS_PYTHON_ENV")
 
-            assert self.python_env,"python virtual env not found"
+            assert self.python_env,\
+                "Related python virtual env not found."
+
             self.python_bin= f"{self.python_env}/bin/python3"
             return self.__dict__.get(attr)
 
@@ -95,9 +97,11 @@ def set_config(values={},**kwargs) -> BaseConfig:
 
     config = BaseConfig(**kwargs)
 
-    if os.isfile(config.conffile):
-        config.load_json()
-        verbose("load config file:",config.conffile)
+    assert os.isfile(config.conffile),\
+        f"Configuration file not found: {config.conffile}."
+
+    config.load_json()
+    verbose("load config file:",config.conffile)
 
     config.update(values)
     return config

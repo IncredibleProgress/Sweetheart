@@ -51,7 +51,8 @@ class HttpResponse(AsgiEndpoint):
             self.content_charset = 'utf-8'#! info only
 
         if isinstance(headers,dict):
-            headers = [# latin-1 is default http/1.1 encoding
+            headers = [
+                # latin-1 is default http/1.1 encoding
                 ( key.encode("latin-1"), val.encode("latin-1") )
                 for key,val in headers.items() ]
 
@@ -61,7 +62,7 @@ class HttpResponse(AsgiEndpoint):
         self.encoded_content = content
         
         # default CORS attributes
-        self.allow_origin: str = "*" #! unsafe
+        self.allow_origin: str = "*" #FIXME: unsafe
         self.allow_methods: str = "GET"
 
     def _apply_CORS_policy_(self,
@@ -162,7 +163,7 @@ class HttpResponse(AsgiEndpoint):
                 "body": self.encoded_content })
             
         else: raise AsgiRuntimeError(
-            f"Method {scope['method']} not allowed.")
+            f"Http method {scope['method']} not allowed.")
 
 
 class JSONResponse(HttpResponse):
@@ -347,7 +348,7 @@ class AsgiLifespanRouter:
 
     def __init__(self,
         # intends to ensure some consistency with Starlette
-        routes: list = [],
+        routes: list[Route] = [],
         debug: bool = BaseConfig.debug,
         middleware: list[tuple] = [] ):
         
@@ -424,7 +425,8 @@ class RestApiEndpoints(Route,AsgiEndpoint):
         self.datasystem = datasystem
 
         assert hasattr(self.datasystem,"restapi")\
-            and isinstance(self.datasystem.restapi,dict)
+        and isinstance(self.datasystem.restapi,dict),\
+            f"Valid REST API not found for {self.datasystem}."
 
         # set Websocket instance and its receiver
         self.websocket = Websocket()
@@ -434,7 +436,7 @@ class RestApiEndpoints(Route,AsgiEndpoint):
         # only RESTful api is handled here 
         self.endpoints = {
             "http": {
-                "fetch.test": self._fetch_TEST,
+                # "fetch.test": self._fetch_TEST,
                 "fetch.rest": self._fetch_REST },
             "websocket": {
                 "ws.rest.get": self._ws_REST,

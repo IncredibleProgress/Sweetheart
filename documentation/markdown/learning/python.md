@@ -22,7 +22,7 @@ In [1]:
 
 ### A first welcome message
 
-Now type `import __hello__` and then press the `RETURN` key. Afterwards try `print("welcome!")` and `RETURN`. If the following lines happend, congratulations that means these are your first successfull lines of python!
+Now type `import __hello__` and then press the `RETURN` key. Afterwards try `print("welcome!")` and `RETURN`. If the following lines happened, congratulations that means these are your first successful lines of python!
 
 ```python
 In [1]: import __hello__

@@ -71,7 +71,7 @@ class Flow(UserList):
         assert len(keys) == len(set(keys)),\
             "Duplicated measurements in Flow definition forbidden."
 
-        [ # set measurements as properties, e.g. Block.In1.Pressure()
+        [# set measurements as properties, e.g. Block.In1.Pressure()
             setattr(self,measure["key"],lambda m=measure: m["value"])
             for measure in self if isinstance(measure,Measure)
         ]
@@ -85,12 +85,14 @@ class Outlet(Flow):
     """ Build Flow instances defined as outlet. """
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
-   
+
+
+class Balance(Flow):
+    """ Build Flow-like instances for computing balances. """
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
 
 class Energy():
-    pass
-
-class Balance():
     pass
 
 
@@ -104,9 +106,10 @@ class BaseBlock:
         cls.computes : list[TypedMeasure]
 
         if any([ 
-            attr for attr in cls.__dict__ 
-            if isinstance(getattr(cls,attr),Flow) 
-        ]): # register block in flowsheeting
+            isinstance(getattr(cls,attr), Flow) 
+            for attr in cls.__dict__ 
+        ]): 
+            # register block in flowsheeting
             cls.flowunit.append(cls)
 
 
@@ -114,6 +117,7 @@ class FlowSheeting:
 
     # list of registered blocks
     blocks : list[BaseBlock] = []
+    iterations : int = 1000
 
     @classmethod
     def append(cls,block:BaseBlock):
@@ -125,9 +129,10 @@ class FlowSheeting:
             "Duplicated Blocks in FlowSheeting forbidden."
 
     @classmethod
-    def calculate(cls, iterations:int=1000):
+    def calculate(cls, iterations:Optional[int]=None):
         """ Execute computations in registered Blocks. """
 
+        iterations = iterations or cls.iterations
         for _count_ in range(1, iterations+1):
             for block in cls.blocks:
 

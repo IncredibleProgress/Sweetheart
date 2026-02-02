@@ -97,11 +97,12 @@ def set_config(values={},**kwargs) -> BaseConfig:
 
     config = BaseConfig(**kwargs)
 
-    assert os.isfile(config.conffile),\
-        f"Configuration file not found: {config.conffile}."
+    if os.isfile(config.conffile):
+        config.load_json()
+        verbose("load config file:",config.conffile)
 
-    config.load_json()
-    verbose("load config file:",config.conffile)
+    elif BaseConfig.debug: 
+        verbose(f"configuration file not found: {config.conffile}")
 
     config.update(values)
     return config

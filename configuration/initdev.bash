@@ -97,7 +97,7 @@ if ! grep -q "SWS_PYTHON_ENV=" ~/.bashrc; then
   printf "\n%s"\
     "# Sweetheart settings"\
     "export SWS_OPERATING_STATE=development"\
-    "export SWS_PYTHON_ENV=$SWS_PYTHON_ENV"\
+    "export SWS_PYTHON_ENV='$SWS_PYTHON_ENV'"\
     "alias sws='$SWS_PYTHON_ENV/bin/python3 -m sweetheart.cmdline'"\
   >> ~/.bashrc
 fi

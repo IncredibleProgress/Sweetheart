@@ -1,4 +1,5 @@
 from sweetheart.subprocess import os
+from platform import python_version_tuple
 from sweetheart import BaseConfig, ansi, echo
 
 # ensure Sweetheart runs in a development purpose
@@ -86,13 +87,12 @@ class ProjectInstaller:
         if enable("conf") and cls.path.get("conf"):
             #FIXME: provide default configuration files
             os.makedirs(cls.path["conf"],mode=0o755,exist_ok=True)
-            unitconf = f"{cls.source['conf']}/unit.json"
-            if os.isfile(unitconf): os.copy(unitconf,cls.path["conf"])
+            os.copy(f"{cls.source['conf']}/unit.json",cls.path["conf"])
 
-        if enable("data") and cls.path.get("data"):
-            # provide an empty gel data project directory
-            os.makedirs(cls.path["data"],mode=0o755,exist_ok=True)
-            os.run("gel init",cwd=cls.path["data"])
+        # if enable("data") and cls.path.get("data"):
+        #     # provide an empty gel data project directory
+        #     os.makedirs(cls.path["data"],mode=0o755,exist_ok=True)
+        #     os.run("gel init",cwd=cls.path["data"])
 
 
 class ProjectSweetheart(ProjectInstaller):
@@ -119,15 +119,15 @@ class ProjectSweetheart(ProjectInstaller):
 
     path = {
         # set running directories
-        "node": f"{os.HOME}/{BaseConfig.basedir}/user_interface",# jsx
         "dist-dir": f"{os.HOME}/{BaseConfig.basedir}/application",# html
         "doc-dev": f"{os.HOME}/{BaseConfig.basedir}/documentation",# html
 
         # provide user working directories
+        "python": f"{os.HOME}/My_code/python",
+        "node": f"{os.HOME}/My_code/webapp",
+        "jsx": f"{os.HOME}/My_code/typescript",# symlink
         "conf": f"{os.HOME}/My_code/configuration",
         "doc": f"{os.HOME}/My_code/documentation",
-        "jsx": f"{os.HOME}/My_code/typescript",# symlink
-        "python": f"{os.HOME}/My_code/python",
         "data": f"{os.HOME}/My_code/database",
     }
 
@@ -149,8 +149,7 @@ class ProjectSweetheart(ProjectInstaller):
 
         # install python env dependencies from source
         echo("Install Python Dependencies",prefix="\n")
-        os.run(["poetry","-n","--no-root","--no-ansi",
-            "install"],cwd=cls.source["python"])
+        os.run("poetry -n --no-root --no-ansi install",cwd=cls.source["python"])
 
         # provide directory for user python code
         os.makedirs(cls.path["python"],mode=0o755,exist_ok=True)

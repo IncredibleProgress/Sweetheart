@@ -9,7 +9,10 @@ class TypedMeasure(TypedDict):
     """ Base class for defining measurement types. """
 
     name: str
-    unit: Literal["kg","°Bx","%","ICUMSA","bar","bara","°C","kJ"]
+    unit: str
+
+    # NOTE: set type allowed measurement values
+    # for better understanding: https://docs.python.org/3/library/decimal.html
     type: Type[int|float]
 
 
@@ -86,7 +89,6 @@ class Outlet(Flow):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
 
-
 class Balance(Flow):
     """ Build Flow-like instances for computing balances. """
     def __init__(self,*args,**kwargs):
@@ -138,8 +140,8 @@ class FlowSheeting:
 
                 for flow in [ 
                     getattr(block,attr) for attr in block.__dict__ 
-                    if isinstance(getattr(block,attr),Flow) ]:
-
+                    if isinstance(getattr(block,attr),Flow)
+                ]:
                     for measure in flow:
                         if measure.get("unresolved",True) and measure.formula is not None:
                             try: 
@@ -160,18 +162,18 @@ class FlowSheeting:
                                         or measure["value"] > (1+offset) * measure["init"]:
                                             measure["unresolved"] = True
 
-                                    case "Measure", "variable":
-                                        raise NotImplementedError
+                                    # case "Measure", "variable":
+                                    #     raise NotImplementedError
 
-                                    case "Measure", "unknown":
-                                        raise NotImplementedError
+                                    # case "Measure", "unknown":
+                                    #     raise NotImplementedError
 
                                     case "Compute", "once":
                                         measure["value"] = measure.formula()
                                         measure["unresolved"] = False
 
-                                    case "Compute", "fuzzy":
-                                        raise NotImplementedError
+                                    # case "Compute", "fuzzy":
+                                    #     raise NotImplementedError
 
                                     case "Compute", "recursive":
                                         measure["value"] = measure.formula()
@@ -209,7 +211,7 @@ class FlowSheeting:
             sorted_inouts = sorted([   
                 attr for attr in block.__dict__ 
                 if isinstance(getattr(block,attr),Flow) 
-            ], key= lambda x: ('InFlOu'.index(x[:2]),x[2:]) )
+            ], key= lambda x: ('InFlOuBa'.index(x[:2]),x[2:]) )
 
             return "Ok",{
                             "blockname": block.__name__,

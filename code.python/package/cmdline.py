@@ -68,11 +68,16 @@ if __name__ == "__main__":
 
         if args.package:
             raise NotImplementedError
-        else: 
-            # [LocalImport]
-            from sweetheart.transitional import ProjectSweetheart
-            ProjectSweetheart.initdev()
+        
+        # [LocalImport]
+        from sweetheart.transitional import ProjectSweetheart
+        ProjectSweetheart.initdev()
 
+        # build default configuration
+        conf = BaseConfig()
+        with open(conf.conffile,"w") as file_out:
+            json.dump(conf.data,file_out,indent=4)
+        
     # set init command
     cli.sub("init",help="launch init process setting up new project")
     cli.opt("package",nargs=cli.REMAINDER,help="additional resources to install")
@@ -85,7 +90,7 @@ if __name__ == "__main__":
         project = args.project or BaseConfig.master_project
         config = set_config(project=project)
 
-        #set directories
+        # set directories
         cache = f"{config.root}/.build-cache"
         chroot = config["shared_content"]["chroot"]
 
@@ -111,10 +116,7 @@ if __name__ == "__main__":
 
     # set build command
     cli.sub("build",help="build your project webapp using parceljs")
-
-    cli.opt("-r","--restart-unit",action="store_true",
-        help="restart Unit reloading python app after build")
-
+    cli.opt("-r","--restart-unit",action="store_true",help="restart Unit reloading python app after build")
     cli.set_function(_command_build)
 
 

@@ -1,7 +1,7 @@
 
 from sweetheart.measurement import (
-    TypedMeasure, Measure, Compute, 
-    FlowSheeting, BaseBlock, Flow, Inlet, Outlet)
+    TypedMeasure, Literal, Measure, Compute, 
+    FlowSheeting, BaseBlock, Flow, Inlet, Outlet, Balance)
 
 
 # --- --- Measurement Types --- --- #
@@ -83,7 +83,6 @@ class ProcessBlock(BaseBlock):
 
 # --- --- Process Blocks --- --- #
 
-# @register("Ex",globals)
 class ExchangerBlock(ProcessBlock):
     "Échangeur thermique"
 
@@ -103,64 +102,77 @@ class ExchangerBlock(ProcessBlock):
         # Compute(SaturationTemp,"once")
     ])
 
-    #* prototype for Balance implementation:
-    # Bn1 = Balance([
-    #     "Bilan jus réchauffé",
+    In2 = Inlet([
+        "Entrée eau chaude",
 
-    #     Compute(GrossWeight,"once",lambda:\
-    #         ExchangerBlock.In1.GrossWeight() - ExchangerBlock.Out1.GrossWeight()    ),
+        Measure(GrossWeight,"constant").set(500.0),
+        Measure(Brix,"unknown").set(70.0),
 
-    #     Alert("GrossWeight negative",lambda:\
-    #         Ex.Bn1.GrossWeight() < 0.0  )
-    # ])
+        # Compute(GrossWeight,"once"),
+        # Compute(Brix,"fuzzy")
+    ])
 
-    # Out1 = "Sortie jus réchauffé",\
-    # [
-    #     Measure(GrossWeight,"variable"),
-    #     Measure(Brix,"target"),
-    #     Measure(Pressure,"unknown",2.0),
-    #     Measure(Temperature,"unknown",25.0),
+    Out1 = Outlet([
+        "Sortie jus réchauffé",
+
+        Measure(GrossWeight,"variable").set(500.0),
+        Measure(Brix,"target"),
+        Measure(Pressure,"unknown"),
+        Measure(Temperature,"unknown"),
         
-    #     Compute(Rate,"once"),
-    #     Compute(DryMatter,"fuzzy"),
-    #     Compute(Energy,"once"),
-    #     Compute(Enthalpy,"once"),
-    #     Compute(SaturationTemp,"once")
-    # ]
+        # Compute(Rate,"once"),
+        # Compute(DryMatter,"fuzzy"),
+        # Compute(Energy,"once"),
+        # Compute(Enthalpy,"once"),
+        # Compute(SaturationTemp,"once")
+    ])
 
-    # In2 = "Entrée eau chaude",[
-    #     Measure(GrossWeight,"constant",1000.0),
-    #     Measure(Brix,"unknown",12.0),
+    Out2 = Outlet([
+        "Sortie eau refroidie",
+
+        Measure(GrossWeight,"variable"),
+        Measure(Brix,"target"),
+
+        # Compute(GrossWeight,"recursive"),
+        # Compute(Brix,"once")
+    ])
+
+    Ba1 = Balance([
+        "Bilan jus réchauffé",
+
+        Compute(Enthalpy,"once",lambda: 0.01, ),
+
+        # Alert("GrossWeight negative",lambda:\
+        #     Ex.Bn1.GrossWeight() < 0.0 )
+    ])
+
+    
+class MixerBlock(ProcessBlock):
+    "Mélangeur sirop"
+
+    In1 = Inlet([
+        "Entrée sirop",
+        Measure(GrossWeight,"constant"),
+        Measure(Brix,"unknown"),
+        # Compute(GrossWeight,"once"),
+        # Compute(Brix,"fuzzy")
+    ])
+
+    In2 = Inlet([
+        "Entrée eau",
+        Measure(GrossWeight,"constant"),
+        Measure(Brix,"unknown"),
+        # Compute(GrossWeight,"once"),
+        # Compute(Brix,"fuzzy")
+    ])
+
+    Out1 = Outlet([
+        "Sortie mélange",
+        Measure(GrossWeight,"variable"),
+        Measure(Brix,"target"),
     #     Compute(GrossWeight,"once"),
-    #     Compute(Brix,"fuzzy")]
-
-    # Out2 = "Sortie eau refroidie",[
-    #     Measure(GrossWeight,"variable"),
-    #     Measure(Brix,"target"),
-    #     Compute(GrossWeight,"recursive"),
-    #     Compute(Brix,"once")]
-
-
-# class MixerBlock(BaseBlock,ProcessBlocks):
-
-#     In1 = "Entrée sirop",[
-#         Measure(GrossWeight,"constant",500.0),
-#         Measure(Brix,"unknown",65.0),
-#         Compute(GrossWeight,"once"),
-#         Compute(Brix,"fuzzy")]
-
-#     In2 = "Entrée eau",[
-#         Measure(GrossWeight,"constant",2000.0),
-#         Measure(Brix,"unknown",5.0),
-#         Compute(GrossWeight,"once"),
-#         Compute(Brix,"fuzzy")]
-
-#     Out1 = "Sortie mélange",[
-#         Measure(GrossWeight,"variable"),
-#         Measure(Brix,"target"),
-#         Compute(GrossWeight,"once"),
-#         Compute(Brix,"fuzzy")]
-
+    #     Compute(Brix,"fuzzy")
+    ])
 
 # --- --- Formula Lexicon --- --- #
 

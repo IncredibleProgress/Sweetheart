@@ -19,11 +19,12 @@ type TypeInOut = {
 
 type TypeBlock = {
   blockname?: string
+  blockdoc?: string
   measures: TypeMeasure[]
   computes: TypeMeasure[]
   inouts: TypeInOut[]
   payload: [ string, number|null ][]
-  // `${inout.key}.${measure.key}` => value
+  // `${inout.key}::${measure.key}` => value
 }
 
 // Build Process Block Component
@@ -49,6 +50,7 @@ const ProcessBlock: Component<ProcessBlockProps> = (
 
   return <ErrorBoundary fallback={(err) => <div> Error: { err.message } </div>}>
     <table class="text-xs my-2">
+      <caption class="mb-2">{ data()?.blockdoc ?? "" }</caption>
       <thead>
         <tr>
           <th class="w-32" />
@@ -120,7 +122,7 @@ export const FlowSheet = (
   const websocket = new sweetheart.WebSocket(ws,"__block__")
   return <Suspense fallback={<div> loading ... </div>}>
 
-    <h1 class="text-xl">{ flow()?.flowsheet || "" }</h1>
+    <h1 class="text-xl">Test Unit Flowsheeting</h1>
     <hr />
 
     <For each={ flow()?.blocks ?? [] }>

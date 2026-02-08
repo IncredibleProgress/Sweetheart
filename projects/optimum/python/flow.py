@@ -1,6 +1,6 @@
 
 from sweetheart.measurement import (
-    TypedMeasure, Literal, Measure, Compute, 
+    TypedMeasure, Measure, Compute, 
     FlowSheeting, BaseBlock, Flow, Inlet, Outlet, Balance)
 
 

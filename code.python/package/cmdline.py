@@ -2,7 +2,7 @@
 Command Line Interface for Sweetheart
 """
 
-import argparse
+import sys,argparse
 from sweetheart import *
 from sweetheart import __version__
 
@@ -60,23 +60,32 @@ if __name__ == "__main__":
     cli.opt("-v","--verbose",action="count",default=0,
         help="get additional messages about ongoing process")
 
-    cli.opt("-p",dest="project",nargs=1,default=BaseConfig.master_project,
+    cli.opt("-p",dest="project",nargs=1,default=[BaseConfig.master_project],
         help="set a project name different from the default one")
 
 
     def _command_init(args):
 
+        # [LocalImport]
+        from sweetheart.transitional import \
+            SweetheartMaster,SweetheartProject,JupyterLab
+
         if args.package:
             raise NotImplementedError
-        
-        # [LocalImport]
-        from sweetheart.transitional import ProjectSweetheart
-        ProjectSweetheart.initdev()
 
-        # build default configuration
-        conf = BaseConfig()
-        with open(conf.conffile,"w") as file_out:
-            json.dump(conf.data,file_out,indent=4)
+        if args.project == ["jupyter"]:
+            #FIXME: for testing purposes only
+            JupyterLab.initdev(project=args.project[0])
+
+        elif args.project != [BaseConfig.master_project]:
+            SweetheartProject.initdev(project=args.project[0])
+        
+        else: 
+            SweetheartMaster.initdev()
+            # build default configuration
+            config = BaseConfig()
+            with open(config.conffile,"w") as file_out:
+                json.dump(config.data,file_out,indent=4)
         
     # set init command
     cli.sub("init",help="launch init process setting up new project")
@@ -87,21 +96,25 @@ if __name__ == "__main__":
     def _command_build(args):
 
         # set project config
-        project = args.project or BaseConfig.master_project
-        config = set_config(project=project)
+        config = set_config(project=args.project[0])
 
         # set directories
         cache = f"{config.root}/.build-cache"
         chroot = config["shared_content"]["chroot"]
 
-        assert os.isfile(f"package.json"),\
-            "Missing package.json file in current directory."
+        # current directory must be a valid node project
+        if not os.isfile("package.json"):
+            logging.error(
+                f"Missing package.json in {os.getcwd()} "+\
+                "which must contain a valid node project.")
+            sys.exit(1)
 
-        # build app with parceljs
-        echo("build webapp in:",chroot)
-        os.run(["npx","parcel","build","--cache-dir",cache,"--dist-dir",chroot])
+        if not args.skip_js:
+            # build app with parceljs
+            echo("build webapp in:",chroot)
+            os.run(["npx","parcel","build","--cache-dir",cache,"--dist-dir",chroot])
 
-        if args.restart_unit:
+        if args.reload_unit:
             # restart Unit reloading python app script
             echo("restarting Nginx Unit ...",prefix="\n")
             os.run("sudo systemctl reload-or-restart unit")
@@ -115,8 +128,9 @@ if __name__ == "__main__":
                 os.run(["sudo","tail",Unit.unitlog])
 
     # set build command
-    cli.sub("build",help="build your project webapp using parceljs")
-    cli.opt("-r","--restart-unit",action="store_true",help="restart Unit reloading python app after build")
+    cli.sub("build",help="build and run your project webapp")
+    cli.opt("-s","--skip-js",action="store_true",help="skip building webapp with parceljs")
+    cli.opt("-r","--reload-unit",action="store_true",help="reload Nginx Unit python app")
     cli.set_function(_command_build)
 
 

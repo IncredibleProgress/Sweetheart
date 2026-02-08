@@ -22,15 +22,15 @@ class BaseConfig(_UserDict_):
             homedir: str|None = None ) -> None:
 
         if project == BaseConfig.master_project:
-            # set default homedir for master project
+            # set default settings for master project
             homedir = homedir or f"{os.HOME}/My_code"
+            self.unitconf = f"{homedir}/configuration/unit.json"
         else:
             homedir = homedir or f"{os.HOME}/{project.capitalize()}"
             self.basedir = str(BaseConfig.basedir).replace("master",project)
             
         self.root = f"{os.HOME}/{self.basedir}"
         self.conffile = f"{homedir}/configuration/config.json"
-        self.unitconf = f"{homedir}/configuration/unit.json"
 
         self.data = {
         #1. General Settings:
@@ -42,7 +42,7 @@ class BaseConfig(_UserDict_):
             # editable python app settings
             # these are put into NginxUnit config
             "python_app": {
-                "home": "{{python_env}}",# auto set
+                "home": "{{python_env}}",# autoset
                 "path": f"{homedir}/python",
                 "module": "start",# no .py extension expected
                 "callable": "webapp",
@@ -123,7 +123,7 @@ class ansi:
 
 logging.basicConfig(
     # filename = f"{BaseConfig.basedir}/sweetheart.log",
-    format = f"$asctime - {ansi.SWHT} - $levelname - $message",
+    format = f"{ansi.SWHT} - $levelname - $message",
     level = logging.INFO,
     style = "$" )
 
@@ -143,13 +143,3 @@ def verbose(*args,level=1,prefix=""):
     if BaseConfig.verbosity >= level:
         init = prefix + f"{level}*" if level != 0 else " *"
         print(init,*args,ansi.NULL)
-
-
-class LoggedException(Exception):
-
-    def __init__(self,message):
-        
-        level = int(BaseConfig.debug)
-        verbose(f"logged:{ansi.RED}",message,level=level)
-        logging.error(message)
-        super().__init__(message)

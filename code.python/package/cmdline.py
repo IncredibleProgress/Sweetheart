@@ -68,27 +68,35 @@ if __name__ == "__main__":
 
         # [LocalImport]
         from sweetheart.transitional import \
-            SweetheartMaster,SweetheartProject,JupyterLab
+            SweetheartMaster,SweetheartProject,JupyterNotebook
+
+        if args.server:
+            # [LocalImport]
+            from sweetheart.systemctl import Caddy
+            
+            server = Caddy()
 
         if args.package:
             raise NotImplementedError
 
         if args.project == ["jupyter"]:
             #FIXME: for testing purposes only
-            JupyterLab.initdev(project=args.project[0])
+            JupyterNotebook.initdev(project=args.project[0])
 
         elif args.project != [BaseConfig.master_project]:
             SweetheartProject.initdev(project=args.project[0])
         
         else: 
             SweetheartMaster.initdev()
-            # build default configuration
+
+            # build the default configuration
             config = BaseConfig()
             with open(config.conffile,"w") as file_out:
                 json.dump(config.data,file_out,indent=4)
         
     # set init command
     cli.sub("init",help="launch init process setting up new project")
+    cli.opt("-s","--server",action="store_true",help="set Caddy web server on this machine")
     cli.opt("package",nargs=cli.REMAINDER,help="additional resources to install")
     cli.set_function(_command_init)
 

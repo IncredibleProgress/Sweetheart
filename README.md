@@ -248,13 +248,13 @@ e.g. Ubuntu Server - Vault - Postgres - Rust - Python - TypeScript
   - clear objectives and strategy, advisable for long-term solutions
 
 ##### 2/ Use highly valuable open-source solutions
-e.g. Snapd - Caddy - React - TailwindCss - Pydantic - Pandas ...
+e.g. Snapd - Caddy - TailwindCss - Pydantic - Pandas ...
   - widely adopted, observed, and studied libraries
   - recognized solutions, managed by established organizations
   - predictable objectives and strategy, advisable at least for middle-term solutions
 
 ##### 3/ Integrate some of the most brillant open-source initiatives
-e.g. NginxUnit - Gel/EdgeQL - SolidJS
+e.g. Gel/EdgeQL - SolidJS
   - innovative, breaking, and emerging ideas
   - superlative design and code quality
   - adopted by recognized people and organizations

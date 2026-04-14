@@ -3,9 +3,8 @@ from typing import Self
 from pathlib import Path
 
 from sweetheart import *
-from sweetheart.subprocess import os, stat
-from sweetheart.systemctl import Unit, Systemd
-# from rethinkdb import RethinkDB as R
+from sweetheart.subprocess import os,stat
+from sweetheart.systemctl import Caddy,PythonApp
 
 from sweetheart.asgi3 import (
     AsgiLifespanRouter, RestApiEndpoints, Route, 
@@ -15,15 +14,7 @@ from sweetheart.asgi3 import (
 class PostgresUnchained():
     #FIXME: incomplete, untested
 
-    def __init__(self, config:BaseConfig=None):
-        
-        if config is None:
-            # inherit config from WebappServer
-            config = WebappServer._config_
-
-        # set default config for single instance
-        # self.pgconfig: dict = config["postgres"] #? cli options
-        self.project: str = config["database_project"]
+    def __init__(self):
 
         self.restapi = {
             #NOTE: methods are uppercased
@@ -43,7 +34,7 @@ class PostgresUnchained():
         kwargs = dict()
         kwargs.update(settings)
 
-        os.chdir(self.project)
+        os.chdir(self.PATH) #FIXME
         self.client = create_client(**kwargs)
         self.client.ensure_connected()
 
@@ -128,12 +119,21 @@ class DocumentDB():
 
 class DataHub(RestApiEndpoints):
 
-    def __init__(self, urlpath: str, datasystem):
+    def __init__(self, urlpath:str, datasystem):
+
         super().__init__(urlpath,datasystem)
+        datasystem.PATH = WebappServer._config_[urlpath] #FIXME
 
         self.endpoints["websocket"].update({
+            # default endpoints
+            #NOTE: provided by RestApiEndpoints
+            # "ws.rest.get": self._ws_REST,
+            # "ws.rest.post": self._ws_REST,
+            # "ws.rest.patch": self._ws_REST,
+            
+            # further DataHub endpoints
+            "ws.edgeql": self._ws_EdgeQL,
             # "ws.reql": self._ws_ReQL,
-            "ws.edgeql": self._ws_EdgeQL
         }) 
 
     def _ws_EdgeQL(self,data:dict) -> JSONMessage:
@@ -159,17 +159,17 @@ class DataHub(RestApiEndpoints):
     #     return JSONMessage.safer(message,uuid=data.get("uuid"))
 
 
-class WebappServer(Unit):
+class WebappServer(Caddy,PythonApp):
 
     def __init__(self, config:BaseConfig):
         
         self.data = []
         self.config = config
-        self.application = "python_app"
+        self.python_app = "python_app"
+        self.shared_content = "shared_content"
         self.middleware = [] #FIXME
-
-        # keep current app config available 
-        WebappServer._config_ = config
+        
+        WebappServer._config_ = config 
 
     def mount(self, *args: Route|DataHub ) -> Self:
 
@@ -198,11 +198,10 @@ class WebappServer(Unit):
             debug = BaseConfig.debug,
             middleware = self.middleware )
 
-    def set_service(self, unit=False):
+    def set_service(self, systemctl:bool=False):
 
-        # Expose webapp statics:
-
-        exposed_path = self.config["shared_content"]["chroot"]
+        # Expose webapp statics
+        exposed_path = self.config[self.shared_content]["chroot"]
         exposed_parts = Path(exposed_path).parts
 
         assert os.isdir(exposed_path),\
@@ -216,32 +215,67 @@ class WebappServer(Unit):
                 verbose(f"add execute permission to {curpth} directory")
                 os.chmod(curpth, st_mode|stat.S_IXOTH)
 
-        # Set python app from config:
-
-        pyconf = self.config[self.application]
+        # Set python app from config
+        pyconf = self.config[self.python_app]
         pyfile = Path(pyconf['path'])/pyconf['module']
 
-        #FIXME: avoid extension matter in Unit with module name
+        #FIXME: avoid extension matter with module name
         module, extension = pyfile.stem, pyfile.suffix
         if extension==".py": pyconf['module'] = module
         else: pyfile = pyfile.with_suffix('.py')
 
         pyfile.parent.mkdir(mode=0o755,parents=True,exist_ok=True)
-        pyfile.write_text(self.generate_python_script(pyconf))
+        pyfile.write_text(self.generate_python_script)
 
-        if unit is True:
+        if systemctl is True:
+            #FIXME: Set systemctl for Caddy web server and Python app
+
+            settings = self.config[self.python_app]
+            settings["venv"] = settings["venv"] or self.config.python_env
+            verbose(f"Set Python app service with venv: {settings['venv']}")
+
+            self.set_uvicorn_service(settings)
+            self.enable_uvicorn_service(settings["sysd"])
+
+            caddyfile = Path(self.config.caddyfile)
+            caddyfile.parent.mkdir(mode=0o755,parents=True,exist_ok=True)
+            caddyfile.write_text(self.generate_caddyfile)
+
+            self.set_caddy_service(caddyfile)
+            self.enable_caddy_service("caddy.service")
+
+            # [Deprecated] 
             # put NginxUnit config for python app
-            self.load_unit_config(source="conffile")
-            self.set_unit_config(share_directory=True)
-            Unit.put_unit_config()
+            # self.load_unit_config(source="conffile")
+            # self.set_unit_config(share_directory=True)
+            # Unit.put_unit_config()
 
-    @staticmethod
-    def generate_python_script(pyconf:dict):
+    @property
+    def generate_caddyfile(self) -> str:
+
+        python_app = self.config[self.python_app]
+        shared_content = self.config[self.shared_content]
+
+        return f"""# --- start Caddyfile script --- #
+
+#FIXME: https support with TLS certificates
+http://localhost:8080 {{
+    reverse_proxy unix//{python_app["uds"][1:]}
+    root * {shared_content["chroot"]}
+    file_server {{
+        index {shared_content["index"]}
+    }}
+}}
+
+# --- end of script --- #"""
+
+    @property
+    def generate_python_script(self) -> str:
+
+        python_app = self.config[self.python_app]
+        assert not python_app["callable"].endswith(".py")
+
         return f"""# --- start Python3 script --- #
-
-# Information:
-# auto-generated by sweetheart.services.WebappServer
-# [ USER: {os.getuser()} ] [ DATE: {os.stdout("date")} ]
 
 # Import Sweetheart Services:
 from sweetheart.services import *
@@ -257,9 +291,9 @@ config = set_config({{
 
 # create here a runable entry point for your data traffic
 # default and recommended is a PostgresUnchained data driver at the url /geldata
-# NOTE: Sweetheart aims to serve statics directly via NginxUnit, not Asgi/3
+# NOTE: Sweetheart aims to serve statics directly via Caddy, not Asgi/3
 
-{pyconf["callable"]} = WebappServer(config).app(
+{python_app["callable"]} = WebappServer(config).app(
     # DataHub("/tsdata", TimescaleDB()), # NotImplemented
     DataHub("/geldata", PostgresUnchained()),
 )

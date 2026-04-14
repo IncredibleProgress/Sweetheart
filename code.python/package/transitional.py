@@ -212,12 +212,19 @@ class SweetheartProject(ProjectInstaller):
             logging.info(f"New config.json file created: {config.conffile}.")
 
 
-class JupyterLab(ProjectInstaller):
+class JupyterNotebook(ProjectInstaller):
 
     libs = { 
         "pip": 
-            [ "jupyterlab" ] 
+            [ "notebook" ] 
     }
+
+    # scripts = {
+    #     #NOTE: this assumes using master project as python kernel
+    #     "kernel-install":
+    #         f"{bin.ipykernel} install --user "+\
+    #         f"--name={BaseConfig.master_project} --display-name={BaseConfig.master_project}"
+    # }
 
     @classmethod
     def initdev(cls,project:str,homedir:str|None=None):
@@ -225,7 +232,15 @@ class JupyterLab(ProjectInstaller):
 
         cls.project = project
         homedir = homedir or f"{os.HOME}/{project.capitalize()}"
-        cls.path = { "python": f"{homedir}/python" }
 
-        echo(f"JupyterLab Setup")
+        cls.path = { 
+            "python": f"{homedir}/python",
+            "notebooks": f"{homedir}/notebooks",
+        }
+
+        echo(f"Jupyter Notebook Setup")
         cls.installer(include="python")
+        os.makedirs(cls.path["notebooks"],mode=0o755,exist_ok=True)
+        # os.run(cls.scripts["kernel-install"])
+        master = BaseConfig.master_project.capitalize()
+        logging.info(f"Jupyter kernel installed for {master}.")

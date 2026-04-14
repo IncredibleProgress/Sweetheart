@@ -1,0 +1,7 @@
+http://localhost:8080 {
+	# reverse_proxy unix//tmp/sweetheart.sock
+	root * /home/nico/.cache/sweetheart-master/application
+	file_server {
+		index index.html startpage.html
+	}
+}

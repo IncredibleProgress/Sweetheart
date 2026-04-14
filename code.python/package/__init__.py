@@ -16,48 +16,62 @@ class BaseConfig(_UserDict_):
     verbosity = 1
     master_project = "sweetheart"
     basedir = f".cache/sweetheart-master"
+    allowed_env = ("development","sysadmin","production")
 
     def __init__(self, *,
             project: str = master_project,
             homedir: str|None = None ) -> None:
 
+        assert os.getenv("SWS_OPERATING_STATE") in BaseConfig.allowed_env,\
+            f"Invalid environment value SWS_OPERATING_STATE"
+
         if project == BaseConfig.master_project:
             # set default settings for master project
             homedir = homedir or f"{os.HOME}/My_code"
-            self.unitconf = f"{homedir}/configuration/unit.json"
+            self.caddyfile = f"{homedir}/configuration/Caddyfile"
         else:
             homedir = homedir or f"{os.HOME}/{project.capitalize()}"
-            self.basedir = str(BaseConfig.basedir).replace("master",project)
+            self.basedir = str(BaseConfig.basedir).replace("master",project.lower())
             
         self.root = f"{os.HOME}/{self.basedir}"
         self.conffile = f"{homedir}/configuration/config.json"
 
         self.data = {
         #1. General Settings:
+            # empty for now
 
-            "database_project": f"{homedir}/database",
+        #2. Webapp Settings:
 
-        #2. System Services Settings:
+            # editable data bindings
+            "/geldata": f"{homedir}/database",
 
             # editable python app settings
-            # these are put into NginxUnit config
             "python_app": {
-                "home": "{{python_env}}",# autoset
+                "venv": None,# autoset to python_env
                 "path": f"{homedir}/python",
                 "module": "start",# no .py extension expected
                 "callable": "webapp",
-                "user": os.getuser(),#FIXME
-                "group": os.getuser(),#FIXME
+                "user": "www-data",#FIXME
+                "group": "www-data",#FIXME
+                "sysd": "uvicorn.service",
+                "uds": "/tmp/sweetheart.sock",
+                "uri": "/geldata",
+            },
+            # editable statics settings
+            "shared_content": {
+                "index": "startpage.html",
+                "fallback": "startpage.html",
+                "chroot": f"{self.root}/application",
             },
             # editable statics setting
             # these are put into NginxUnit config
-            "shared_content": {
-                "index": "startpage.html",
-                "chroot": f"{self.root}/application",
-                "share": f"{self.root}/application$uri",
-                #NOTE: fallback allows routing by startpage itself
-                "fallback": {"share": f"{self.root}/application/startpage.html"},
-            },
+            # "shared_content_ngu": {
+            #     "index": "startpage.html",
+            #     "chroot": f"{self.root}/application",
+            #     "share": f"{self.root}/application$uri",
+            #     #NOTE: fallback allows routing by startpage itself
+            #     "fallback": {"share": f"{self.root}/application/startpage.html"},
+            # },
         }
     
     def __getattr__(self,attr):

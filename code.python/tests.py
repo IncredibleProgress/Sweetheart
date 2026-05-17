@@ -11,7 +11,7 @@ def test_initCaddyService():
     echo("python app directory:",config['python_app']['path'])
 
     # set Caddy web server
-    WebappServer(config).set_service(systemctl=True)
+    WebappServer(config).set_service(systemctl=True,caddy=True)
 
 
 if __name__ == "__main__":

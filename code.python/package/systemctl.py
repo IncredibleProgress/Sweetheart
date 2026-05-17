@@ -1,6 +1,7 @@
-import json
+# import json
 import configparser
 from pathlib import Path
+from typing import Optional
 
 from sweetheart.subprocess import os
 from sweetheart import BaseConfig, echo, verbose, ansi
@@ -8,8 +9,7 @@ from sweetheart import BaseConfig, echo, verbose, ansi
 
 class Systemd:
 
-    def set_systemd_service(self,config:dict)\
-        -> configparser.ConfigParser :
+    def set_systemd_service(self,config:dict) -> configparser.ConfigParser :
 
         """ create and set config for new systemd service 
             config keys must be supported service options """
@@ -73,12 +73,38 @@ class Systemd:
 
 class Caddy(Systemd):
 
-    # def set_systemd_service(self):
-    #     # set_caddy_service is provided with presets
-    #     raise NotImplementedError
+    """ Write Caddyfile content and set systemd service for Caddy web server.
+    Caddyfile content is generated from caddylist which must be populated by subclass(es). """
 
-    def set_caddy_service(self,caddyfile:str):
-        self.set_systemd_service({
+    # set default path to Caddyfile
+    caddyfile: str = "/etc/caddy/Caddyfile" 
+
+    # init list of str snippets for building Caddyfile content
+    # must be populated by subclass(es) to generate Caddyfile content
+    caddylist: list[str] = []
+
+    # set default systemd service name
+    service: str = "caddy.service"
+
+    @classmethod
+    def set_caddy_instance(cls,systemctl:bool):
+        """ create a singleton instance of Caddy ensuring 
+        that Caddyfile snippets are added to the same instance """
+
+        assert not hasattr(cls,"instance"),\
+            "Caddy instance already exists"
+
+        cls.instance: Caddy = Caddy()
+        cls.systemctl: bool = systemctl
+
+    @classmethod
+    def set_caddy_service(cls,caddyfile:Optional[str]=None):
+
+        # reset path to Caddyfile 
+        Caddy.caddyfile = caddyfile or Caddy.caddyfile
+
+        # set systemd service config for Caddy web server
+        cls.instance.set_systemd_service({
 
             'Unit': dict(
                 Description='Caddy web server',
@@ -91,8 +117,8 @@ class Caddy(Systemd):
                 Type='notify',
                 User='www-data',#FIXME
                 Group='www-data',#FIXME
-                ExecStart=f'caddy run --environ --config {caddyfile}',
-                ExecReload=f'caddy reload --config {caddyfile} --force',
+                ExecStart=f'caddy run --environ --config {Caddy.caddyfile}',
+                ExecReload=f'caddy reload --config {Caddy.caddyfile} --force',
                 TimeoutStopSec='5s',
                 LimitNOFILE='1048576',
                 PrivateTmp='true',
@@ -115,13 +141,42 @@ class Caddy(Systemd):
                 WantedBy='multi-user.target')
         })
     
-    def enable_caddy_service(self,service="caddy.service"):
-        self.enable_systemd_service(service)
+    @classmethod
+    def enable_caddy_service(cls,service:Optional[str]=None):
+
+        # reset systemd service name for Caddy web server
+        Caddy.service = service or Caddy.service
+
+        verbose("Writing Caddyfile:",Caddy.caddyfile)
+        caddyfile = Path(Caddy.caddyfile)
+        caddyfile.parent.mkdir(mode=0o755,parents=True,exist_ok=True)
+        caddyfile.write_text("\n".join(Caddy.caddylist))
+
+        assert getattr(Caddy,"systemctl",False),\
+            "Caddy.systemctl must be set to True to enable Caddy service"
+
+        verbose("Enable Caddy systemd service:",Caddy.service)
+        cls.instance.enable_systemd_service(Caddy.service)
 
 
 class PythonApp(Systemd):
 
-    def set_uvicorn_service(self,settings:dict):
+    def set_uvicorn_service(self,settings:dict,python_script:str):
+
+        # set python app settings
+        self.pyconf = settings
+        self.pypath = Path(self.pyconf['path'])/self.pyconf['module']
+
+        #FIXME: avoid extension matter with module name
+        module, extension = self.pypath.stem, self.pypath.suffix
+        if extension==".py": self.pyconf['module'] = module
+        else: self.pypath = self.pypath.with_suffix('.py')
+
+        # write the python app script
+        self.pypath.parent.mkdir(mode=0o755,parents=True,exist_ok=True)
+        self.pypath.write_text(python_script)
+
+        # set the systemd config for uvicorn ASGI server
         self.set_systemd_service({
 
             'Unit': dict(
@@ -129,15 +184,15 @@ class PythonApp(Systemd):
                 After='network.target' ),
 
             'Service': dict(
-                User=settings["user"],
-                Group=settings["group"],
-                WorkingDirectory=settings["path"],
+                User=self.pyconf["user"],
+                Group=self.pyconf["group"],
+                WorkingDirectory=self.pyconf["path"],
                 ExecStart=(
-                    f'{settings["home"]}/bin/uvicorn '
-                    f'--uds {settings["uds"]} '
+                    f'{self.pyconf["home"]}/bin/uvicorn '
+                    f'--uds {self.pyconf["uds"]} '
                     '--forwarded-allow-ips=127.0.0.1 ' #FIXME
                     '--proxy-headers '             
-                    f'{settings["module"]}:{settings["callable"]}' ),
+                    f'{self.pyconf["module"]}:{self.pyconf["callable"]}' ),
                 Restart='always',
                 RestartSec='3',
 
@@ -154,6 +209,7 @@ class PythonApp(Systemd):
         })
 
     def enable_uvicorn_service(self,service="uvicorn.service"):
+        #NOTE: given for convenience
         self.enable_systemd_service(service)
 
 

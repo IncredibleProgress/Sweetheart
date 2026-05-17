@@ -15,7 +15,8 @@ class BaseConfig(_UserDict_):
     debug = True
     verbosity = 1
     master_project = "sweetheart"
-    basedir = f".cache/sweetheart-master"
+    homedir = f"{os.HOME}/My_code"
+    basedir = f"{os.HOME}/.cache/sweetheart-master"
     allowed_env = ("development","sysadmin","production")
 
     def __init__(self, *,
@@ -27,43 +28,48 @@ class BaseConfig(_UserDict_):
 
         if project == BaseConfig.master_project:
             # set default settings for master project
-            homedir = homedir or f"{os.HOME}/My_code"
+            homedir = homedir or BaseConfig.homedir
             self.caddyfile = f"{homedir}/configuration/Caddyfile"
         else:
             homedir = homedir or f"{os.HOME}/{project.capitalize()}"
             self.basedir = str(BaseConfig.basedir).replace("master",project.lower())
             
-        self.root = f"{os.HOME}/{self.basedir}"
+        # set path for configuration file
         self.conffile = f"{homedir}/configuration/config.json"
 
         self.data = {
         #1. General Settings:
+
             # empty for now
 
-        #2. Webapp Settings:
+        #2. Webapps Settings:
 
-            # editable data bindings
-            "/geldata": f"{homedir}/database",
-
+            # editable routing settings
+            "localhost": {
+                "type": "WebappServer",
+                "url": "http://localhost:8080",
+                "html": "shared_content",
+                "data": "/geldata:python_app",
+                "dbpth": f"{homedir}/database",
+            },
             # editable python app settings
             "python_app": {
                 "venv": None,# autoset to python_env
                 "path": f"{homedir}/python",
                 "module": "start",# no .py extension expected
                 "callable": "webapp",
-                "user": "www-data",#FIXME
-                "group": "www-data",#FIXME
+                "user": os.getuser(),#FIXME
+                "group": os.getuser(),#FIXME
                 "sysd": "uvicorn.service",
-                "uds": "/tmp/sweetheart.sock",
-                "uri": "/geldata",
+                "uds": f"/tmp/{project}.sock",
             },
             # editable statics settings
             "shared_content": {
                 "index": "startpage.html",
                 "fallback": "startpage.html",
-                "chroot": f"{self.root}/application",
+                "chroot": f"{self.basedir}/application",
             },
-            # editable statics setting
+            # [Deprecated] editable statics setting
             # these are put into NginxUnit config
             # "shared_content_ngu": {
             #     "index": "startpage.html",
@@ -152,7 +158,7 @@ def echo(*args,prefix="",**kwargs):
 def verbose(*args,level=1,prefix=""):
 
     """ convenient function for verbose messages, 
-        'level' set the intended level of verbosity """
+        'level' sets the intended level of verbosity """
 
     if BaseConfig.verbosity >= level:
         init = prefix + f"{level}*" if level != 0 else " *"

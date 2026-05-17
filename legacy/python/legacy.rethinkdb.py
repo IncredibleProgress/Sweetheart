@@ -151,3 +151,18 @@ class RethinkDB(Systemd):
         """ Close default connection when object is deleted. """
         #NOTE: multiple connections must be managed explicitly
         if hasattr(self,"conn"): self.conn.close()
+
+
+# --- --- ---
+# class DataHub:
+
+    # [Deprecated]
+    # def _ws_ReQL(self,data:dict) -> JSONMessage:
+    #     """ Execute any RethinkDB query from WebSocket. """
+
+    #     #NOTE: available for development only
+    #     assert os.getenv("SWS_OPERATING_STATE") == "development"
+
+    #     message: tuple = self.datasystem.rql_expr(data["query"])
+    #     return JSONMessage.safer(message,uuid=data.get("uuid"))
+

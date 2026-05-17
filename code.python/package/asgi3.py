@@ -441,7 +441,10 @@ class RestApiEndpoints(Route,AsgiEndpoint):
             "websocket": {
                 "ws.rest.get": self._ws_REST,
                 "ws.rest.post": self._ws_REST,
-                "ws.rest.patch": self._ws_REST }}
+                "ws.rest.patch": self._ws_REST,
+                # "ws.rest.put": self._ws_REST,#FIXME
+                # "ws.rest.delete": self._ws_REST,#FIXME
+            }}
 
     # --- --- Dedicated Asgi/3 endpoint --- --- #
 
@@ -477,6 +480,7 @@ class RestApiEndpoints(Route,AsgiEndpoint):
             else: raise AsgiRuntimeError(
                 "Missing 'sweetheart-action' http header.")
 
+
     # --- --- Websocket processing --- --- #
 
     def on_receive(self,message:dict) -> JSONMessage | None:
@@ -506,6 +510,19 @@ class RestApiEndpoints(Route,AsgiEndpoint):
 
         if message == ("Ok",None): return None # no message to send back
         return JSONMessage.safer(message,uuid=data.get("uuid"))
+    
+    def _ws_edgeQL(self,data:dict) -> JSONMessage:
+        """ Execute any Gel/EdgeQL query from WebSocket. """
+
+        #NOTE: available for development only
+        assert os.getenv("SWS_OPERATING_STATE") == "development"
+
+        assert hasattr(self.datasystem,"edgeql"),\
+            f"Data system {self.datasystem} does not support EdgeQL queries."
+
+        message: tuple = self.datasystem.edgeql(data["query"])
+        return JSONMessage.safer(message,uuid=data.get("uuid"))
+
 
     # --- --- Http processing --- --- #
 

@@ -131,15 +131,15 @@ class SweetheartMaster(ProjectInstaller):
 
     path = {
         # set running directories
-        "dist-dir": f"{os.HOME}/{BaseConfig.basedir}/application",# html
-        "mdbk-dir": f"{os.HOME}/{BaseConfig.basedir}/documentation",# html
+        "dist-dir": f"{BaseConfig.basedir}/application",# html
+        "mdbk-dir": f"{BaseConfig.basedir}/documentation",# html
 
         # provide user working directories
-        "conf": f"{os.HOME}/My_code/configuration",
-        "doc": f"{os.HOME}/My_code/documentation",
-        "node": f"{os.HOME}/My_code/webapp",
-        "python": f"{os.HOME}/My_code/python",
-        "edgedb": f"{os.HOME}/My_code/database",
+        "conf": f"{BaseConfig.homedir}/configuration",
+        "doc": f"{BaseConfig.homedir}/documentation",
+        "node": f"{BaseConfig.homedir}/webapp",
+        "python": f"{BaseConfig.homedir}/python",
+        "edgedb": f"{BaseConfig.homedir}/database",
     }
 
     scripts = {

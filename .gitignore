@@ -1,11 +1,12 @@
 .vscode/
 
+code.rust/Cargo.lock
 code.python/poetry.lock
 code.python/**/__pycache__/
 
-code.node/**/dist/
-code.node/**/node_modules/
-code.node/**/.parcel-cache/
-code.node/**/package-lock.json
+/**/dist/
+/**/node_modules/
+/**/.parcel-cache/
+/**/package-lock.json
 
-optimum/database/dbschema/migrations/
+/projects/optimum/database/dbschema/migrations/

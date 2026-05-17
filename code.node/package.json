@@ -1,9 +1,9 @@
 {
   "name": "sweetheart-solidjs",
   "source": "resources/startpage.html",
-  "scripts": {
-  },
+  "scripts": {},
   "dependencies": {
+    "@observablehq/plot": "^0.6.17",
     "gel": "^2.1.1"
   },
   "devDependencies": {

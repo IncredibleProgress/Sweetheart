@@ -25,7 +25,7 @@ class AsgiEndpoint:
     def ensure_versions(scope):
 
         if BaseConfig.debug:
-            # ensure scope consistency with NginxUnit
+            # ensure scope consistency with ASGI specification
             assert scope["http_version"] == "1.1"
             assert scope["asgi"]["version"] == "3.0"
             assert scope["asgi"]["spec_version"] == "2.1"
@@ -39,11 +39,15 @@ class HttpResponse(AsgiEndpoint):
 
     """ Base class and interface for setting Asgi/3 http responses.
         It supports CORS headers and handling of preflight requests. """
+    
+    # Class-level origin allowlist — override per subclass or instance.
+    # Empty set means no cross-origin requests allowed.
+    ALLOW_ORIGINS: set[str] = set()
 
     def __init__(self, 
             status: int = 200,# Ok status
             content: bytes | str = b"",
-            headers: list[tuple[bytes,bytes]] | dict[str,str] = [] ):
+            headers: list[tuple[bytes,bytes]] | dict[str,str] = []):
 
         if isinstance(content,str):
             # encode content providing charset info
@@ -53,70 +57,55 @@ class HttpResponse(AsgiEndpoint):
         if isinstance(headers,dict):
             headers = [
                 # latin-1 is default http/1.1 encoding
-                ( key.encode("latin-1"), val.encode("latin-1") )
+                (key.encode("latin-1"), val.encode("latin-1"))
                 for key,val in headers.items() ]
 
         # response settings
         self.status = status
-        self.encoded_headers = headers
+        self.encoded_headers = list(headers) # copy
         self.encoded_content = content
-        
-        # default CORS attributes
-        self.allow_origin: str = "*" #FIXME: unsafe
-        self.allow_methods: str = "GET"
+        self.allow_methods: set[str] = {"OPTIONS","GET"} #FIXME
 
     def _apply_CORS_policy_(self,
             origin_b: bytes,
             method_b: bytes,
-            headers_b: bytes ) -> None:
+            headers_b: bytes ) -> bool:
 
-        self.encoded_CORS_headers = []
-        origin = origin_b.decode("ascii")
-        method = method_b.decode("ascii")
-        headers = headers_b.decode("latin-1")
+        try:
+            origin = origin_b.decode("ascii")
+            method = method_b.decode("ascii").upper()
+            headers = headers_b.decode("latin-1")
+        except UnicodeDecodeError:
+            return False # reject — send no CORS headers
 
         #1. Handle origin policy
-        if "*" in self.allow_origin or origin in self.allow_origin:
-            allow_origin = (b"access-control-allow-origin",origin_b)
-            self.encoded_CORS_headers.append(allow_origin)
-            self.encoded_headers.append(allow_origin)
+        if origin not in self.ALLOW_ORIGINS:
+            return False  # reject — send no CORS headers
 
+        self.encoded_CORS_headers = [
+            (b"access-control-allow-origin", origin_b),
+            (b"vary", b"Origin") ]
+            
         #2. Handle methods policy
-        if method in self.allow_methods:
-            bmethods = self.allow_methods.encode("ascii")
-            self.encoded_CORS_headers.append(
-                (b"access-control-allow-methods",bmethods))
+        if method and method in self.allow_methods:
+            self.encoded_CORS_headers.append((
+                b"access-control-allow-methods",
+                b", ".join(m.encode("ascii") for m in self.allow_methods)) )
 
         #3. Handle headers policy
         if headers and hasattr(self,"allow_headers") \
-        and all([h.strip() in self.allow_headers for h in headers.split(",")]):
-            bheaders = self.allow_headers.encode("latin-1")
-            self.encoded_CORS_headers.append(
-                (b"access-control-allow-headers",bheaders))
+        and all([h.strip().lower() in self.allow_headers for h in headers.split(",")]):
+            self.encoded_CORS_headers.append((
+                b"access-control-allow-headers",
+                self.allow_headers.encode("latin-1")) )
 
         #4. Handle max-age policy
-        if hasattr(self,"max_age"):
-            assert type(self.max_age) is int
-            bmax_age = str(self.max_age).encode("latin-1")
-            self.encoded_CORS_headers.append(
-                (b"access-control-max-age",bmax_age))
+        if hasattr(self,"max_age") and isinstance(self.max_age,int):
+            self.encoded_CORS_headers.append((
+                b"access-control-max-age",
+                str(self.max_age).encode("latin-1")) )
 
-        #FIXME: to test and complete
-    
-    # def getHeaderValue(self,header:str): -> str | None:
-    #     """ Get header value from encoded headers with ease. """
-        
-    #     target = header.lower().encode("latin-1")
-    #     headers = dict(self.encoded_headers)
-    #     value = headers.get(target)
-
-    #     if not value and hasattr(self,"encoded_CORS_headers"):
-    #         # get header within CORS headers
-    #         headers = dict(self.encoded_CORS_headers)
-    #         value = headers.get(target) 
-        
-    #     if value is not None:
-    #         return value.decode("latin-1")
+        return True # accept — send CORS headers
     
     async def __call__(self,scope,receive,send):
         """ Endpoint for handling Http responses. """
@@ -124,27 +113,25 @@ class HttpResponse(AsgiEndpoint):
         try:
             super().ensure_versions(scope)
             assert scope["type"] == "http"
+        except:
+            raise AsgiRuntimeError("Invalid HttpResponse scope.")
 
-        except: raise AsgiRuntimeError(
-            "Invalid HttpResponse scope.")
-
-        #! ASGI lowercases http headers
-        #! ASGI uppercases http methods
-        request_headers = dict(scope["headers"]) # bytes
-        gethdr = lambda hd: request_headers.get(hd,default=b"") #FIXME
+        #! ASGI lowercases http headers, uppercases http methods
+        request_headers: dict[bytes,bytes] = dict(scope["headers"])
+        def gethdr(hd:bytes)->bytes: return request_headers.get(hd,b"")
 
         if scope["method"] == "OPTIONS":
             # --- CORS Preflight Requests --- #
 
-            self._apply_CORS_policy_(
+            approved = self._apply_CORS_policy_(
                 origin_b = gethdr(b"origin"),
                 method_b = gethdr(b"access-control-request-method"),
                 headers_b = gethdr(b"access-control-request-headers") )
 
             await send({
                 "type": "http.response.start",
-                "status": 204, # No Content
-                "headers": self.encoded_CORS_headers })
+                "status": 204 if approved else 403 ,# No Content or Forbidden
+                "headers": self.encoded_CORS_headers if approved else [] })
 
             await send({
                 "type": "http.response.body",
@@ -152,6 +139,13 @@ class HttpResponse(AsgiEndpoint):
 
         elif scope["method"] in self.allow_methods:
             # --- Mainstream Http Requests --- #
+
+            # add CORS allow-origin header if cross-origin request
+            origin = gethdr(b"origin").decode("ascii",errors="ignore")
+            if origin and origin in self.ALLOW_ORIGINS:
+                self.encoded_headers.extend([
+                    (b"access-control-allow-origin",gethdr(b"origin")),
+                    (b"vary", b"Origin") ])
 
             await send({
                 "type": "http.response.start",
@@ -162,8 +156,19 @@ class HttpResponse(AsgiEndpoint):
                 "type": "http.response.body",
                 "body": self.encoded_content })
             
-        else: raise AsgiRuntimeError(
-            f"Http method {scope['method']} not allowed.")
+        else:
+            # --- Method Not Allowed --- #
+
+            await send({
+                "type": "http.response.start",
+                "status": 405,# Method Not Allowed
+                "headers": [(
+                    b"allow", b", ".join(m.encode("ascii") 
+                    for m in self.allow_methods) )]
+            })
+            await send({
+                "type": "http.response.body",
+                "body": b"" })
 
 
 class JSONResponse(HttpResponse):

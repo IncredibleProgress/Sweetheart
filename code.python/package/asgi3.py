@@ -1,10 +1,11 @@
 """
 ASGI/3.0 implementation for Sweetheart
 which provides Http and Websocket interfaces
+for handling JSON data exchanges only
 """
 
 import json
-from typing import Self
+from typing import Self, Optional
 from sweetheart.subprocess import os
 from sweetheart.urllib import urlparse_qs
 from sweetheart import BaseConfig, ansi, echo, verbose
@@ -23,7 +24,6 @@ class AsgiEndpoint:
 
     @staticmethod
     def ensure_versions(scope):
-
         if BaseConfig.debug:
             # ensure scope consistency with ASGI specification
             assert scope["http_version"] == "1.1"
@@ -36,18 +36,25 @@ class AsgiRuntimeError(Exception):
 
 
 class HttpResponse(AsgiEndpoint):
-
     """ Base class and interface for setting Asgi/3 http responses.
         It supports CORS headers and handling of preflight requests. """
-    
-    # Class-level origin allowlist — override per subclass or instance.
-    # Empty set means no cross-origin requests allowed.
-    ALLOW_ORIGINS: set[str] = set()
+
+    MAX_AGE: Optional[str] = None
+    ALLOW_CREDENTIALS: bool = True # safer
+    ALLOW_ORIGINS: set[str] = set() # empty - no cross-origin allowance
+    ALLOW_HEADERS: set[str] = set() # empty
+    EXPOSE_HEADERS: set[str] = set() # empty
+    REJECT_METHODS = {"CONNECT","TRACE","TRACK"}
+
+    REJECT_HEADERS = {"accept-charset","accept-encoding","access-control-request-headers",
+        "access-control-request-method","connection","content-length","cookie",
+        "cookie2","date","dnt","expect","host","keep-alive","origin","referer",
+        "te","trailer","transfer-encoding","upgrade","via"}  
 
     def __init__(self, 
             status: int = 200,# Ok status
             content: bytes | str = b"",
-            headers: list[tuple[bytes,bytes]] | dict[str,str] = []):
+            headers: list[tuple[bytes,bytes]] | dict[str,str] = None):
 
         if isinstance(content,str):
             # encode content providing charset info
@@ -61,51 +68,72 @@ class HttpResponse(AsgiEndpoint):
                 for key,val in headers.items() ]
 
         # response settings
-        self.status = status
-        self.encoded_headers = list(headers) # copy
-        self.encoded_content = content
-        self.allow_methods: set[str] = {"OPTIONS","GET"} #FIXME
+        self.status: int = status
+        self.encoded_headers: list[bytes] = headers or []
+        self.encoded_content: bytes = content
+        self.allow_methods: set[str] = {"GET"}
 
     def _apply_CORS_policy_(self,
             origin_b: bytes,
             method_b: bytes,
-            headers_b: bytes ) -> bool:
+            headers_b: bytes ) -> (bool,list):
 
         try:
             origin = origin_b.decode("ascii")
             method = method_b.decode("ascii").upper()
-            headers = headers_b.decode("latin-1")
+            headers = headers_b.decode("latin-1").strip()#!
         except UnicodeDecodeError:
-            return False # reject — send no CORS headers
+            return False, []
 
         #1. Handle origin policy
         if origin not in self.ALLOW_ORIGINS:
-            return False  # reject — send no CORS headers
+            return False, []
 
-        self.encoded_CORS_headers = [
+        encoded_CORS_headers = [
             (b"access-control-allow-origin", origin_b),
             (b"vary", b"Origin") ]
             
         #2. Handle methods policy
-        if method and method in self.allow_methods:
-            self.encoded_CORS_headers.append((
-                b"access-control-allow-methods",
-                b", ".join(m.encode("ascii") for m in self.allow_methods)) )
+        if not method\
+        or method in self.REJECT_METHODS\
+        or method not in self.allow_methods:
+            return False, []
+
+        encoded_CORS_headers.append((
+            b"access-control-allow-methods",
+            b", ".join(m.encode("ascii") for m in self.allow_methods)) )
 
         #3. Handle headers policy
-        if headers and hasattr(self,"allow_headers") \
-        and all([h.strip().lower() in self.allow_headers for h in headers.split(",")]):
-            self.encoded_CORS_headers.append((
+        allow_headers = {h.lower() for h in self.ALLOW_HEADERS}
+        reject_headers = {h.lower() for h in self.REJECT_HEADERS}
+        received_headers = (
+            {h.strip().lower() for h in headers.split(",") if h.strip()}
+            if headers else set())
+
+        if received_headers and (
+        any(h in reject_headers for h in received_headers)
+        or any(h not in allow_headers for h in received_headers)):
+            return False, []
+
+        if allow_headers:
+            encoded_CORS_headers.append((
                 b"access-control-allow-headers",
-                self.allow_headers.encode("latin-1")) )
+                b", ".join(h.encode("latin-1") for h in allow_headers)))
 
         #4. Handle max-age policy
-        if hasattr(self,"max_age") and isinstance(self.max_age,int):
-            self.encoded_CORS_headers.append((
+        if self.MAX_AGE and isinstance(self.MAX_AGE,int):
+            encoded_CORS_headers.append((
                 b"access-control-max-age",
-                str(self.max_age).encode("latin-1")) )
+                str(self.MAX_AGE).encode("latin-1")) )
 
-        return True # accept — send CORS headers
+        #5. Handle credentials policy
+        if self.ALLOW_CREDENTIALS:
+            encoded_CORS_headers.append((
+                b"access-control-allow-credentials",
+                b"true"))
+
+        # APPROVED -> return CORS headers
+        return True, encoded_CORS_headers
     
     async def __call__(self,scope,receive,send):
         """ Endpoint for handling Http responses. """
@@ -123,15 +151,17 @@ class HttpResponse(AsgiEndpoint):
         if scope["method"] == "OPTIONS":
             # --- CORS Preflight Requests --- #
 
-            approved = self._apply_CORS_policy_(
-                origin_b = gethdr(b"origin"),
-                method_b = gethdr(b"access-control-request-method"),
-                headers_b = gethdr(b"access-control-request-headers") )
+            approved,encoded_CORS_headers =(
+            # return (False,[]) whith CORS rejected
+                self._apply_CORS_policy_(
+                    origin_b = gethdr(b"origin"),
+                    method_b = gethdr(b"access-control-request-method"),
+                    headers_b = gethdr(b"access-control-request-headers")))
 
             await send({
                 "type": "http.response.start",
                 "status": 204 if approved else 403 ,# No Content or Forbidden
-                "headers": self.encoded_CORS_headers if approved else [] })
+                "headers": encoded_CORS_headers })
 
             await send({
                 "type": "http.response.body",
@@ -139,26 +169,35 @@ class HttpResponse(AsgiEndpoint):
 
         elif scope["method"] in self.allow_methods:
             # --- Mainstream Http Requests --- #
-
             # add CORS allow-origin header if cross-origin request
-            origin = gethdr(b"origin").decode("ascii",errors="ignore")
-            if origin and origin in self.ALLOW_ORIGINS:
-                self.encoded_headers.extend([
-                    (b"access-control-allow-origin",gethdr(b"origin")),
-                    (b"vary", b"Origin") ])
+            origin: bytes = gethdr(b"origin")
+            try:
+                if origin and origin.decode("ascii") in self.ALLOW_ORIGINS:
+                    self.encoded_headers.extend([
+                        (b"access-control-allow-origin", origin),
+                        (b"vary", b"Origin") ])
+                    if self.ALLOW_CREDENTIALS:
+                        self.encoded_headers.append(
+                            (b"access-control-allow-credentials", b"true"))
+            except UnicodeDecodeError:
+                pass #FIXME
+
+            if self.EXPOSE_HEADERS:
+                self.encoded_headers.append((
+                    b"access-control-expose-headers",
+                    b", ".join(h.encode("latin-1") for h in self.EXPOSE_HEADERS) ))
 
             await send({
                 "type": "http.response.start",
                 "status": self.status,
-                "headers": self.encoded_headers })
-            
+                "headers": self.encoded_headers
+            })
             await send({
                 "type": "http.response.body",
                 "body": self.encoded_content })
             
         else:
             # --- Method Not Allowed --- #
-
             await send({
                 "type": "http.response.start",
                 "status": 405,# Method Not Allowed
@@ -172,9 +211,8 @@ class HttpResponse(AsgiEndpoint):
 
 
 class JSONResponse(HttpResponse):
-
-    """ Interface for setting Asgi/3 JSON http responses. """
-    # intends to ensure some consistency with starlette.py
+    """Interface for setting Asgi/3 JSON http responses."""
+    ALLOW_HEADERS = {"content-type", "sweetheart-action"}
 
     def __init__(self,
             content: dict | list[dict],
@@ -193,12 +231,8 @@ class JSONResponse(HttpResponse):
             content= bjson,
             headers= headers )
 
-        # set CORS attributes
-        self.allow_headers = "content-type, sweetheart-action"
-
         
 class JSONMessage:
-
     """ Interface for setting Asgi/3 JSON websocket messages.
         Content is encoded as bytes when given type is 'bytes'. """
 
@@ -245,52 +279,65 @@ class JSONMessage:
         
 
 class Websocket(AsgiEndpoint):
+    """Interface for setting Asgi/3 WebSocket endpoints."""
+    ALLOW_ORIGINS: set[str] = set() # empty - no cross-origin allowance
 
     def on_receive(self,message:dict) -> JSONMessage | None:
-
         """ Hook for handling incoming messages, which must be implemented by instance.
         It should return a JSONMessage instance for sending to the client or None. """
-
         raise NotImplementedError
 
     async def send_json(self,data:dict):
         """ Send JSON data as text to the client. """
-
         await self.send({
             "type": "websocket.send",
             "text": json.dumps(data) })
 
     async def send_bjson(self,data:dict):
         """ Send JSON data as bytes to the client. """
-
         await self.send({
             "type": "websocket.send",
             "bytes": json.dumps(data).encode() })
 
+    def _apply_origin_policy_(self,
+            headers_lb: list[tuple[bytes,bytes]] ) -> bool:
+        """Check if origin is allowed for cross-origin WebSocket connections."""
+        try:
+            header = dict(headers_lb)[b"origin"]
+            origin = header.decode("ascii")
+        except (UnicodeDecodeError, KeyError):
+            return False
+        return origin in self.ALLOW_ORIGINS
+
     async def __call__(self,scope,receive,send):
         """ Handle WebSocket connections. """
-
-        # self.scope = scope
-        # self.send = send
 
         try:
             super().ensure_versions(scope)
             assert scope["type"] == "websocket"
-            assert list(scope["subprotocols"]) == ["json"]
-
+            assert list(scope["subprotocols"]) == ["json"]#!
             # Wait for the WebSocket connect message
             message = await receive()
             assert message["type"] == "websocket.connect"
-        
         except:
             raise AsgiRuntimeError(
                 "Websocket connection failed.")
-        
-        # Send WebSocket accept message
-        await send({
-            "type": "websocket.accept",
-            "subprotocol": "json" })
 
+        header_lb: list[tuple[bytes,bytes]] = scope["headers"]
+        accepted_origin = self._apply_origin_policy_(header_lb)
+        
+        if not accepted_origin:
+            # Send WebSocket close message with 403 status code
+            await send({
+                "type": "websocket.close",
+                "code": 403 })
+            return
+        else:
+            # Send WebSocket accept message for json subprotocol
+            await send({
+                "type": "websocket.accept",
+                "subprotocol": "json" })
+            
         while True:
             message = await receive()
 
@@ -303,12 +350,10 @@ class Websocket(AsgiEndpoint):
                     await send({
                         "type": "websocket.send",
                         "text": json_message.text,
-                        "bytes": json_message.bytes })
-                        
+                        "bytes": json_message.bytes })      
                 elif json_message is None:
                     # no feedback here to the client, just
                     pass
-
                 else: raise ValueError(
                     "Function on_receive() must return JSONMessage instance or None.")
                 
@@ -330,22 +375,14 @@ class Route:
     def __init__(self,
         urlpath: str,
         endpoint: AsgiEndpoint,
-        methods: str | list[str] = "GET" ):
+        methods: set[str] = {'GET'} ):
 
         self.path = urlpath
         self.endpoint = endpoint
 
-        # set CORS headers for the endpoint:
-
-        if isinstance(methods,str):
-            #NOTE: , separated methods expected
-            endpoint.allow_methods = methods.upper()
-
-        elif isinstance(methods,list):
-            endpoint.allow_methods = ", ".join([m.upper() for m in methods])
-
-        else: raise ValueError(
-            "Route methods must be str or list of str.")
+        #FIXME: set CORS headers for the endpoint:
+        assert isinstance(methods,set)
+        endpoint.allow_methods = {m.upper() for m in methods}
 
         
 class AsgiLifespanRouter:
@@ -424,7 +461,7 @@ class RestApiEndpoints(Route,AsgiEndpoint):
             self,
             urlpath,
             endpoint = self, # AsgiEndpoint
-            methods = "GET, POST, PATCH, PUT, DELETE" )
+            methods = {'GET','POST','PATCH','PUT','DELETE'} )
 
         # set related data system
         self.datasystem = datasystem
@@ -454,7 +491,6 @@ class RestApiEndpoints(Route,AsgiEndpoint):
     # --- --- Dedicated Asgi/3 endpoint --- --- #
 
     async def __call__(self,scope,receive,send):
-
         """ Handle HTTP and WebSocket connections.
         Redirect action through sweetheart-action header. """
 
@@ -464,24 +500,18 @@ class RestApiEndpoints(Route,AsgiEndpoint):
             await self.websocket(scope,receive,send)
         
         elif scope["type"] == "http":
-            
             request = await receive()
             assert request["type"] == "http.request"
-
             # get sweetheart-action header, lowercased
             #NOTE: ASGI lowercases every http headers
             action = dict(scope["headers"])\
                 .get(b"sweetheart-action",b"")\
                 .decode('latin-1').lower()
-
             if action:
-
                 json_response =\
                     self.endpoints["http"][action](scope,request)
-
                 if json_response is not None:
                     await json_response(scope,receive,send)
-
             else: raise AsgiRuntimeError(
                 "Missing 'sweetheart-action' http header.")
 

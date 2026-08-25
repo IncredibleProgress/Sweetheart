@@ -69,7 +69,7 @@ class HttpResponse(AsgiEndpoint):
 
         # response settings
         self.status: int = status
-        self.encoded_headers: list[bytes] = headers or []
+        self.encoded_headers: list[tuple[bytes,bytes]] = headers or []
         self.encoded_content: bytes = content
         self.allow_methods: set[str] = {"GET"}
 
@@ -368,23 +368,19 @@ class Websocket(AsgiEndpoint):
     #         "reason": "WebSocket instance deleted at server side." })
 
 
-class Route:
-    """ Interface for setting url path endpoints. """
-    # intends to ensure some consistency with starlette.py
+# class Route:
+#     """ Interface for setting url path endpoints. """
+#     # intends to ensure some consistency with starlette.py
 
-    def __init__(self,
-        urlpath: str,
-        endpoint: AsgiEndpoint,
-        methods: set[str] = {'GET'} ):
+#     def __init__(self,
+#         urlpath: str,
+#         endpoint: AsgiEndpoint,
+#         methods: set[str] = {'GET'} ):
 
-        self.path = urlpath
-        self.endpoint = endpoint
+#         self.path = urlpath
+#         self.endpoint = endpoint
+#         endpoint.allow_methods = {m.upper() for m in methods}
 
-        #FIXME: set CORS headers for the endpoint:
-        assert isinstance(methods,set)
-        endpoint.allow_methods = {m.upper() for m in methods}
-
-        
 class AsgiLifespanRouter:
     """ Implement ASGI lifespan providing a simple router. """
 
@@ -402,67 +398,46 @@ class AsgiLifespanRouter:
         #FIXME: should use asynccontextmanager
 
         if scope["type"] == "lifespan":
-
             while True:
                 message = await receive()
-
                 if message["type"] == "lifespan.startup":
-
                     #FIXME: to test and complete
                     middleware = dict(self.middleware)
                     startup = middleware.pop("lifespan.startup",None)
                     shutdown = middleware.pop("lifespan.shutdown",None)
                     #NOTE: scope["status"] holds the current app status
                     scope["status"] = middleware # set the remaining entries
-
                     try:
                         #NOTE: startup() must return tuple of (scope,receive,send)
                         if startup: scope,receive,send = startup(scope,receive,send)
                         await send({ "type": "lifespan.startup.complete" })
-
                     except:
                         await send({
                             "type": "lifespan.startup.failed",
-                            "message": "ASGI lifespan startup failed." })
-                        
+                            "message": "ASGI lifespan startup failed." })    
                 elif message["type"] == "lifespan.shutdown":
-                    
                     if shutdown: shutdown(status=scope["status"])
                     await send({ "type": "lifespan.shutdown.complete" })
                     break
 
         elif scope["type"] in ("http","websocket"):
-
             # try matching route from the given url path
             # this implements here a predictable basic router concept
             # which provides the first match found for the given path
-
-            try: 
-                route = list( filter(
-                    lambda route: route.path == scope["path"], self.routes))[0]
-            
-            except IndexError: raise AsgiRuntimeError(
-                f"No route found for {scope["path"]} in AsgiLifespanRouter.")
-
-            await route.endpoint(scope,receive,send)
+            route = next(r for r in self.routes if r.urlpath==scope["path"])
+            await route.__call__(scope,receive,send)
 
 
-class RestApiEndpoints(Route,AsgiEndpoint):
-    """
-    Wrapper which ensures data exchanges with given datasystem
-    and through a RESTful API over Http and WebSocket scopes.
-    RestApiEndpoints instance is both Route and AsgiEndpoint.
-    """
+class RestApiEndpoints(AsgiEndpoint):
+    """Wrapper which ensures data exchanges with given datasystem
+    and through a RESTful API over Http and WebSocket scopes."""
 
     def __init__(self, urlpath: str, datasystem):
 
-        # set Route-like signature
-        Route.__init__(
-            self,
-            urlpath,
-            endpoint = self, # AsgiEndpoint
-            methods = {'GET','POST','PATCH','PUT','DELETE'} )
-
+        # set route signature
+        self.urlpath = urlpath
+        self.allow_methods = {'GET','POST','PATCH','PUT','DELETE'}
+        self.allow_origins = {'http:\\localhost'}
         # set related data system
         self.datasystem = datasystem
 
